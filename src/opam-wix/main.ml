@@ -11,7 +11,7 @@
 open Cmdliner
 open OpamStateTypes
 
-open Opam_wix
+open Oui
 open Types
 
 let create_bundle cli =
@@ -42,7 +42,7 @@ let create_bundle cli =
         `P "Additionnaly, installer gives to user a possibility to create a shortcut on Desktop and Start \
             menu as well as adding installation folder to the PATH.";
       ]
-      @ Opam_wix_cli.Man.configuration
+      @ Oui_cli.Man.configuration
 
     in
     let create_bundle global_options conf () =
@@ -52,7 +52,7 @@ let create_bundle cli =
     OpamArg.mk_command ~cli OpamArg.cli_original "opam-wix" ~doc ~man
       Term.(const create_bundle
             $ OpamArg.global_options cli
-            $ Opam_wix_cli.Args.config)
+            $ Oui_cli.Args.config)
 
 let () =
   OpamSystem.init ();

@@ -10,8 +10,8 @@
 
 open Cmdliner
 open Cmdliner.Arg
-open Opam_wix
-open Opam_wix.Types
+open Oui
+open Oui.Types
 
 let wix_version_conv =
   let parse str =
