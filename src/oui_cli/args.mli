@@ -11,7 +11,7 @@
 val opam_filename : OpamFilename.t Cmdliner.Arg.conv
 val opam_dirname : OpamFilename.Dir.t Cmdliner.Arg.conv
 
-val config : Opam_wix.Types.config Cmdliner.Term.t
+val config : Oui.Types.config Cmdliner.Term.t
 (** Cmdliner term evaluating to the config compiled from relevant CLI args and
     options. Note that this consumes the first positional argument. *)
 

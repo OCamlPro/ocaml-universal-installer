@@ -9,8 +9,8 @@
 ;------------------------------------------------------------------------;
 
 (library
- (name opam_wix)
- (public_name opam-wix.lib)
+ (name oui)
+ (public_name oui.lib)
  (libraries fmt opam-format opam-client markup unix yojson)
  (preprocess
   (pps ppx_deriving_yojson)))

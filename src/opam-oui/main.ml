@@ -9,7 +9,7 @@
 (**************************************************************************)
 
 open Cmdliner
-open Opam_wix
+open Oui
 
 let dst =
   let open Arg in
@@ -17,7 +17,7 @@ let dst =
   & pos 1 (some string) None
   & info [] ~docv:"OUTPUT" ~doc:"Where to write the installer or bundle"
 
-let autodetect_backend () : Opam_wix_cli.Args.backend =
+let autodetect_backend () : Oui_cli.Args.backend =
   match Sys.unix with
   | true ->
     OpamConsole.formatted_msg
@@ -28,7 +28,7 @@ let autodetect_backend () : Opam_wix_cli.Args.backend =
     Wix
 
 let choose_backend backend_choice =
-  let open Opam_wix_cli.Args in
+  let open Oui_cli.Args in
   match backend_choice with
   | Autodetect -> Some (autodetect_backend ())
   | Forced opt -> opt
@@ -59,8 +59,8 @@ let create_bundle cli =
     ~doc ~man:[]
     Term.(const create_bundle
           $ OpamArg.global_options cli
-          $ Opam_wix_cli.Args.config
-          $ Opam_wix_cli.Args.backend
+          $ Oui_cli.Args.config
+          $ Oui_cli.Args.backend
           $ dst)
 
 let () =

@@ -13,4 +13,4 @@
  (inline_tests)
  (preprocess
   (pps ppx_expect))
- (libraries opam-wix.lib opam-format))
+ (libraries oui.lib opam-format))

@@ -1,5 +1,5 @@
 opam-version: "2.0"
-name: "opam-wix"
+name: "oui"
 version: "0.1"
 maintainer: "Mohamed Hernouf <mohamed.hernouf@ocamlpro.com>"
 authors: [
@@ -31,12 +31,9 @@ build: [
     "@runtest" {with-test}
 ]
 dev-repo: "git+https://github.com/OCamlPro/opam-wix"
-synopsis: "A tool that produces stand-alone MSI installer for opam packages"
+synopsis: "A tool that builds standalone installers for your OCaml applications"
 description: """
-opam-wix is command-line tool that, generates MSI installer for opam package and binaries in this way:
-- It searches for executable file within specified package that should be installed in
-current switch.
-- It imports all required DLLs for given binary.
-- It generates input and makes use of WiX toolset for generating MSI installer.
+oui is a command-line tool that generates standalone installers for Linux, Windows and
+macOS from your OCaml and non OCaml binaries.
 """
 flags: plugin

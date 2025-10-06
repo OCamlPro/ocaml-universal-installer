@@ -1,3 +1,0 @@
-(library
- (name opam_wix_cli)
- (libraries opam-wix.lib cmdliner fmt opam-format))
