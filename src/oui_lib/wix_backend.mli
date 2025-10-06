@@ -9,7 +9,8 @@
 (**************************************************************************)
 
 val create_bundle :
+  tmp_dir:OpamFilename.Dir.t ->
   Types.config ->
   Installer_config.t ->
-  tmp_dir:OpamFilename.Dir.t ->
+  OpamFilename.t ->
   unit

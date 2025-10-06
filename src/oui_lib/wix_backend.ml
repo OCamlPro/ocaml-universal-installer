@@ -10,7 +10,7 @@
 
 open Types
 
-let create_bundle conf (desc : Installer_config.t) ~tmp_dir =
+let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
   let wix_path = System.normalize_path conf.conf_wix_path in
   System.check_available_commands wix_path;
   OpamConsole.header_msg "WiX setup";
@@ -82,5 +82,5 @@ let create_bundle conf (desc : Installer_config.t) ~tmp_dir =
   OpamFilename.remove (OpamFilename.of_string (name ^ ".wixpdb"));
   OpamFilename.move
     ~src:(OpamFilename.of_string (name ^ ".msi"))
-    ~dst:OpamFilename.Op.(conf.conf_output_dir // (name ^ ".msi"));
+    ~dst;
   OpamConsole.formatted_msg "Done.\n"

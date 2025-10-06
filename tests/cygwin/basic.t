@@ -1,4 +1,4 @@
-This test verify functionalities of `opam-wix`. We do this by using -k option
+This test verify functionalities of `opam-oui`. We do this by using -k option
 to keep every build artefact for Wix. For test purpose, we will use mock
 version of package `foo`, `cygcheck` and dlls. Test depends on Wix toolset of
 version 3.11.
@@ -90,7 +90,7 @@ Try to install package with just one binary.
   -> retrieved foo.0.1  (file://./archive)
   -> installed foo.0.1
   Done.
-  $ opam-wix --keep-wxs --wix-path=$WIX_PATH foo
+  $ opam-oui --keep-wxs --wix-path=$WIX_PATH foo foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.1 found with binaries:
@@ -197,7 +197,7 @@ Try to install package by specifying explicitly binary name.
   -> removed   foo.0.1
   -> installed foo.0.2
   Done.
-  $ opam-wix --keep-wxs --wix-path=$WIX_PATH foo -b foo_1
+  $ opam-oui --keep-wxs --wix-path=$WIX_PATH foo -b foo_1 foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.2 found with binaries:
@@ -216,7 +216,7 @@ Try to install package by specifying explicitly binary name.
 
 ================== Test 3 ====================
 Try to install package by specifying explicitly binary path.
-  $ opam-wix --wix-path=$WIX_PATH foo --bp OPAMROOT/one/bin/foo_2
+  $ opam-oui --wix-path=$WIX_PATH foo --bp OPAMROOT/one/bin/foo_2 foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.2 found with binaries:
@@ -252,7 +252,7 @@ Testing config file that embeds directory and file and set environment variables
   >   ["VAR2" "val2"]
   > ]
   > EOF
-  $ opam-wix --keep-wxs --conf conf --wix-path=$WIX_PATH foo -b foo_2
+  $ opam-oui --keep-wxs --conf conf --wix-path=$WIX_PATH foo -b foo_2 foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.2 found with binaries:
@@ -388,7 +388,7 @@ Testing config file that specifies wrong paths to files to embed (absolute, expl
   > ]
   > EOF
 
-  $ opam-wix --conf conf_absolute --wix-path=$WIX_PATH foo -b foo_1
+  $ opam-oui --conf conf_absolute --wix-path=$WIX_PATH foo -b foo_1 foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.2 found with binaries:
@@ -405,7 +405,7 @@ Testing config file that specifies wrong paths to files to embed (absolute, expl
   Compiling WiX components...
   Producing final msi...
   Done.
-  $ opam-wix --conf conf_explicit --wix-path=$WIX_PATH foo -b foo_1
+  $ opam-oui --conf conf_explicit --wix-path=$WIX_PATH foo -b foo_1 foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.2 found with binaries:
@@ -422,7 +422,7 @@ Testing config file that specifies wrong paths to files to embed (absolute, expl
   Compiling WiX components...
   Producing final msi...
   Done.
-  $ opam-wix --conf conf_wrong --wix-path=$WIX_PATH foo -b foo_1
+  $ opam-oui --conf conf_wrong --wix-path=$WIX_PATH foo -b foo_1 foo.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package foo.0.2 found with binaries:
@@ -488,14 +488,14 @@ Version testing
   -> installed bar-only-alpha.aversion
   -> installed bar-with-plus.0.1+23
   Done.
-  $ opam-wix --wix-path=$WIX_PATH bar-with-plus
+  $ opam-oui --wix-path=$WIX_PATH bar-with-plus bar.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   [WARNING] Package version 0.1+23 contains characters not accepted by MSI.
   It must be only dot separated numbers. You can use config file to set it or option --with-version.
   Do you want to use simplified version 0.1? [Y/n] n
   [10]
-  $ opam-wix --wix-path=$WIX_PATH bar-with-plus -y
+  $ opam-oui --wix-path=$WIX_PATH bar-with-plus -y bar.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   [WARNING] Package version 0.1+23 contains characters not accepted by MSI.
@@ -513,19 +513,19 @@ Version testing
   Compiling WiX components...
   Producing final msi...
   Done.
-  $ opam-wix --wix-path=$WIX_PATH bar-beg-alpha
+  $ opam-oui --wix-path=$WIX_PATH bar-beg-alpha bar.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   [WARNING] Package version v012 contains characters not accepted by MSI.
   [ERROR] No version can be retrieved from 'v012', use config file to set it or option --with-version.
   [5]
-  $ opam-wix --wix-path=$WIX_PATH bar-only-alpha
+  $ opam-oui --wix-path=$WIX_PATH bar-only-alpha bar.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   [WARNING] Package version aversion contains characters not accepted by MSI.
   [ERROR] No version can be retrieved from 'aversion', use config file to set it or option --with-version.
   [5]
-  $ opam-wix --wix-path=$WIX_PATH bar-only-alpha --with-version 4.2
+  $ opam-oui --wix-path=$WIX_PATH bar-only-alpha --with-version 4.2 bar.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package bar-only-alpha.aversion found with binaries:
@@ -544,7 +544,7 @@ Version testing
   > opamwix-version: "0.2"
   > wix-version: "3.2+3"
   > EOF
-  $ opam-wix --wix-path=$WIX_PATH --conf conf bar-only-alpha
+  $ opam-oui --wix-path=$WIX_PATH --conf conf bar-only-alpha bar.msi
   Fatal error:
   At $TESTCASE_ROOT/conf:2:0-2:20::
   while expecting wix_version: Invalid character '+' in WIX version "3.2+3"
@@ -553,7 +553,7 @@ Version testing
   > opamwix-version: "0.2"
   > wix-version: "3.2"
   > EOF
-  $ opam-wix --wix-path=$WIX_PATH --conf conf bar-only-alpha
+  $ opam-oui --wix-path=$WIX_PATH --conf conf bar-only-alpha bar.msi
   
   <><> Initialising opam ><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
   Package bar-only-alpha.aversion found with binaries:

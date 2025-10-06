@@ -49,7 +49,9 @@ let create_bundle cli =
          | None ->
            let dst = OpamFilename.Dir.of_string dst in
            save_bundle_and_conf ~installer_config ~bundle_dir dst
-         | Some Wix -> Wix_backend.create_bundle ~tmp_dir conf installer_config
+         | Some Wix ->
+           let dst = OpamFilename.of_string dst in
+           Wix_backend.create_bundle ~tmp_dir conf installer_config dst
          | Some Makeself ->
            let dst = OpamFilename.of_string dst in
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst)

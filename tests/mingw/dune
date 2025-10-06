@@ -2,7 +2,7 @@
  (alias mingw)
  (enabled_if (not (= %{os_type} "Unix")))
  (applies_to basic)
- (deps %{bin:opam-wix} %{bin:cygpath} wix311.zip))
+ (deps %{bin:opam-oui} %{bin:cygpath} wix311.zip))
 
 (rule
  (target wix311.zip)
