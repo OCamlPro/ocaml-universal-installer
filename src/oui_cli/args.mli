@@ -19,3 +19,8 @@ type backend = Wix | Makeself
 type 'a choice = Autodetect | Forced of 'a option
 
 val backend : backend choice Cmdliner.Term.t
+(** --backend option to overwrite the default backend detection mechanism,
+    based on the local system. *)
+
+val output : string option Cmdliner.Term.t
+(** -o/--output option to overwrite the default output file/dir. *)

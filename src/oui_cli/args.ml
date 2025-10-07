@@ -160,3 +160,14 @@ let backend =
      into any of the existing backends."
   in
   value & opt conv Autodetect & info [ "backend" ] ~doc ~docv
+
+let output =
+  let open Arg in
+  let doc =
+    "$(docv) installer or bundle name. Defaults to \
+     $(b,package-name.version.ext), in the current directory, where $(b,ext) \
+     is $(b,.msi) for Windows installers and $(b,.run) for Linux installers."
+  in
+  value
+  & opt (some string) None
+  & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]
