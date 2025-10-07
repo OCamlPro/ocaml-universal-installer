@@ -1,0 +1,30 @@
+name: linux
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        ocaml-compiler: [4.14.x, 5.0.x, 5.1.x, 5.2.x, 5.3.x]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - run: opam install . --deps-only -t
+      - run: opam exec -- dune build @install
+      - run: opam exec -- dune runtest
+      - run: opam config report
+      - run: opam install .
+      - run: opam exec opam-oui --help

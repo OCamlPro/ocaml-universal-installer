@@ -1,4 +1,4 @@
-name: opam wix
+name: windows
 
 on:
   pull_request:
@@ -9,21 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            ocaml-compiler: 4.14.x
-          - os: ubuntu-latest
-            ocaml-compiler: 4.14.x
-          - os: ubuntu-latest
-            ocaml-compiler: 5.0.x
-          - os: ubuntu-latest
-            ocaml-compiler: 5.1.x
-          - os: ubuntu-latest
-            ocaml-compiler: 5.2.x
-          - os: ubuntu-latest
-            ocaml-compiler: 5.3.x
+        ocaml-compiler: 4.14.x
 
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
