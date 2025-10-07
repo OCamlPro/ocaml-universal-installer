@@ -39,4 +39,4 @@ jobs:
       - run: opam exec -- dune runtest
       - run: opam config report
       - run: opam install .
-      - run: opam exec opam-wix --help
+      - run: opam exec opam-oui --help
