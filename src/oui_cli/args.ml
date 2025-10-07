@@ -64,12 +64,6 @@ let wix_version =
         "The version to use for the installer, in an msi format, i.e. numbers \
          and dots, [0-9.]+"
 
-let output_dir =
-  value
-  & opt opam_dirname (OpamFilename.Dir.of_string ".")
-  & info [ "o"; "output" ] ~docv:"DIR"
-      ~doc:"The output directory where bundle will be stored"
-
 let wix_path =
   (* FIXME: that won't work when using a MinGW ocaml compiler under a Cygwin env... *)
   (* NOTE1: we could retrieve this using the WIX6 environment variable *)
@@ -116,7 +110,7 @@ let keep_wxs = value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
 
 let config =
   let apply conf_file conf_package conf_path conf_binary conf_wix_version
-      conf_output_dir conf_wix_path conf_package_guid conf_icon_file
+      conf_wix_path conf_package_guid conf_icon_file
       conf_dlg_bmp conf_ban_bmp conf_keep_wxs =
     {
       conf_file;
@@ -124,7 +118,6 @@ let config =
       conf_path;
       conf_binary;
       conf_wix_version;
-      conf_output_dir;
       conf_wix_path;
       conf_package_guid;
       conf_icon_file;
@@ -134,7 +127,7 @@ let config =
     }
   in
   Term.(
-    const apply $ conffile $ package $ path $ binary $ wix_version $ output_dir
+    const apply $ conffile $ package $ path $ binary $ wix_version
     $ wix_path $ package_guid $ icon_file $ dlg_bmp $ ban_bmp $ keep_wxs)
 
 type backend = Wix | Makeself
@@ -167,3 +160,14 @@ let backend =
      into any of the existing backends."
   in
   value & opt conv Autodetect & info [ "backend" ] ~doc ~docv
+
+let output =
+  let open Arg in
+  let doc =
+    "$(docv) installer or bundle name. Defaults to \
+     $(b,package-name.version.ext), in the current directory, where $(b,ext) \
+     is $(b,.msi) for Windows installers and $(b,.run) for Linux installers."
+  in
+  value
+  & opt (some string) None
+  & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]

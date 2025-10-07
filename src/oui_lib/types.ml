@@ -16,7 +16,6 @@ type config = {
   conf_path : filename option;
   conf_binary: string option;
   conf_wix_version: Wix.Version.t option;
-  conf_output_dir : dirname;
   conf_wix_path : string;
   conf_package_guid: string option;
   conf_icon_file : filename option;

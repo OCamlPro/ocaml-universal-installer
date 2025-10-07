@@ -11,6 +11,7 @@
 (library
  (name test)
  (inline_tests)
+ (enabled_if (= %{os_type} "Unix"))
  (preprocess
   (pps ppx_expect))
  (libraries oui.lib opam-format))

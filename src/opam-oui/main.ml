@@ -11,12 +11,6 @@
 open Cmdliner
 open Oui
 
-let dst =
-  let open Arg in
-  required
-  & pos 1 (some string) None
-  & info [] ~docv:"OUTPUT" ~doc:"Where to write the installer or bundle"
-
 let autodetect_backend () : Oui_cli.Args.backend =
   match Sys.unix with
   | true ->
@@ -39,21 +33,37 @@ let save_bundle_and_conf ~(installer_config : Installer_config.t) ~bundle_dir
   let conf_path = OpamFilename.Op.(dst // "installer-config.json") in
   Installer_config.save installer_config conf_path
 
+let output_name ~output ~backend (ic : Installer_config.t) =
+  match output with
+  | Some o -> o
+  | None ->
+    let base = Printf.sprintf "%s.%s" ic.package_name ic.package_version in
+    let ext =
+      match (backend : Oui_cli.Args.backend option) with
+      | None -> ""
+      | Some Wix -> ".msi"
+      | Some Makeself -> ".run"
+    in
+    base ^ ext
+
 let create_bundle cli =
   let doc = "Extract package installer bundle" in
-  let create_bundle global_options conf backend dst () =
+  let create_bundle global_options conf backend output () =
     Opam_frontend.with_install_bundle cli global_options conf
       (fun conf installer_config ~tmp_dir ->
          let bundle_dir = installer_config.package_dir in
-         match choose_backend backend with
+         let backend = choose_backend backend in
+         let output = output_name ~output ~backend installer_config in
+         match backend with
          | None ->
-           let dst = OpamFilename.Dir.of_string dst in
+           let dst = OpamFilename.Dir.of_string output in
            save_bundle_and_conf ~installer_config ~bundle_dir dst
-         | Some Wix -> Wix_backend.create_bundle ~tmp_dir conf installer_config
+         | Some Wix ->
+           let dst = OpamFilename.of_string output in
+           Wix_backend.create_bundle ~tmp_dir conf installer_config dst
          | Some Makeself ->
-           let dst = OpamFilename.of_string dst in
+           let dst = OpamFilename.of_string output in
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst)
-
   in
   OpamArg.mk_command ~cli OpamArg.cli_original "opam-make-installer"
     ~doc ~man:[]
@@ -61,7 +71,7 @@ let create_bundle cli =
           $ OpamArg.global_options cli
           $ Oui_cli.Args.config
           $ Oui_cli.Args.backend
-          $ dst)
+          $ Oui_cli.Args.output)
 
 let () =
   OpamSystem.init ();
