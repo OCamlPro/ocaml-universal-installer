@@ -4,27 +4,102 @@ on:
   pull_request:
   push:
 
+env:
+  WIX6_URL: https://github.com/wixtoolset/wix/releases/download/v6.0.2/wix-cli-x64.msi
+  WIX6: C:\Program Files\WiX Toolset v6.0\bin
+
 jobs:
   build:
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        ocaml-compiler: 4.14.x
+        ocaml-compiler: [4.14.x]
 
     runs-on: windows-latest
 
     steps:
+
+      - name: Set git user
+        run: |
+          git config --global user.name github-actions
+          git config --global user.email github-actions-bot@users.noreply.github.com
+
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Restore WiX 6 from cache
+        id: restore-wix6
+        uses: actions/cache/restore@v4
+        with:
+          key: cache-wix6
+          path: wix6.msi
+
+      - name: Download Wix 6
+        if: ${{ steps.restore-wix6.outputs.cache-hit != 'true' }}
+        run: curl -L $env:WIX6_URL -o wix6.msi
+
+      - name: Save Wix6 to cache
+        if: ${{ steps.restore-wix6.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          key: cache-wix6
+          path: wix6.msi
+
+      - name: Install Wix 6
+        run: msiexec /i wix6.msi /qn /L*v wixlog.txt
+
+      - name: Upload wixlog.txt
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wixlog.txt
+          path: wixlog.txt
 
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - run: opam install . --deps-only -t
-      - run: opam exec -- dune build @install
-      - run: opam exec -- dune runtest
-      - run: opam config report
-      - run: opam install .
-      - run: opam exec opam-oui --help
+      - name: Restore dependencies from cache
+        id: restore-deps
+        uses: actions/cache/restore@v4
+        with:
+          key: cache-deps
+          path: _opam
+
+      - name: Install dependencies
+        run: |
+          opam install . --deps-only -t
+          opam clean
+
+      - name: Save dependencies to cache
+        uses: actions/cache/save@v4
+        with:
+          key: cache-deps
+          path: _opam
+
+      - name: Build
+        run: opam exec -- dune build @install
+
+      - name: Install
+        run: opam install .
+
+      - name: "Test: create package"
+        run: |
+          opam install ocp-indent.1.9.0
+          opam exec -- opam-oui ocp-indent --binary=ocp-indent
+
+      - name: "Test: install package"
+        run: msiexec /i ocp-indent.1.9.0.msi /qn /L*v wixlog.txt
+
+      - name: Upload wixlog.txt
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wixlog.txt
+          path: wixlog.txt
+
+      - name: "Test: execute binary"
+        run: |
+          & "C:\Program Files (x86)\ocp-indent.1.9.0-ocp-indent\ocp-indent.exe" --version
