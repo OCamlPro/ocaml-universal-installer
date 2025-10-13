@@ -50,8 +50,7 @@ let create_bundle cli =
   let doc = "Extract package installer bundle" in
   let create_bundle global_options conf backend output () =
     Opam_frontend.with_install_bundle cli global_options conf
-      (fun conf installer_config ~tmp_dir ->
-         let bundle_dir = installer_config.package_dir in
+      (fun conf installer_config ~bundle_dir ~tmp_dir ->
          let backend = choose_backend backend in
          let output = output_name ~output ~backend installer_config in
          match backend with
@@ -60,7 +59,7 @@ let create_bundle cli =
            save_bundle_and_conf ~installer_config ~bundle_dir dst
          | Some Wix ->
            let dst = OpamFilename.of_string output in
-           Wix_backend.create_bundle ~tmp_dir conf installer_config dst
+           Wix_backend.create_bundle ~tmp_dir ~bundle_dir conf installer_config dst
          | Some Makeself ->
            let dst = OpamFilename.of_string output in
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst)

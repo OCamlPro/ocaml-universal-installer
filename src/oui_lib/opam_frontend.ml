@@ -346,27 +346,27 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
     | None -> name
   in
   let open Installer_config in
-  {
-    package_dir = bundle_dir ;
-    package_name = OpamPackage.Name.to_string (OpamPackage.name package) ;
-    package_fullname = OpamPackage.to_string package ;
-    package_version ;
-    package_description = package_description ~binary_path ~opam package ;
-    package_manufacturer = String.concat ", "
-        (OpamFile.OPAM.maintainer opam) ;
-    package_guid = conf.conf_package_guid ;
-    package_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
-    package_exec_file = OpamFilename.Base.to_string exe_base ;
-    package_icon_file = data_basename conf.conf_icon_file Data.IMAGES.logo ;
-    package_dlg_bmp_file = data_basename conf.conf_dlg_bmp Data.IMAGES.dlgbmp ;
-    package_banner_bmp_file = data_basename conf.conf_ban_bmp Data.IMAGES.banbmp ;
-    package_environment =
-      package_environment ~conffile ~embedded_dirs ~embedded_files;
-    package_embedded_dirs = embedded_dirs ;
-    package_additional_embedded_name = additional_embedded_name ;
-    package_embedded_files = embedded_files ;
-    package_additional_embedded_dir = additional_embedded_dir;
-  }
+  (bundle_dir,
+   {
+     package_name = OpamPackage.Name.to_string (OpamPackage.name package) ;
+     package_fullname = OpamPackage.to_string package ;
+     package_version ;
+     package_description = package_description ~binary_path ~opam package ;
+     package_manufacturer = String.concat ", "
+         (OpamFile.OPAM.maintainer opam) ;
+     package_guid = conf.conf_package_guid ;
+     package_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
+     package_exec_file = OpamFilename.Base.to_string exe_base ;
+     package_icon_file = data_basename conf.conf_icon_file Data.IMAGES.logo ;
+     package_dlg_bmp_file = data_basename conf.conf_dlg_bmp Data.IMAGES.dlgbmp ;
+     package_banner_bmp_file = data_basename conf.conf_ban_bmp Data.IMAGES.banbmp ;
+     package_environment =
+       package_environment ~conffile ~embedded_dirs ~embedded_files;
+     package_embedded_dirs = embedded_dirs ;
+     package_additional_embedded_name = additional_embedded_name ;
+     package_embedded_files = embedded_files ;
+     package_additional_embedded_dir = additional_embedded_dir;
+   })
 
 let with_opam_and_conf cli global_options conf f =
   let conffile =
@@ -390,7 +390,7 @@ let with_opam_and_conf cli global_options conf f =
 let with_install_bundle cli global_options conf f =
   with_opam_and_conf cli global_options conf
     (fun ~global_state ~switch_state ~env ~tmp_dir conf conffile ->
-       let desc =
+       let bundle_dir, desc =
          create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
        in
-       f conf desc ~tmp_dir)
+       f conf desc ~bundle_dir ~tmp_dir)

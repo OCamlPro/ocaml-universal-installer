@@ -10,7 +10,7 @@
 
 open Types
 
-let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
+let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
   let wix_path = System.normalize_path conf.conf_wix_path in
   System.check_available_commands wix_path;
   OpamConsole.header_msg "WiX setup";
@@ -25,19 +25,19 @@ let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
     | _ ->
       let dst = desc.package_exec_file ^ ".exe" in
       OpamFilename.move
-        ~src:OpamFilename.Op.(desc.package_dir // desc.package_exec_file)
-        ~dst:OpamFilename.Op.(desc.package_dir // dst);
+        ~src:OpamFilename.Op.(bundle_dir // desc.package_exec_file)
+        ~dst:OpamFilename.Op.(bundle_dir // dst);
       dst
   in
   let wix_dlls =
-    let dlls = Cygcheck.get_dlls OpamFilename.Op.(desc.package_dir // wix_exec_file) in
+    let dlls = Cygcheck.get_dlls OpamFilename.Op.(bundle_dir // wix_exec_file) in
     OpamConsole.formatted_msg "Getting dlls/so:\n%s"
       (OpamStd.Format.itemize OpamFilename.to_string dlls);
-    List.iter (fun dll -> OpamFilename.copy_in dll desc.package_dir) dlls;
+    List.iter (fun dll -> OpamFilename.copy_in dll bundle_dir) dlls;
     List.map (fun dll -> OpamFilename.(basename dll |> Base.to_string)) dlls
   in
   let info = Wix.{
-      wix_path = (*Filename.basename @@*) OpamFilename.Dir.to_string desc.package_dir;
+      wix_path = (*Filename.basename @@*) OpamFilename.Dir.to_string bundle_dir;
       wix_name = desc.package_name;
       wix_version = desc.package_version;
       wix_description = desc.package_description;

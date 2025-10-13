@@ -19,7 +19,6 @@ let make_config
   { package_name
   ; package_version
   ; package_exec_file
-  ; package_dir = OpamFilename.Dir.of_string ""
   ; package_fullname = ""
   ; package_description = ""
   ; package_manufacturer = ""

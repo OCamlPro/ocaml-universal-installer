@@ -14,5 +14,6 @@ val with_install_bundle :
   Types.config ->
   (Types.config ->
    Installer_config.t ->
+   bundle_dir:OpamFilename.Dir.t ->
    tmp_dir:OpamFilename.Dir.t -> unit) ->
   unit

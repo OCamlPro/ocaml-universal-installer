@@ -10,9 +10,6 @@
 
 (** Information module used to generated main wxs document. *)
 type t = {
-    package_dir : OpamFilename.Dir.t ;
-    (** Path to the bundle containing all required files. Every relative file
-        path will be concatenated to this path *)
     package_name : string;
     (** Package name used as product name. Deduced from opam file *)
     package_fullname : string ;
