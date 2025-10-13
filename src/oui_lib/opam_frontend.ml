@@ -294,12 +294,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
   OpamConsole.formatted_msg "Getting dlls/so:\n%s"
     (OpamStd.Format.itemize OpamFilename.to_string dlls);
   List.iter (fun dll -> OpamFilename.copy_in dll bundle_dir) dlls;
-  let exe_base =
-    let base = OpamFilename.basename binary_path in
-    if not (OpamFilename.Base.check_suffix base "exe")
-    then OpamFilename.Base.add_extension base "exe"
-    else base
-  in
+  let exe_base = OpamFilename.basename binary_path in
   OpamFilename.copy ~src:binary_path ~dst:(OpamFilename.create bundle_dir exe_base);
   let copy_data data_path (name, content) =
     match data_path with

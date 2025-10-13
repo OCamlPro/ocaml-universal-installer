@@ -18,6 +18,17 @@ let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
     String.capitalize_ascii basename ^ "CG"
   in
   let dir_ref basename = basename ^ "_REF" in
+  (* add .exe suffix if needed *)
+  let wix_exec_file =
+    match Filename.extension desc.package_exec_file with
+    | ".exe" -> desc.package_exec_file
+    | _ ->
+      let dst = desc.package_exec_file ^ ".exe" in
+      OpamFilename.move
+        ~src:OpamFilename.Op.(desc.package_dir // desc.package_exec_file)
+        ~dst:OpamFilename.Op.(desc.package_dir // dst);
+      dst
+  in
   let info = Wix.{
       wix_path = (*Filename.basename @@*) OpamFilename.Dir.to_string desc.package_dir;
       wix_name = desc.package_name;
@@ -26,7 +37,7 @@ let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
       wix_manufacturer = desc.package_manufacturer;
       wix_guid = conf.conf_package_guid;
       wix_tags = desc.package_tags;
-      wix_exec_file = desc.package_exec_file;
+      wix_exec_file;
       wix_dlls = desc.package_dlls;
       wix_icon_file = desc.package_icon_file;
       wix_dlg_bmp_file = desc.package_dlg_bmp_file;
