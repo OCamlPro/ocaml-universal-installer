@@ -29,6 +29,13 @@ let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
         ~dst:OpamFilename.Op.(desc.package_dir // dst);
       dst
   in
+  let wix_dlls =
+    let dlls = Cygcheck.get_dlls OpamFilename.Op.(desc.package_dir // wix_exec_file) in
+    OpamConsole.formatted_msg "Getting dlls/so:\n%s"
+      (OpamStd.Format.itemize OpamFilename.to_string dlls);
+    List.iter (fun dll -> OpamFilename.copy_in dll desc.package_dir) dlls;
+    List.map (fun dll -> OpamFilename.(basename dll |> Base.to_string)) dlls
+  in
   let info = Wix.{
       wix_path = (*Filename.basename @@*) OpamFilename.Dir.to_string desc.package_dir;
       wix_name = desc.package_name;
@@ -38,7 +45,7 @@ let create_bundle ~tmp_dir conf (desc : Installer_config.t) dst =
       wix_guid = conf.conf_package_guid;
       wix_tags = desc.package_tags;
       wix_exec_file;
-      wix_dlls = desc.package_dlls;
+      wix_dlls;
       wix_icon_file = desc.package_icon_file;
       wix_dlg_bmp_file = desc.package_dlg_bmp_file;
       wix_banner_bmp_file = desc.package_banner_bmp_file;

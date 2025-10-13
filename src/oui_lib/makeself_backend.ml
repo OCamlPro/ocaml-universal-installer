@@ -135,10 +135,20 @@ let uninstall_script (ic : Installer_config.t) =
   @ remove_symlinks
   @ notify_uninstall_complete
 
+let add_sos_to_bundle ~bundle_dir binary =
+  let sos = Ldd.get_sos OpamFilename.Op.(bundle_dir // binary) in
+  match sos with
+  | [] -> ()
+  | _ ->
+    let lib_dir = OpamFilename.Op.(bundle_dir / "lib") in
+    OpamFilename.mkdir lib_dir;
+    List.iter (fun so -> OpamFilename.copy_in so lib_dir) sos
+
 let create_installer
     ~(installer_config : Installer_config.t) ~bundle_dir installer =
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
+  add_sos_to_bundle ~bundle_dir installer_config.package_exec_file;
   let install_script = install_script installer_config in
   let uninstall_script = uninstall_script installer_config in
   let install_sh = OpamFilename.Op.(bundle_dir // install_script_name) in

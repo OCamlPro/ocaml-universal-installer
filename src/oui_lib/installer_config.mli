@@ -27,7 +27,6 @@ type t = {
         specified, generated new UID *)
     package_tags : string list; (** Package tags. Deduced from opam file *)
     package_exec_file : string; (** Filename of bundled .exe binary. *)
-    package_dlls : string list; (** Filenames for all bundled DLLs. *)
     package_icon_file : string; (** Icon filename. *)
     package_dlg_bmp_file : string; (** Dialog bmp filename. *)
     package_banner_bmp_file : string; (* Banner bmp filename. *)

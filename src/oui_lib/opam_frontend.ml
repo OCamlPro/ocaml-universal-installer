@@ -290,10 +290,6 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
   let external_dir = OpamFilename.Op.(bundle_dir / "external") in
   OpamFilename.mkdir opam_dir;
   OpamFilename.mkdir external_dir;
-  let dlls = Shared_libraries.get binary_path in
-  OpamConsole.formatted_msg "Getting dlls/so:\n%s"
-    (OpamStd.Format.itemize OpamFilename.to_string dlls);
-  List.iter (fun dll -> OpamFilename.copy_in dll bundle_dir) dlls;
   let exe_base = OpamFilename.basename binary_path in
   OpamFilename.copy ~src:binary_path ~dst:(OpamFilename.create bundle_dir exe_base);
   let copy_data data_path (name, content) =
@@ -361,7 +357,6 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
     package_guid = conf.conf_package_guid ;
     package_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
     package_exec_file = OpamFilename.Base.to_string exe_base ;
-    package_dlls = List.map (fun dll -> OpamFilename.basename dll|> OpamFilename.Base.to_string) dlls ;
     package_icon_file = data_basename conf.conf_icon_file Data.IMAGES.logo ;
     package_dlg_bmp_file = data_basename conf.conf_dlg_bmp Data.IMAGES.dlgbmp ;
     package_banner_bmp_file = data_basename conf.conf_ban_bmp Data.IMAGES.banbmp ;

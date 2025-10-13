@@ -25,7 +25,6 @@ let make_config
   ; package_manufacturer = ""
   ; package_guid = None
   ; package_tags = []
-  ; package_dlls = []
   ; package_icon_file = ""
   ; package_dlg_bmp_file = ""
   ; package_banner_bmp_file = ""
