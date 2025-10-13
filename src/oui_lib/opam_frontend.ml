@@ -103,7 +103,7 @@ let binary_path ~conf ~opam_bin_folder ~binaries package =
                                   `bold (OpamFilename.to_string path))
   | None, Some binary ->
     if List.exists (String.equal binary) binaries then
-      let binary = if Sys.cygwin then binary else binary ^ ".exe" in
+      let binary = if Sys.win32 then binary ^ ".exe" else binary in
       OpamFilename.Op.(opam_bin_folder // binary)
     else
       OpamConsole.error_and_exit `Not_found
