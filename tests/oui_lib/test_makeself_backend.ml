@@ -19,13 +19,11 @@ let make_config
   { package_name
   ; package_version
   ; package_exec_file
-  ; package_dir = OpamFilename.Dir.of_string ""
   ; package_fullname = ""
   ; package_description = ""
   ; package_manufacturer = ""
   ; package_guid = None
   ; package_tags = []
-  ; package_dlls = []
   ; package_icon_file = ""
   ; package_dlg_bmp_file = ""
   ; package_banner_bmp_file = ""

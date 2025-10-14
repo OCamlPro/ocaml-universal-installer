@@ -1,0 +1,4 @@
+(executable
+ (name main)
+ (public_name oui)
+ (libraries cmdliner oui.lib oui_cli))

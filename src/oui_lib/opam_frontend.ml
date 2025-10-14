@@ -103,7 +103,7 @@ let binary_path ~conf ~opam_bin_folder ~binaries package =
                                   `bold (OpamFilename.to_string path))
   | None, Some binary ->
     if List.exists (String.equal binary) binaries then
-      let binary = if Sys.cygwin then binary else binary ^ ".exe" in
+      let binary = if Sys.win32 then binary ^ ".exe" else binary in
       OpamFilename.Op.(opam_bin_folder // binary)
     else
       OpamConsole.error_and_exit `Not_found
@@ -255,20 +255,21 @@ let conf_embedded ~global_state ~switch_state ~env conffile =
         Some (Copy_external path))
     conffile.File.Conf.c_embedded
 
-let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
+let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
+    package_name =
   let package =
     try
-      OpamSwitchState.find_installed_package_by_name switch_state conf.conf_package
+      OpamSwitchState.find_installed_package_by_name switch_state package_name
     with Not_found ->
       OpamConsole.error_and_exit `Not_found
         "Package %s isn't found in your current switch. Please, run %s and retry."
-        (OpamConsole.colorise `bold (OpamPackage.Name.to_string conf.conf_package))
-        (OpamConsole.colorise `bold ("opam install " ^ (OpamPackage.Name.to_string conf.conf_package)))
+        (OpamConsole.colorise `bold (OpamPackage.Name.to_string package_name))
+        (OpamConsole.colorise `bold ("opam install " ^ (OpamPackage.Name.to_string package_name)))
   in
   let package_version = wix_version ~conf package in
   let opam = OpamSwitchState.opam switch_state package in
   let changes : string list =
-    OpamPath.Switch.changes global_state.root switch_state.switch conf.conf_package
+    OpamPath.Switch.changes global_state.root switch_state.switch package_name
     |> OpamFile.Changes.safe_read
     |> OpamStd.String.Map.keys
   in
@@ -290,16 +291,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
   let external_dir = OpamFilename.Op.(bundle_dir / "external") in
   OpamFilename.mkdir opam_dir;
   OpamFilename.mkdir external_dir;
-  let dlls = Shared_libraries.get binary_path in
-  OpamConsole.formatted_msg "Getting dlls/so:\n%s"
-    (OpamStd.Format.itemize OpamFilename.to_string dlls);
-  List.iter (fun dll -> OpamFilename.copy_in dll bundle_dir) dlls;
-  let exe_base =
-    let base = OpamFilename.basename binary_path in
-    if not (OpamFilename.Base.check_suffix base "exe")
-    then OpamFilename.Base.add_extension base "exe"
-    else base
-  in
+  let exe_base = OpamFilename.basename binary_path in
   OpamFilename.copy ~src:binary_path ~dst:(OpamFilename.create bundle_dir exe_base);
   let copy_data data_path (name, content) =
     match data_path with
@@ -355,28 +347,27 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
     | None -> name
   in
   let open Installer_config in
-  {
-    package_dir = bundle_dir ;
-    package_name = OpamPackage.Name.to_string (OpamPackage.name package) ;
-    package_fullname = OpamPackage.to_string package ;
-    package_version ;
-    package_description = package_description ~binary_path ~opam package ;
-    package_manufacturer = String.concat ", "
-        (OpamFile.OPAM.maintainer opam) ;
-    package_guid = conf.conf_package_guid ;
-    package_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
-    package_exec_file = OpamFilename.Base.to_string exe_base ;
-    package_dlls = List.map (fun dll -> OpamFilename.basename dll|> OpamFilename.Base.to_string) dlls ;
-    package_icon_file = data_basename conf.conf_icon_file Data.IMAGES.logo ;
-    package_dlg_bmp_file = data_basename conf.conf_dlg_bmp Data.IMAGES.dlgbmp ;
-    package_banner_bmp_file = data_basename conf.conf_ban_bmp Data.IMAGES.banbmp ;
-    package_environment =
-      package_environment ~conffile ~embedded_dirs ~embedded_files;
-    package_embedded_dirs = embedded_dirs ;
-    package_additional_embedded_name = additional_embedded_name ;
-    package_embedded_files = embedded_files ;
-    package_additional_embedded_dir = additional_embedded_dir;
-  }
+  (bundle_dir,
+   {
+     package_name = OpamPackage.Name.to_string (OpamPackage.name package) ;
+     package_fullname = OpamPackage.to_string package ;
+     package_version ;
+     package_description = package_description ~binary_path ~opam package ;
+     package_manufacturer = String.concat ", "
+         (OpamFile.OPAM.maintainer opam) ;
+     package_guid = conf.conf_package_guid ;
+     package_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
+     package_exec_file = OpamFilename.Base.to_string exe_base ;
+     package_icon_file = data_basename conf.conf_icon_file Data.IMAGES.logo ;
+     package_dlg_bmp_file = data_basename conf.conf_dlg_bmp Data.IMAGES.dlgbmp ;
+     package_banner_bmp_file = data_basename conf.conf_ban_bmp Data.IMAGES.banbmp ;
+     package_environment =
+       package_environment ~conffile ~embedded_dirs ~embedded_files;
+     package_embedded_dirs = embedded_dirs ;
+     package_additional_embedded_name = additional_embedded_name ;
+     package_embedded_files = embedded_files ;
+     package_additional_embedded_dir = additional_embedded_dir;
+   })
 
 let with_opam_and_conf cli global_options conf f =
   let conffile =
@@ -397,10 +388,11 @@ let with_opam_and_conf cli global_options conf f =
   OpamSwitchState.drop switch_state;
   OpamGlobalState.drop global_state
 
-let with_install_bundle cli global_options conf f =
+let with_install_bundle cli global_options conf package f =
   with_opam_and_conf cli global_options conf
     (fun ~global_state ~switch_state ~env ~tmp_dir conf conffile ->
-       let desc =
+       let bundle_dir, desc =
          create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
+           package
        in
-       f conf desc ~tmp_dir)
+       f conf desc ~bundle_dir ~tmp_dir)

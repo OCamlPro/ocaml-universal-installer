@@ -32,7 +32,6 @@ module Yojsonable = struct
 end
 
 type t = {
-    package_dir : Yojsonable.dirname;
     package_name : string;
     package_fullname : string ;
     package_version : string;
@@ -41,7 +40,6 @@ type t = {
     package_guid : string option;
     package_tags : string list;
     package_exec_file : string;
-    package_dlls : string list;
     package_icon_file : string;
     package_dlg_bmp_file : string;
     package_banner_bmp_file : string;
