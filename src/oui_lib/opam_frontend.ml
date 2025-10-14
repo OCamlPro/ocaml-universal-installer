@@ -255,20 +255,21 @@ let conf_embedded ~global_state ~switch_state ~env conffile =
         Some (Copy_external path))
     conffile.File.Conf.c_embedded
 
-let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile =
+let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
+    package_name =
   let package =
     try
-      OpamSwitchState.find_installed_package_by_name switch_state conf.conf_package
+      OpamSwitchState.find_installed_package_by_name switch_state package_name
     with Not_found ->
       OpamConsole.error_and_exit `Not_found
         "Package %s isn't found in your current switch. Please, run %s and retry."
-        (OpamConsole.colorise `bold (OpamPackage.Name.to_string conf.conf_package))
-        (OpamConsole.colorise `bold ("opam install " ^ (OpamPackage.Name.to_string conf.conf_package)))
+        (OpamConsole.colorise `bold (OpamPackage.Name.to_string package_name))
+        (OpamConsole.colorise `bold ("opam install " ^ (OpamPackage.Name.to_string package_name)))
   in
   let package_version = wix_version ~conf package in
   let opam = OpamSwitchState.opam switch_state package in
   let changes : string list =
-    OpamPath.Switch.changes global_state.root switch_state.switch conf.conf_package
+    OpamPath.Switch.changes global_state.root switch_state.switch package_name
     |> OpamFile.Changes.safe_read
     |> OpamStd.String.Map.keys
   in
@@ -387,10 +388,11 @@ let with_opam_and_conf cli global_options conf f =
   OpamSwitchState.drop switch_state;
   OpamGlobalState.drop global_state
 
-let with_install_bundle cli global_options conf f =
+let with_install_bundle cli global_options conf package f =
   with_opam_and_conf cli global_options conf
     (fun ~global_state ~switch_state ~env ~tmp_dir conf conffile ->
        let bundle_dir, desc =
          create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
+           package
        in
        f conf desc ~bundle_dir ~tmp_dir)

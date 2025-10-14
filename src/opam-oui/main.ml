@@ -11,21 +11,12 @@
 open Cmdliner
 open Oui
 
-let autodetect_backend () : Oui_cli.Args.backend =
-  match Sys.unix with
-  | true ->
-    OpamConsole.formatted_msg
-      "Detected UNIX system: using makeself.sh backend.\n";
-    Makeself
-  | false ->
-    OpamConsole.formatted_msg "Detected Windows system: using WiX backend.\n";
-    Wix
-
-let choose_backend backend_choice =
-  let open Oui_cli.Args in
-  match backend_choice with
-  | Autodetect -> Some (autodetect_backend ())
-  | Forced opt -> opt
+let package =
+  let open Arg in
+  required
+  & pos 0 (some OpamArg.package_name) None
+  & info [] ~docv:"PACKAGE" ~docs:Oui_cli.Man.Section.package_arg
+      ~doc:"The package to create an installer for"
 
 let save_bundle_and_conf ~(installer_config : Installer_config.t) ~bundle_dir
     dst =
@@ -33,26 +24,14 @@ let save_bundle_and_conf ~(installer_config : Installer_config.t) ~bundle_dir
   let conf_path = OpamFilename.Op.(dst // "installer-config.json") in
   Installer_config.save installer_config conf_path
 
-let output_name ~output ~backend (ic : Installer_config.t) =
-  match output with
-  | Some o -> o
-  | None ->
-    let base = Printf.sprintf "%s.%s" ic.package_name ic.package_version in
-    let ext =
-      match (backend : Oui_cli.Args.backend option) with
-      | None -> ""
-      | Some Wix -> ".msi"
-      | Some Makeself -> ".run"
-    in
-    base ^ ext
-
 let create_bundle cli =
   let doc = "Extract package installer bundle" in
-  let create_bundle global_options conf backend output () =
-    Opam_frontend.with_install_bundle cli global_options conf
+  let create_bundle global_options conf backend output package () =
+    Opam_frontend.with_install_bundle cli global_options conf package
       (fun conf installer_config ~bundle_dir ~tmp_dir ->
-         let backend = choose_backend backend in
-         let output = output_name ~output ~backend installer_config in
+         let output =
+           Oui_cli.Args.output_name ~output ~backend installer_config
+         in
          match backend with
          | None ->
            let dst = OpamFilename.Dir.of_string output in
@@ -69,8 +48,9 @@ let create_bundle cli =
     Term.(const create_bundle
           $ OpamArg.global_options cli
           $ Oui_cli.Args.config
-          $ Oui_cli.Args.backend
-          $ Oui_cli.Args.output)
+          $ Oui_cli.Args.backend_opt
+          $ Oui_cli.Args.output
+          $ package)
 
 let () =
   OpamSystem.init ();

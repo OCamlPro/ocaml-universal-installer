@@ -36,12 +36,6 @@ let conffile =
         "Configuration file for the binary to install. See $(i,Configuration) \
          section"
 
-let package =
-  required
-  & pos 0 (some OpamArg.package_name) None
-  & info [] ~docv:"PACKAGE" ~docs:Man.Section.package_arg
-      ~doc:"The package to create an installer"
-
 let path =
   value
   & opt (some opam_filename) None
@@ -109,12 +103,11 @@ let ban_bmp =
 let keep_wxs = value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
 
 let config =
-  let apply conf_file conf_package conf_path conf_binary conf_wix_version
+  let apply conf_file conf_path conf_binary conf_wix_version
       conf_wix_path conf_package_guid conf_icon_file
       conf_dlg_bmp conf_ban_bmp conf_keep_wxs =
     {
       conf_file;
-      conf_package;
       conf_path;
       conf_binary;
       conf_wix_version;
@@ -127,39 +120,89 @@ let config =
     }
   in
   Term.(
-    const apply $ conffile $ package $ path $ binary $ wix_version
+    const apply $ conffile $ path $ binary $ wix_version
     $ wix_path $ package_guid $ icon_file $ dlg_bmp $ ban_bmp $ keep_wxs)
 
 type backend = Wix | Makeself
-type 'a choice = Autodetect | Forced of 'a option
 
-let backend =
-  let open Arg in
+let pp_backend fmt t =
+  match t with
+  | Wix -> Fmt.pf fmt "wix"
+  | Makeself -> Fmt.pf fmt "makeself"
+
+type 'a choice = Autodetect | Forced of 'a
+
+let autodetect_backend () =
+  match Sys.unix with
+  | true ->
+    OpamConsole.formatted_msg
+      "Detected UNIX system: using makeself.sh backend.\n";
+    Makeself
+  | false ->
+    OpamConsole.formatted_msg "Detected Windows system: using WiX backend.\n";
+    Wix
+
+let backend_conv ~make ~print =
   let parse s =
     match String.lowercase_ascii s with
-    | "wix" -> Ok (Forced (Some Wix))
-    | "makeself" -> Ok (Forced (Some Makeself))
-    | "none" -> Ok (Forced None)
+    | "wix" -> make (Some Wix)
+    | "makeself" -> make (Some Makeself)
+    | "none" -> make None
     | _ -> Error (Format.sprintf "Unsupported backend %S" s)
   in
   let print fmt t =
     match t with
     | Autodetect -> Fmt.pf fmt "autodetect"
-    | Forced None -> Fmt.pf fmt "none"
-    | Forced (Some Wix) -> Fmt.pf fmt "wix"
-    | Forced (Some Makeself) -> Fmt.pf fmt "makeself"
+    | Forced x -> print fmt x
   in
   let docv = "BACKEND" in
-  let conv = Cmdliner.Arg.conv' ~docv (parse, print) in
-  let doc =
-    "($(b,wix)|$(b,makeself)|$(b,none)). Overwrites the default $(docv). \
+  Cmdliner.Arg.conv' ~docv (parse, print)
+
+let backend_doc ~choices =
+  let choices = List.map (Printf.sprintf "$(b,%s)") choices in
+  let choices_str = String.concat "|" choices in
+  Printf.sprintf
+    "(%s). Overwrites the default $(docv). \
      Without this option, it is determined from the system: WiX to produce msi \
      installers on Windows, makeself to produce self extracting/installing \
-     .run archives on Unix. When $(b,none), disables backend, making the \
-     command generate a bundle with an installer config that can later be fed \
-     into any of the existing backends."
+     .run archives on Unix."
+    choices_str
+
+let backend =
+  let docv = "BACKEND" in
+  let conv =
+    backend_conv
+      ~print:pp_backend
+      ~make:(function
+          | None -> Error "Unsupported backend \"none\""
+          | Some b -> Ok (Forced b))
   in
-  value & opt conv Autodetect & info [ "backend" ] ~doc ~docv
+  let doc = backend_doc ~choices:["wix"; "makeself"] in
+  let arg = opt conv Autodetect & info [ "backend" ] ~doc ~docv in
+  let choose = function Autodetect -> autodetect_backend () | Forced x -> x in
+  Cmdliner.Term.(const choose $ value arg)
+
+let backend_opt =
+  let docv = "BACKEND" in
+  let print fmt t =
+    match t with
+    | None -> Fmt.pf fmt "none"
+    | Some b -> pp_backend fmt b
+  in
+  let conv = backend_conv ~make:(fun opt -> Ok (Forced opt)) ~print in
+  let doc =
+    backend_doc ~choices:["wix"; "backend"; "none"]
+    ^
+    "When $(b,none), disables backend, making the command generate a bundle \
+     with an installer config that can later be fed into any of the existing \
+     backends."
+  in
+  let arg = opt conv Autodetect & info [ "backend" ] ~doc ~docv in
+  let choose = function
+    | Autodetect -> Some (autodetect_backend ())
+    | Forced opt -> opt
+  in
+  Cmdliner.Term.(const choose $ value arg)
 
 let output =
   let open Arg in
@@ -171,3 +214,16 @@ let output =
   value
   & opt (some string) None
   & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]
+
+let output_name ~output ~backend (ic : Installer_config.t) =
+  match output with
+  | Some o -> o
+  | None ->
+    let base = Printf.sprintf "%s.%s" ic.package_name ic.package_version in
+    let ext =
+      match backend with
+      | None -> ""
+      | Some Wix -> ".msi"
+      | Some Makeself -> ".run"
+    in
+    base ^ ext

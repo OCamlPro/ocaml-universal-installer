@@ -16,11 +16,22 @@ val config : Oui.Types.config Cmdliner.Term.t
     options. Note that this consumes the first positional argument. *)
 
 type backend = Wix | Makeself
-type 'a choice = Autodetect | Forced of 'a option
 
-val backend : backend choice Cmdliner.Term.t
+val backend : backend Cmdliner.Term.t
 (** --backend option to overwrite the default backend detection mechanism,
     based on the local system. *)
 
+val backend_opt : backend option Cmdliner.Term.t
+(** --backend option to overwrite the default backend detection mechanism,
+    based on the local system. Allow selecting no backend. *)
+
 val output : string option Cmdliner.Term.t
 (** -o/--output option to overwrite the default output file/dir. *)
+
+val output_name :
+  output: string option ->
+  backend: backend option ->
+  Oui.Installer_config.t ->
+  string
+(** Returns the approriate output name based on the value of the
+    -o and --backend options. *)
