@@ -28,7 +28,9 @@ module IMAGES = struct
   let dlgbmp = get "dlgbmp.bmp" "images"
   let banbmp = get "bannrbmp.bmp" "images"
 end
+module LICENSES = struct
+  let gpl3 = get "gpl-3.0.rtf" "licenses"
+end
 module WIX = struct
-  let custom_install_dir = get "CustomInstallDir.wxs" "wix"
-  let custom_install_dir_dlg = get "CustomInstallDirDlg.wxs" "wix"
+  let custom_app = get "WixUI_CustomApp.wxs" "wix"
 end

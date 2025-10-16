@@ -43,6 +43,7 @@ type t = {
     wix_icon_file : string option; [@default None]
     wix_dlg_bmp_file : string option; [@default None]
     wix_banner_bmp_file : string option; [@default None]
+    wix_license_file : string option; [@default None]
     wix_embedded_dirs : (Yojsonable.basename * Yojsonable.dirname) list; [@default []]
     wix_additional_embedded_name : string list; [@default []]
     wix_additional_embedded_dir : Yojsonable.dirname list; [@default []]
