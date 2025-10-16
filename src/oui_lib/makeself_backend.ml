@@ -30,8 +30,8 @@ let check_run_as_root =
 let install_script (ic : Installer_config.t) =
   let open Sh_script in
   let (/) = Filename.concat in
-  let package = ic.package_name in
-  let version = ic.package_version in
+  let package = ic.name in
+  let version = ic.version in
   let prefix = "/opt" / package in
   let bin = prefix / "bin" in
   let usrbin = "/usr/local/bin" in
@@ -41,7 +41,7 @@ let install_script (ic : Installer_config.t) =
     ; mkdir [prefix; bin]
     ]
   in
-  let binaries = [ic.package_exec_file] in
+  let binaries = [ic.exec_file] in
   let install_binaries =
     List.map
       (fun binary -> cp ~src:binary ~dst:bin)
@@ -84,10 +84,10 @@ let install_script (ic : Installer_config.t) =
 let uninstall_script (ic : Installer_config.t) =
   let open Sh_script in
   let (/) = Filename.concat in
-  let package = ic.package_name in
+  let package = ic.name in
   let prefix = "/opt" / package in
   let usrbin = "/usr/local/bin" in
-  let binaries = [ic.package_exec_file] in
+  let binaries = [ic.exec_file] in
   let display_symlinks =
     List.map
       (fun binary -> echof "- %s/%s" usrbin binary)
@@ -148,7 +148,7 @@ let create_installer
     ~(installer_config : Installer_config.t) ~bundle_dir installer =
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
-  add_sos_to_bundle ~bundle_dir installer_config.package_exec_file;
+  add_sos_to_bundle ~bundle_dir installer_config.exec_file;
   let install_script = install_script installer_config in
   let uninstall_script = uninstall_script installer_config in
   let install_sh = OpamFilename.Op.(bundle_dir // install_script_name) in
@@ -159,7 +159,7 @@ let create_installer
   let args : System.makeself =
     { archive_dir = bundle_dir
     ; installer
-    ; description = installer_config.package_name
+    ; description = installer_config.name
     ; startup_script = Format.sprintf "./%s" install_script_name
     }
   in

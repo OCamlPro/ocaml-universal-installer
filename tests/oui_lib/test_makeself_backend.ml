@@ -11,36 +11,32 @@
 open Oui
 
 let make_config
-    ?(package_name="")
-    ?(package_version="")
-    ?(package_exec_file="")
+    ?(name="")
+    ?(version="")
+    ?(exec_file="")
     () : Installer_config.t
   =
-  { package_name
-  ; package_version
-  ; package_exec_file
-  ; package_fullname = ""
-  ; package_description = ""
-  ; package_manufacturer = ""
-  ; package_guid = None
-  ; package_tags = []
-  ; package_icon_file = ""
-  ; package_dlg_bmp_file = ""
-  ; package_banner_bmp_file = ""
-  ; package_embedded_dirs = []
-  ; package_additional_embedded_name = []
-  ; package_additional_embedded_dir = []
-  ; package_embedded_files = []
-  ; package_environment = []
+  { name
+  ; version
+  ; exec_file
+  ; fullname = ""
+  ; description = ""
+  ; manufacturer = ""
+  ; wix_guid = None
+  ; wix_tags = []
+  ; wix_icon_file = None
+  ; wix_dlg_bmp_file = None
+  ; wix_banner_bmp_file = None
+  ; wix_embedded_dirs = []
+  ; wix_additional_embedded_name = []
+  ; wix_additional_embedded_dir = []
+  ; wix_embedded_files = []
+  ; wix_environment = []
   }
 
 let%expect_test "install_script: one binary" =
   let config =
-    make_config
-      ~package_name:"aaa"
-      ~package_version:"x.y.z"
-      ~package_exec_file:"aaa-command"
-      ()
+    make_config ~name:"aaa" ~version:"x.y.z" ~exec_file:"aaa-command" ()
   in
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
@@ -67,12 +63,7 @@ let%expect_test "install_script: one binary" =
     |}]
 
 let%expect_test "uninstall_script: one binary" =
-  let config =
-    make_config
-      ~package_name:"aaa"
-      ~package_exec_file:"aaa-command"
-      ()
-  in
+  let config = make_config ~name:"aaa" ~exec_file:"aaa-command" () in
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
   [%expect {|

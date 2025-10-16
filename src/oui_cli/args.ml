@@ -219,7 +219,7 @@ let output_name ~output ~backend (ic : Installer_config.t) =
   match output with
   | Some o -> o
   | None ->
-    let base = Printf.sprintf "%s.%s" ic.package_name ic.package_version in
+    let base = Printf.sprintf "%s.%s" ic.name ic.version in
     let ext =
       match backend with
       | None -> ""

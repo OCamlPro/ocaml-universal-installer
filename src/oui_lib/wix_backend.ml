@@ -20,12 +20,12 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
   let dir_ref basename = basename ^ "_REF" in
   (* add .exe suffix if needed *)
   let wix_exec_file =
-    match Filename.extension desc.package_exec_file with
-    | ".exe" -> desc.package_exec_file
+    match Filename.extension desc.exec_file with
+    | ".exe" -> desc.exec_file
     | _ ->
-      let dst = desc.package_exec_file ^ ".exe" in
+      let dst = desc.exec_file ^ ".exe" in
       OpamFilename.move
-        ~src:OpamFilename.Op.(bundle_dir // desc.package_exec_file)
+        ~src:OpamFilename.Op.(bundle_dir // desc.exec_file)
         ~dst:OpamFilename.Op.(bundle_dir // dst);
       dst
   in
@@ -36,37 +36,52 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
     List.iter (fun dll -> OpamFilename.copy_in dll bundle_dir) dlls;
     List.map (fun dll -> OpamFilename.(basename dll |> Base.to_string)) dlls
   in
+  let image_file ~default:(name, content) data_path =
+    match data_path with
+    | Some path -> path
+    | None ->
+      let dst = OpamFilename.Op.(tmp_dir // name) in
+      OpamFilename.write dst content;
+      OpamFilename.to_string dst
+  in
+  let wix_icon_file = image_file ~default:Data.IMAGES.logo desc.wix_icon_file in
+  let wix_dlg_bmp_file =
+    image_file ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file
+  in
+  let wix_banner_bmp_file =
+    image_file ~default:Data.IMAGES.banbmp desc.wix_banner_bmp_file
+  in
   let info = Wix.{
       wix_path = (*Filename.basename @@*) OpamFilename.Dir.to_string bundle_dir;
-      wix_name = desc.package_name;
-      wix_version = desc.package_version;
-      wix_description = desc.package_description;
-      wix_manufacturer = desc.package_manufacturer;
+      wix_name = desc.name;
+      wix_version = desc.version;
+      wix_description = desc.description;
+      wix_manufacturer = desc.manufacturer;
       wix_guid = conf.conf_package_guid;
-      wix_tags = desc.package_tags;
+      wix_tags = desc.wix_tags;
       wix_exec_file;
       wix_dlls;
-      wix_icon_file = desc.package_icon_file;
-      wix_dlg_bmp_file = desc.package_dlg_bmp_file;
-      wix_banner_bmp_file = desc.package_banner_bmp_file;
-      wix_environment = desc.package_environment;
+      wix_icon_file;
+      wix_dlg_bmp_file;
+      wix_banner_bmp_file;
+      wix_environment = desc.wix_environment;
       wix_embedded_dirs =
         List.map (fun (base, dir) ->
             (* FIXME: do we need absolute dir ? *)
             let base = OpamFilename.Base.to_string base in
             base, component_group base, dir_ref base, OpamFilename.Dir.to_string dir)
-          (desc.package_embedded_dirs @
+          (desc.wix_embedded_dirs @
            List.map2 (fun base dir -> OpamFilename.Base.of_string base, dir)
-             desc.package_additional_embedded_name
-             desc.package_additional_embedded_dir);
+             desc.wix_additional_embedded_name
+             desc.wix_additional_embedded_dir);
       wix_embedded_files =
         List.map (fun (base, _) ->
             OpamFilename.Base.to_string base)
-          desc.package_embedded_files;
+          desc.wix_embedded_files;
     }
   in
   let wxs = Wix.main_wxs info in
-  let name = Filename.chop_extension desc.package_exec_file in
+  let name = Filename.chop_extension desc.exec_file in
   let (addwxs1, content1) = Data.WIX.custom_install_dir in
   OpamFilename.write OpamFilename.Op.(tmp_dir//addwxs1) content1;
   let (addwxs2, content2) = Data.WIX.custom_install_dir_dlg in

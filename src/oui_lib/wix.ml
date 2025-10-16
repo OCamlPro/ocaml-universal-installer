@@ -124,6 +124,7 @@ let main_wxs info : wxs =
   let path p = Filename.concat info.wix_path p in
   let exec_name = Filename.basename info.wix_exec_file
                   |> Filename.chop_extension in
+  let icon_name = Filename.basename info.wix_icon_file in
   [
     `Xml xml_declaration;
     `Start_element ((name "Wix"), [name "xmlns", "http://wixtoolset.org/schemas/v4/wxs" ;
@@ -176,10 +177,10 @@ let main_wxs info : wxs =
   ] @
     component "MainExecutable" [
         `Start_element ((name "File"), [
-                          name "Id", normalize_id info.wix_icon_file;
-                          name "Name", info.wix_icon_file;
+                          name "Id", normalize_id icon_name;
+                          name "Name", icon_name;
                           name "DiskId", "1";
-                          name "Source", path info.wix_icon_file;
+                          name "Source", info.wix_icon_file;
           ]);
         `End_element;
 
@@ -301,7 +302,7 @@ let main_wxs info : wxs =
                                         name "Id", "desktop_" ^ normalize_id info.wix_exec_file;
                                         name "Name", exec_name;
                                         name "WorkingDirectory", "INSTALLDIR";
-                                        name "Icon", info.wix_icon_file;
+                                        name "Icon", icon_name;
                                         name "Target", "[INSTALLDIR]" ^ info.wix_exec_file
                         ]);
                       `End_element;
@@ -336,7 +337,7 @@ let main_wxs info : wxs =
                                           name "Id", "startmenu_" ^ normalize_id info.wix_exec_file;
                                           name "Name", exec_name;
                                           name "WorkingDirectory", "INSTALLDIR";
-                                          name "Icon", info.wix_icon_file;
+                                          name "Icon", icon_name;
                                           name "Target", "[INSTALLDIR]" ^ info.wix_exec_file
                           ]);
                         `End_element;
@@ -454,14 +455,14 @@ let main_wxs info : wxs =
                             `End_element;
 
                             `Start_element ((name "Icon"), [
-                                              name "Id", normalize_id info.wix_icon_file;
-                                              name "SourceFile", path info.wix_icon_file;
+                                              name "Id", normalize_id icon_name;
+                                              name "SourceFile", info.wix_icon_file;
                               ]);
                             `End_element;
 
                             `Start_element ((name "Property"), [
                                               name "Id", "ARPPRODUCTICON";
-                                              name "Value", normalize_id info.wix_icon_file
+                                              name "Value", normalize_id icon_name
                               ]);
                             `End_element;
 
@@ -473,13 +474,13 @@ let main_wxs info : wxs =
 
                             `Start_element ((name "WixVariable"), [
                                               name "Id", "WixUIBannerBmp";
-                                              name "Value", path info.wix_banner_bmp_file
+                                              name "Value", info.wix_banner_bmp_file
                               ]);
                             `End_element;
 
                             `Start_element ((name "WixVariable"), [
                                               name "Id", "WixUIDialogBmp";
-                                              name "Value", path info.wix_dlg_bmp_file
+                                              name "Value", info.wix_dlg_bmp_file
                               ]);
                             `End_element;
 
