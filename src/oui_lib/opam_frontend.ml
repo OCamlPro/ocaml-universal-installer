@@ -266,7 +266,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
         (OpamConsole.colorise `bold (OpamPackage.Name.to_string package_name))
         (OpamConsole.colorise `bold ("opam install " ^ (OpamPackage.Name.to_string package_name)))
   in
-  let package_version = wix_version ~conf package in
+  let version = wix_version ~conf package in
   let opam = OpamSwitchState.opam switch_state package in
   let changes : string list =
     OpamPath.Switch.changes global_state.root switch_state.switch package_name
@@ -293,14 +293,6 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
   OpamFilename.mkdir external_dir;
   let exe_base = OpamFilename.basename binary_path in
   OpamFilename.copy ~src:binary_path ~dst:(OpamFilename.create bundle_dir exe_base);
-  let copy_data data_path (name, content) =
-    match data_path with
-    | Some path -> OpamFilename.copy_in path bundle_dir
-    | None -> OpamFilename.write OpamFilename.Op.(bundle_dir // name) content
-  in
-  copy_data conf.conf_icon_file Data.IMAGES.logo;
-  copy_data conf.conf_dlg_bmp Data.IMAGES.dlgbmp;
-  copy_data conf.conf_ban_bmp Data.IMAGES.banbmp;
   let emb_modes = conf_embedded ~global_state ~switch_state ~env conffile in
   let (embedded_dirs : (basename * dirname) list),
       (embedded_files : (basename * filename) list) =
@@ -340,33 +332,26 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
     in (opam_base @ external_base), (opam_dir @ external_dir)
   in
   OpamConsole.formatted_msg "Bundle created.";
-  let data_basename data (name,_) =
-    match data with
-    | Some data ->
-      OpamFilename.basename data |> OpamFilename.Base.to_string
-    | None -> name
-  in
   let open Installer_config in
   (bundle_dir,
    {
-     package_name = OpamPackage.Name.to_string (OpamPackage.name package) ;
-     package_fullname = OpamPackage.to_string package ;
-     package_version ;
-     package_description = package_description ~binary_path ~opam package ;
-     package_manufacturer = String.concat ", "
-         (OpamFile.OPAM.maintainer opam) ;
-     package_guid = conf.conf_package_guid ;
-     package_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
-     package_exec_file = OpamFilename.Base.to_string exe_base ;
-     package_icon_file = data_basename conf.conf_icon_file Data.IMAGES.logo ;
-     package_dlg_bmp_file = data_basename conf.conf_dlg_bmp Data.IMAGES.dlgbmp ;
-     package_banner_bmp_file = data_basename conf.conf_ban_bmp Data.IMAGES.banbmp ;
-     package_environment =
+     name = OpamPackage.Name.to_string (OpamPackage.name package);
+     fullname = OpamPackage.to_string package;
+     version;
+     description = package_description ~binary_path ~opam package;
+     manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam);
+     wix_guid = conf.conf_package_guid;
+     wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
+     exec_file = OpamFilename.Base.to_string exe_base;
+     wix_icon_file = Option.map OpamFilename.to_string conf.conf_icon_file;
+     wix_dlg_bmp_file = Option.map OpamFilename.to_string conf.conf_dlg_bmp;
+     wix_banner_bmp_file = Option.map OpamFilename.to_string conf.conf_ban_bmp;
+     wix_environment =
        package_environment ~conffile ~embedded_dirs ~embedded_files;
-     package_embedded_dirs = embedded_dirs ;
-     package_additional_embedded_name = additional_embedded_name ;
-     package_embedded_files = embedded_files ;
-     package_additional_embedded_dir = additional_embedded_dir;
+     wix_embedded_dirs = embedded_dirs ;
+     wix_additional_embedded_name = additional_embedded_name ;
+     wix_embedded_files = embedded_files ;
+     wix_additional_embedded_dir = additional_embedded_dir;
    })
 
 let with_opam_and_conf cli global_options conf f =

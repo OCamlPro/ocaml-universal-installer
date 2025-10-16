@@ -32,22 +32,22 @@ module Yojsonable = struct
 end
 
 type t = {
-    package_name : string;
-    package_fullname : string ;
-    package_version : string;
-    package_description : string;
-    package_manufacturer : string;
-    package_guid : string option;
-    package_tags : string list;
-    package_exec_file : string;
-    package_icon_file : string;
-    package_dlg_bmp_file : string;
-    package_banner_bmp_file : string;
-    package_embedded_dirs : (Yojsonable.basename * Yojsonable.dirname) list;
-    package_additional_embedded_name : string list ;
-    package_additional_embedded_dir : Yojsonable.dirname list;
-    package_embedded_files : (Yojsonable.basename * Yojsonable.filename) list;
-    package_environment : (string * string) list;
+    name : string;
+    fullname : string ;
+    version : string;
+    description : string;
+    manufacturer : string;
+    exec_file : string;
+    wix_guid : string option; [@default None]
+    wix_tags : string list; [@default []]
+    wix_icon_file : string option; [@default None]
+    wix_dlg_bmp_file : string option; [@default None]
+    wix_banner_bmp_file : string option; [@default None]
+    wix_embedded_dirs : (Yojsonable.basename * Yojsonable.dirname) list; [@default []]
+    wix_additional_embedded_name : string list; [@default []]
+    wix_additional_embedded_dir : Yojsonable.dirname list; [@default []]
+    wix_embedded_files : (Yojsonable.basename * Yojsonable.filename) list; [@default []]
+    wix_environment : (string * string) list; [@default []]
   }
 [@@deriving yojson]
 

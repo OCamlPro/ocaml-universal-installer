@@ -10,30 +10,34 @@
 
 (** Information module used to generated main wxs document. *)
 type t = {
-    package_name : string;
+    name : string;
     (** Package name used as product name. Deduced from opam file *)
-    package_fullname : string ;
-    package_version : string;
+    fullname : string ;
+    version : string;
     (** Package version used as part of product name. Deduced from opam file *)
-    package_description : string;
+    description : string;
     (** Package description. Deduced from opam file *)
-    package_manufacturer : string;
+    manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
-    package_guid : string option;
-    (** Package UID. Should be equal for every version of given package. If not
-        specified, generated new UID *)
-    package_tags : string list; (** Package tags. Deduced from opam file *)
-    package_exec_file : string; (** Filename of bundled .exe binary. *)
-    package_icon_file : string; (** Icon filename. *)
-    package_dlg_bmp_file : string; (** Dialog bmp filename. *)
-    package_banner_bmp_file : string; (* Banner bmp filename. *)
-    package_embedded_dirs : (OpamFilename.Base.t * OpamFilename.Dir.t) list;
+    exec_file : string; (** Filename of bundled .exe binary. *)
+    wix_guid : string option;
+    (** Package UID, used by WiX backend. Should be equal for every version of
+        given package. If not specified, generated new UID *)
+    wix_tags : string list; (** Package tags, used by WiX. *)
+    wix_icon_file : string option;
+    (** Icon filename, used by WiX. Defaults to our data/images/logo.ico file. *)
+    wix_dlg_bmp_file : string option;
+    (** Dialog bmp filename, used by WiX. Default to our data/images/dlgbmp.bmp *)
+    wix_banner_bmp_file : string option;
+    (* Banner bmp filename, used by WiX. Defaults to our
+       data/images/bannrbmp.bmp *)
+    wix_embedded_dirs : (OpamFilename.Base.t * OpamFilename.Dir.t) list;
     (** Embedded directories information (reference another wxs file) *)
-    package_additional_embedded_name : string list ;
-    package_additional_embedded_dir : OpamFilename.Dir.t list;
-    package_embedded_files : (OpamFilename.Base.t * OpamTypes.filename) list;
+    wix_additional_embedded_name : string list ;
+    wix_additional_embedded_dir : OpamFilename.Dir.t list;
+    wix_embedded_files : (OpamFilename.Base.t * OpamTypes.filename) list;
     (** Embedded files *)
-    package_environment : (string * string) list;
+    wix_environment : (string * string) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
   }
 [@@deriving yojson]
