@@ -20,7 +20,7 @@ type condition =
 type command =
   | Exit of int
   | Echo of string
-  | Mkdir of string list
+  | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
   | Rm of {rec_: bool; files : string list}
@@ -48,7 +48,7 @@ val exit : int -> command
 val echof : ('a, Format.formatter, unit, command) format4 -> 'a
 
 (** [mkdir f1::f2::_] is ["mkdir -p f1 f2 ..."] *)
-val mkdir : string list -> command
+val mkdir : ?permissions: int -> string list -> command
 
 (** [chmod i f1::f2::_] is ["chmod i f1 f2 ..."] *)
 val chmod : int -> string list -> command

@@ -20,7 +20,7 @@ type condition =
 type command =
   | Exit of int
   | Echo of string
-  | Mkdir of string list
+  | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
   | Rm of {rec_: bool; files : string list}
@@ -39,7 +39,7 @@ type t = command list
 
 let exit i = Exit i
 let echof fmt = Format.kasprintf (fun s -> Echo s) fmt
-let mkdir dirs = Mkdir dirs
+let mkdir ?permissions dirs = Mkdir {permissions; dirs}
 let chmod permissions files = Chmod {permissions; files}
 let cp ~src ~dst = Cp {src; dst}
 let rm files = Rm {rec_ = false; files}
@@ -70,7 +70,9 @@ let rec pp_sh_command ~indent fmtr command =
   match command with
   | Exit i -> fpf "exit %d" i
   | Echo s -> fpf "echo %S" s
-  | Mkdir dirs -> fpf "mkdir -p %a" pp_files dirs
+  | Mkdir {permissions = None; dirs} -> fpf "mkdir -p %a" pp_files dirs
+  | Mkdir {permissions = Some perm; dirs} ->
+    fpf "mkdir -p -m %i %a" perm pp_files dirs
   | Chmod {permissions; files} -> fpf "chmod %i %a" permissions pp_files files
   | Cp {src; dst} -> fpf "cp %s %s" src dst
   | Rm {rec_ = true; files} -> fpf "rm -rf %a" pp_files files
