@@ -21,7 +21,7 @@ let configuration =
        complete support of installing complex programs and non self-contained \
        binaries, it is necessary to provide a config file with $(b,opam-format \
        syntax) (See https://opam.ocaml.org/doc/Manual.html). Such a file \
-       allows opam-wix to determine which additional files and directories \
+       allows opam-oui to determine which additional files and directories \
        should be installed along with the program, as well as which \
        environment variables need to be set in the Windows Terminal.";
     `P

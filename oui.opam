@@ -8,8 +8,8 @@ authors: [
 ]
 tags: ["wix" "msi" "windows" "cygwin"]
 license: "GPL-3.0-only"
-homepage: "https://github.com/OCamlPro/opam-wix"
-bug-reports: "https://github.com/OCamlPro/opam-wix/issues"
+homepage: "https://github.com/OCamlPro/ocaml-universal-installer"
+bug-reports: "https://github.com/OCamlPro/ocaml-universal-installer/issues"
 depends: [
   "ocaml" {build & >= "4.11.0"}
   "dune" {build & >= "3.2"}
@@ -30,7 +30,7 @@ build: [
     "-p" name
     "@runtest" {with-test}
 ]
-dev-repo: "git+https://github.com/OCamlPro/opam-wix"
+dev-repo: "git+https://github.com/OCamlPro/ocaml-universal-installer"
 synopsis: "A tool that builds standalone installers for your OCaml applications"
 description: """
 oui is a command-line tool that generates standalone installers for Linux, Windows and
