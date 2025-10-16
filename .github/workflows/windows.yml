@@ -87,11 +87,11 @@ jobs:
 
       - name: "Test: create package"
         run: |
-          opam install ocp-indent.1.9.0
+          opam install ocp-indent.1.8.1
           opam exec -- opam-oui ocp-indent
 
       - name: "Test: install package"
-        run: msiexec /i ocp-indent.1.9.0.msi /qn /L*v wixlog.txt
+        run: msiexec /i ocp-indent.1.8.1.msi /qn /L*v wixlog.txt
 
       - name: Upload wixlog.txt
         if: ${{ failure() }}
@@ -102,4 +102,4 @@ jobs:
 
       - name: "Test: execute binary"
         run: |
-          & "C:\Program Files (x86)\ocp-indent.1.9.0-ocp-indent\ocp-indent.exe" --version
+          & "C:\Program Files (x86)\ocp-indent.1.8.1-ocp-indent\ocp-indent.exe" --version
