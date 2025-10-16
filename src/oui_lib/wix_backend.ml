@@ -19,13 +19,20 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
   in
   let dir_ref basename = basename ^ "_REF" in
   (* add .exe suffix if needed *)
-  let wix_exec_file =
-    match Filename.extension desc.exec_file with
-    | ".exe" -> desc.exec_file
+  let exec_file =
+    match desc.exec_files with
+    | [exec] -> exec
     | _ ->
-      let dst = desc.exec_file ^ ".exe" in
+      OpamConsole.error_and_exit `False
+        "WiX backend only supports installing a single binary"
+  in
+  let wix_exec_file =
+    match Filename.extension exec_file with
+    | ".exe" -> exec_file
+    | _ ->
+      let dst = exec_file ^ ".exe" in
       OpamFilename.move
-        ~src:OpamFilename.Op.(bundle_dir // desc.exec_file)
+        ~src:OpamFilename.Op.(bundle_dir // exec_file)
         ~dst:OpamFilename.Op.(bundle_dir // dst);
       dst
   in
@@ -81,7 +88,7 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
     }
   in
   let wxs = Wix.main_wxs info in
-  let name = Filename.chop_extension desc.exec_file in
+  let name = Filename.chop_extension exec_file in
   let (addwxs1, content1) = Data.WIX.custom_install_dir in
   OpamFilename.write OpamFilename.Op.(tmp_dir//addwxs1) content1;
   let (addwxs2, content2) = Data.WIX.custom_install_dir_dlg in

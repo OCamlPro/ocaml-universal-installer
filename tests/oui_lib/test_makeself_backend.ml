@@ -13,12 +13,12 @@ open Oui
 let make_config
     ?(name="")
     ?(version="")
-    ?(exec_file="")
+    ?(exec_files=[])
     () : Installer_config.t
   =
   { name
   ; version
-  ; exec_file
+  ; exec_files
   ; fullname = ""
   ; description = ""
   ; manufacturer = ""
@@ -36,7 +36,8 @@ let make_config
 
 let%expect_test "install_script: one binary" =
   let config =
-    make_config ~name:"aaa" ~version:"x.y.z" ~exec_file:"aaa-command" ()
+    make_config ~name:"aaa" ~version:"x.y.z"
+      ~exec_files:["aaa-command"; "aaa-utility"] ()
   in
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
@@ -51,11 +52,14 @@ let%expect_test "install_script: one binary" =
     fi
     mkdir -p /opt/aaa /opt/aaa/bin
     cp aaa-command /opt/aaa/bin
+    cp aaa-utility /opt/aaa/bin
     find /opt/aaa -type d -exec chmod 755 {} +
     find /opt/aaa -type f -exec chmod 644 {} +
     find /opt/aaa/bin -type f -exec chmod 755 {} +
     echo "Adding aaa-command to /usr/local/bin"
     ln -s /opt/aaa/bin/aaa-command /usr/local/bin/aaa-command
+    echo "Adding aaa-utility to /usr/local/bin"
+    ln -s /opt/aaa/bin/aaa-utility /usr/local/bin/aaa-utility
     cp uninstall.sh /opt/aaa
     chmod 755 /opt/aaa/uninstall.sh
     echo "Installation complete!"
@@ -63,7 +67,9 @@ let%expect_test "install_script: one binary" =
     |}]
 
 let%expect_test "uninstall_script: one binary" =
-  let config = make_config ~name:"aaa" ~exec_file:"aaa-command" () in
+  let config =
+    make_config ~name:"aaa" ~exec_files:["aaa-command"; "aaa-utility"] ()
+  in
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
   [%expect {|
@@ -78,6 +84,7 @@ let%expect_test "uninstall_script: one binary" =
     echo "The following files and folders will be removed from the system:"
     echo "- /opt/aaa"
     echo "- /usr/local/bin/aaa-command"
+    echo "- /usr/local/bin/aaa-utility"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -94,6 +101,10 @@ let%expect_test "uninstall_script: one binary" =
     if [ -L "/usr/local/bin/aaa-command" ]; then
       echo "Removink symlink /usr/local/bin/aaa-command..."
       rm -f /usr/local/bin/aaa-command
+    fi
+    if [ -L "/usr/local/bin/aaa-utility" ]; then
+      echo "Removink symlink /usr/local/bin/aaa-utility..."
+      rm -f /usr/local/bin/aaa-utility
     fi
     echo "Uninstallation complete!"
     |}]

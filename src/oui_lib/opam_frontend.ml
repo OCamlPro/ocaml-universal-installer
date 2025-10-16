@@ -22,10 +22,7 @@ let normalize_conf env conf file =
   in
   {
     conf with
-    conf_binary = merge_opt conf.conf_binary file.c_binary;
     conf_wix_version = merge_opt conf.conf_wix_version file.c_wix_version;
-    conf_path = merge_opt conf.conf_path
-        (Option.map (System.resolve_file_path env) file.c_binary_path);
     conf_icon_file = merge_opt conf.conf_icon_file
         (Option.map (System.resolve_file_path env) file.c_images.ico);
     conf_dlg_bmp = merge_opt conf.conf_dlg_bmp
@@ -83,59 +80,27 @@ let binaries changes =
       else Some bin)
     changes
 
-let binary_path ~conf ~opam_bin_folder ~binaries package =
-  match conf.conf_path, conf.conf_binary with
-  | Some _, Some _ ->
-    OpamConsole.error_and_exit `Bad_arguments
-      "Options --binary-path and --binary can't be used together"
-  | Some path, None ->
-    if OpamFilename.exists path then
-      if not (OpamFilename.is_exec path) then
-        OpamConsole.error_and_exit `Bad_arguments
-          "File %s is not executable" (OpamConsole.colorise
-                                         `bold (OpamFilename.to_string path))
-      else begin
-        path
-      end
-    else
-      OpamConsole.error_and_exit `Not_found
-        "File not found at %s" (OpamConsole.colorise
-                                  `bold (OpamFilename.to_string path))
-  | None, Some binary ->
-    if List.exists (String.equal binary) binaries then
-      let binary = if Sys.win32 then binary ^ ".exe" else binary in
-      OpamFilename.Op.(opam_bin_folder // binary)
-    else
-      OpamConsole.error_and_exit `Not_found
-        "Binary %s not found in opam installation"
-        (OpamConsole.colorise `bold binary)
-  | None, None ->
+let binaries_path ~opam_bin_folder ~binaries package =
     match binaries with
-    | [bin] ->
-      let bin = if Sys.win32 then bin ^ ".exe" else bin in
-      OpamFilename.Op.(opam_bin_folder // bin)
     | [] ->
       OpamConsole.error_and_exit `Not_found
         "No binary file found at package installation %s"
         (OpamConsole.colorise `bold (OpamPackage.to_string package))
-    | _::_ ->
-      OpamConsole.error_and_exit `False
-        "opam-wix don't handle multiple binaries yet, \
-         choose one in the list and give it in argument \
-         with option '--binary'."
+    | bins ->
+      List.map
+        (fun bin ->
+           let bin = if Sys.win32 then bin ^ ".exe" else bin in
+           OpamFilename.Op.(opam_bin_folder // bin))
+        bins
 
-let package_description ~binary_path ~opam package =
+let package_description ~opam package =
   let synopsis =
     match OpamFile.OPAM.synopsis opam with None -> "" | Some s -> s
   in
   let descr =
     match OpamFile.OPAM.descr_body opam with None -> "" | Some s -> s
   in
-  let summary =
-    Printf.sprintf "Package %s - binary %s"
-       (OpamPackage.to_string package)
-       (OpamFilename.to_string binary_path)
-  in
+  let summary = Printf.sprintf "Package %s" (OpamPackage.to_string package) in
   synopsis ^ descr ^ summary
 
 let package_environment ~conffile ~embedded_dirs ~embedded_files =
@@ -281,9 +246,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
     OpamPath.Switch.bin
       global_state.root switch_state.switch switch_state.switch_config
   in
-  let binary_path = binary_path ~conf ~opam_bin_folder ~binaries package in
-  OpamConsole.formatted_msg "Path to the selected binary file : %s"
-    (OpamConsole.colorise `bold (System.path_str binary_path));
+  let binaries_path = binaries_path ~opam_bin_folder ~binaries package in
   OpamConsole.header_msg "Creating installation bundle";
   let bundle_dir = OpamFilename.Op.(tmp_dir / OpamPackage.to_string package) in
   OpamFilename.mkdir bundle_dir;
@@ -291,8 +254,13 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
   let external_dir = OpamFilename.Op.(bundle_dir / "external") in
   OpamFilename.mkdir opam_dir;
   OpamFilename.mkdir external_dir;
-  let exe_base = OpamFilename.basename binary_path in
-  OpamFilename.copy ~src:binary_path ~dst:(OpamFilename.create bundle_dir exe_base);
+  let exe_bases = List.map OpamFilename.basename binaries_path in
+  List.iter2
+    (fun binary_path exe_base ->
+       OpamFilename.copy ~src:binary_path
+         ~dst:(OpamFilename.create bundle_dir exe_base))
+    binaries_path
+    exe_bases;
   let emb_modes = conf_embedded ~global_state ~switch_state ~env conffile in
   let (embedded_dirs : (basename * dirname) list),
       (embedded_files : (basename * filename) list) =
@@ -338,11 +306,11 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
      name = OpamPackage.Name.to_string (OpamPackage.name package);
      fullname = OpamPackage.to_string package;
      version;
-     description = package_description ~binary_path ~opam package;
+     description = package_description ~opam package;
      manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam);
      wix_guid = conf.conf_package_guid;
      wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
-     exec_file = OpamFilename.Base.to_string exe_base;
+     exec_files = List.map OpamFilename.Base.to_string exe_bases;
      wix_icon_file = Option.map OpamFilename.to_string conf.conf_icon_file;
      wix_dlg_bmp_file = Option.map OpamFilename.to_string conf.conf_dlg_bmp;
      wix_banner_bmp_file = Option.map OpamFilename.to_string conf.conf_ban_bmp;

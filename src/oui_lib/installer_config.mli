@@ -19,7 +19,7 @@ type t = {
     (** Package description. Deduced from opam file *)
     manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
-    exec_file : string; (** Filename of bundled .exe binary. *)
+    exec_files : string list; (** Filenames of bundled .exe binary. *)
     wix_guid : string option;
     (** Package UID, used by WiX backend. Should be equal for every version of
         given package. If not specified, generated new UID *)
