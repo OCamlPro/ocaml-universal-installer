@@ -10,10 +10,24 @@
 
 open Oui
 
+let make_manpages
+    ?(man1=[])
+    ?(man2=[])
+    ?(man3=[])
+    ?(man4=[])
+    ?(man5=[])
+    ?(man6=[])
+    ?(man7=[])
+    ?(man8=[])
+    () : Installer_config.manpages
+  =
+  {man1; man2; man3; man4; man5; man6; man7; man8}
+
 let make_config
     ?(name="")
     ?(version="")
     ?(exec_files=[])
+    ?makeself_manpages
     () : Installer_config.t
   =
   { name
@@ -22,6 +36,7 @@ let make_config
   ; fullname = ""
   ; description = ""
   ; manufacturer = ""
+  ; makeself_manpages
   ; wix_guid = None
   ; wix_tags = []
   ; wix_icon_file = None
@@ -36,9 +51,17 @@ let make_config
   }
 
 let%expect_test "install_script: one binary" =
+  let makeself_manpages =
+    make_manpages
+      ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
+      ~man5:["man/man5/aaa-file.1"]
+      ()
+  in
   let config =
     make_config ~name:"aaa" ~version:"x.y.z"
-      ~exec_files:["aaa-command"; "aaa-utility"] ()
+      ~exec_files:["aaa-command"; "aaa-utility"]
+      ~makeself_manpages
+      ()
   in
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
@@ -57,13 +80,32 @@ let%expect_test "install_script: one binary" =
     ln -s /opt/aaa/aaa-command /usr/local/bin/aaa-command
     echo "Adding aaa-utility to /usr/local/bin"
     ln -s /opt/aaa/aaa-utility /usr/local/bin/aaa-utility
+    if [ -d "/usr/local/share/man" ]; then
+      MAN_DEST="/usr/local/share/man"
+    else
+      MAN_DEST="usr/local/man"
+    fi
+    mkdir -p -m 755 $MAN_DEST/man1
+    ln -s /opt/aaa/man/man1/aaa-command.1 $MAN_DEST/man1/aaa-command.1
+    ln -s /opt/aaa/man/man1/aaa-utility.1 $MAN_DEST/man1/aaa-utility.1
+    mkdir -p -m 755 $MAN_DEST/man5
+    ln -s /opt/aaa/man/man5/aaa-file.1 $MAN_DEST/man5/aaa-file.1
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run /opt/aaa/uninstall.sh."
     |}]
 
 let%expect_test "uninstall_script: one binary" =
+  let makeself_manpages =
+    make_manpages
+      ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
+      ~man5:["man/man5/aaa-file.1"]
+      ()
+  in
   let config =
-    make_config ~name:"aaa" ~exec_files:["aaa-command"; "aaa-utility"] ()
+    make_config ~name:"aaa"
+      ~exec_files:["aaa-command"; "aaa-utility"]
+      ~makeself_manpages
+      ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
@@ -94,12 +136,29 @@ let%expect_test "uninstall_script: one binary" =
       rm -rf /opt/aaa
     fi
     if [ -L "/usr/local/bin/aaa-command" ]; then
-      echo "Removink symlink /usr/local/bin/aaa-command..."
+      echo "Removing symlink /usr/local/bin/aaa-command..."
       rm -f /usr/local/bin/aaa-command
     fi
     if [ -L "/usr/local/bin/aaa-utility" ]; then
-      echo "Removink symlink /usr/local/bin/aaa-utility..."
+      echo "Removing symlink /usr/local/bin/aaa-utility..."
       rm -f /usr/local/bin/aaa-utility
+    fi
+    if [ -d "/usr/local/share/man" ]; then
+      MAN_DEST="/usr/local/share/man"
+    else
+      MAN_DEST="usr/local/man"
+    fi
+    if [ -L "$MAN_DEST/man1/aaa-command.1" ]; then
+      echo "Removing manpage $MAN_DEST/man1/aaa-command.1..."
+      rm -f $MAN_DEST/man1/aaa-command.1
+    fi
+    if [ -L "$MAN_DEST/man1/aaa-utility.1" ]; then
+      echo "Removing manpage $MAN_DEST/man1/aaa-utility.1..."
+      rm -f $MAN_DEST/man1/aaa-utility.1
+    fi
+    if [ -L "$MAN_DEST/man5/aaa-file.1" ]; then
+      echo "Removing manpage $MAN_DEST/man5/aaa-file.1..."
+      rm -f $MAN_DEST/man5/aaa-file.1
     fi
     echo "Uninstallation complete!"
     |}]

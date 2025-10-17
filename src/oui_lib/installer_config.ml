@@ -31,6 +31,18 @@ module Yojsonable = struct
     | _ -> Error "Invalid OpamFilename.Base.t JSON encoding"
 end
 
+type manpages =
+  { man1 : string list [@default []]
+  ; man2 : string list [@default []]
+  ; man3 : string list [@default []]
+  ; man4 : string list [@default []]
+  ; man5 : string list [@default []]
+  ; man6 : string list [@default []]
+  ; man7 : string list [@default []]
+  ; man8 : string list [@default []]
+  }
+[@@deriving yojson]
+
 type t = {
     name : string;
     fullname : string ;
@@ -38,6 +50,7 @@ type t = {
     description : string;
     manufacturer : string;
     exec_files : string list;
+    makeself_manpages : manpages option; [@default None]
     wix_guid : string option; [@default None]
     wix_tags : string list; [@default []]
     wix_icon_file : string option; [@default None]

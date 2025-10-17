@@ -321,6 +321,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
      wix_additional_embedded_name = additional_embedded_name ;
      wix_embedded_files = embedded_files ;
      wix_additional_embedded_dir = additional_embedded_dir;
+     makeself_manpages = None;
    })
 
 let with_opam_and_conf cli global_options conf f =
