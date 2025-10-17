@@ -36,20 +36,6 @@ let conffile =
         "Configuration file for the binary to install. See $(i,Configuration) \
          section"
 
-let path =
-  value
-  & opt (some opam_filename) None
-  & info [ "binary-path"; "bp" ] ~docs:Man.Section.bin_args ~docv:"PATH"
-      ~doc:"The path to the binary file to handle"
-
-let binary =
-  value
-  & opt (some string) None
-  & info [ "binary"; "b" ] ~docs:Man.Section.bin_args ~docv:"NAME"
-      ~doc:
-        "The binary name to handle. Specified package should contain the \
-         binary with the same name."
-
 let wix_version =
   value
   & opt (some wix_version_conv) None
@@ -103,13 +89,11 @@ let ban_bmp =
 let keep_wxs = value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
 
 let config =
-  let apply conf_file conf_path conf_binary conf_wix_version
+  let apply conf_file conf_wix_version
       conf_wix_path conf_package_guid conf_icon_file
       conf_dlg_bmp conf_ban_bmp conf_keep_wxs =
     {
       conf_file;
-      conf_path;
-      conf_binary;
       conf_wix_version;
       conf_wix_path;
       conf_package_guid;
@@ -120,7 +104,7 @@ let config =
     }
   in
   Term.(
-    const apply $ conffile $ path $ binary $ wix_version
+    const apply $ conffile $ wix_version
     $ wix_path $ package_guid $ icon_file $ dlg_bmp $ ban_bmp $ keep_wxs)
 
 type backend = Wix | Makeself

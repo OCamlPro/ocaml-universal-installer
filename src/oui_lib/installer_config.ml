@@ -37,7 +37,7 @@ type t = {
     version : string;
     description : string;
     manufacturer : string;
-    exec_file : string;
+    exec_files : string list;
     wix_guid : string option; [@default None]
     wix_tags : string list; [@default []]
     wix_icon_file : string option; [@default None]
