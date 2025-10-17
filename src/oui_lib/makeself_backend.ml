@@ -63,7 +63,9 @@ let install_manpages ~prefix manpages =
            :: (List.map (install_page ~section) pages))
         manpages
     in
-    set_man_dest::install_manpages
+    set_man_dest
+    :: echof "Installing manpages to %s..." man_dst_var
+    :: install_manpages
 
 let install_script (ic : Installer_config.t) =
   let open Sh_script in
