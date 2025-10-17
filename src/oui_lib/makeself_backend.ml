@@ -112,18 +112,30 @@ let uninstall_script (ic : Installer_config.t) =
   let prefix = "/opt" / package in
   let usrbin = "/usr/local/bin" in
   let binaries = ic.exec_files in
+  let manpages = manpages_to_list ic.makeself_manpages in
   let display_symlinks =
     List.map
       (fun binary -> echof "- %s/%s" usrbin binary)
       binaries
   in
+  let display_manpages =
+    List.concat_map
+      (fun (section, pages) ->
+         List.map
+           (fun page ->
+              echof "- %s/%s/%s" man_dst_var section (Filename.basename page))
+           pages)
+      manpages
+  in
   let setup =
     [ check_run_as_root
+    ; set_man_dest
     ; echof "About to uninstall %s." package
     ; echof "The following files and folders will be removed from the system:"
     ; echof "- %s" prefix
     ]
     @ display_symlinks
+    @ display_manpages
   in
   let confirm_uninstall =
     [ prompt ~question:"Proceed? [y/N]" ~varname:"ans"
@@ -141,7 +153,6 @@ let uninstall_script (ic : Installer_config.t) =
         ()
     ]
   in
-  let manpages = manpages_to_list ic.makeself_manpages in
   let remove_symlinks =
     List.map
       (fun binary ->
@@ -155,8 +166,6 @@ let uninstall_script (ic : Installer_config.t) =
       binaries
   in
   let remove_manpages =
-    set_man_dest
-    ::
     List.concat_map
       (fun (section, pages) ->
          List.map
