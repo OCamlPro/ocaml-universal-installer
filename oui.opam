@@ -36,4 +36,3 @@ description: """
 oui is a command-line tool that generates standalone installers for Linux, Windows and
 macOS from your OCaml and non OCaml binaries.
 """
-flags: plugin

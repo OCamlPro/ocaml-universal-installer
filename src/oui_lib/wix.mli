@@ -8,15 +8,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Wxs document type. *)
-type wxs
-
-(** Component group id *)
-type component_group = string
-
-(** Directory id reference *)
-type directory_ref = string
-
 (** Version in the form [0-9.]+, i.e dot separated numbers *)
 module Version: sig
   type t = string
@@ -26,56 +17,73 @@ end
 
 (** Information module used to generated main wxs document. *)
 type info = {
-  (* Path to the bundle containing all required files. Every relative file path will be concatenated to this path *)
-  wix_path : string;
 
-  (* Package name used as product name. Deduced from opam file *)
-  wix_name : string;
+  (* Package unique ID (replaces GUID) *)
+  unique_id: string;
 
-  (* Package version used as part of product name. Deduced from opam file *)
-  wix_version : string;
+  (* Product manufacturer *)
+  organization: string;
 
-  (* Package description. Deduced from opam file *)
-  wix_description : string;
+  (* Package name used as product name *)
+  short_name: string;
 
-  (* Product manufacturer. Deduced from field {i maintainer} in opam file *)
-  wix_manufacturer : string;
+  (* More descriptive package name *)
+  long_name: string;
 
-  (* Package UID. Should be equal for every version of given package. If not specified,
-      generated new UID *)
-  wix_guid : string option;
+  (* Package version *)
+  version: string;
 
-  (* Package tags. Deduced from opam file *)
-  wix_tags : string list;
+  (* Package description *)
+  description: string;
 
-  (* Filename of bundled .exe binary. *)
-  wix_exec_file : string;
+  (* Package keywords *)
+  keywords: string;
 
-  (* Filenames for all bundled DLLs. *)
-  wix_dlls : string list;
+  (* Absolute path to the bundle containing all required files *)
+  directory: string;
 
-  (* Icon filename. *)
-  wix_icon_file : string;
+  (* Shorcuts to install *)
+  shortcuts: shortcut list;
 
-  (* Dialog bmp filename. *)
-  wix_dlg_bmp_file : string;
+  (* Environment variables to set up *)
+  environment: var list;
 
-  (* Banner bmp filename. *)
-  wix_banner_bmp_file : string;
+  (* Registry keys to create *)
+  registry: key list;
 
-  (* Embedded directories information (reference another wxs file) *)
-  wix_embedded_dirs : (string (* name *) * component_group * directory_ref * string (* source *)) list;
+  (* Icon filename (absolute) *)
+  icon: string;
 
-  (* Embedded files *)
-  wix_embedded_files : string list;
+  (* Banner bmp filename (absolute) *)
+  banner: string;
 
-  (* Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
-  wix_environment : (string * string) list;
+  (* Background bmp filename (absolute) *)
+  background: string;
+
+  (* License filename (absolute) *)
+  license: string;
 }
 
-(** [main_wxs (module Info)] produces content for main Wix source file. Input represents a
-    module containing set of value required for main wxs generation. *)
-val main_wxs : info -> wxs
+and shortcut =
+  | File of { name: string; description: string; target: string } (* target may contain vars *)
+  | URL of { name: string; target: string } (* optionally icon *)
 
-(** Write a wxs file content to a .wxs file with the specified path. *)
-val write_wxs : string -> wxs -> unit
+and var = {
+  var_name: string; (* no space *)
+  var_value: string; (* allow specifying info from the package, such as installation dir *)
+  var_part: part;
+}
+
+and key = {
+  key_name: string;
+  key_type: string;
+  key_value: string;
+}
+
+and part = (* or Set, Prepend, Append *)
+  | All
+  | First
+  | Last
+
+(** [print_wix fmt info] outputs the main WiX source file *)
+val print_wix : Format.formatter -> info -> unit

@@ -10,15 +10,40 @@
 
 open Types
 
+let sanitize_id id =
+  String.map (fun c ->
+      if c >= 'A' && c <= 'Z'
+      || c >= 'a' && c <= 'z'
+      || c >= '0' && c <= '9'
+      || c = '_' || c = '.'
+      then c
+      else '_'
+    ) id
+
+let add_dlls_to_bundle ~bundle_dir binary =
+  let dlls = Cygcheck.get_dlls OpamFilename.Op.(bundle_dir // binary) in
+  match dlls with
+  | [] -> ()
+  | _ ->
+      OpamConsole.formatted_msg "Getting dlls:\n%s"
+        (OpamStd.Format.itemize OpamFilename.to_string dlls);
+      let bin_dir = bundle_dir in
+      (* TODO *) (* let bin_dir = OpamFilename.Op.(bundle_dir / "bin") in *)
+      OpamFilename.mkdir bin_dir;
+      List.iter (fun dll -> OpamFilename.copy_in dll bin_dir) dlls
+
+let data_file ~tmp_dir ~default:(name, content) data_path =
+  match data_path with
+  | Some path -> path
+  | None ->
+      let dst = OpamFilename.Op.(tmp_dir // name) in
+      OpamFilename.write dst content;
+      OpamFilename.to_string dst
+
 let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
   let wix_path = System.normalize_path conf.conf_wix_path in
   System.check_available_commands wix_path;
-  OpamConsole.header_msg "WiX setup";
-  let component_group basename =
-    String.capitalize_ascii basename ^ "CG"
-  in
-  let dir_ref basename = basename ^ "_REF" in
-  (* add .exe suffix if needed *)
+  OpamConsole.header_msg "Preparing MSI installer using WiX";
   let exec_file =
     match desc.exec_files with
     | [exec] -> exec
@@ -26,84 +51,47 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
       OpamConsole.error_and_exit `False
         "WiX backend only supports installing a single binary"
   in
-  let wix_exec_file =
-    match Filename.extension exec_file with
-    | ".exe" -> exec_file
-    | _ ->
-      let dst = exec_file ^ ".exe" in
-      OpamFilename.move
-        ~src:OpamFilename.Op.(bundle_dir // exec_file)
-        ~dst:OpamFilename.Op.(bundle_dir // dst);
-      dst
-  in
-  let wix_dlls =
-    let dlls = Cygcheck.get_dlls OpamFilename.Op.(bundle_dir // wix_exec_file) in
-    OpamConsole.formatted_msg "Getting dlls/so:\n%s"
-      (OpamStd.Format.itemize OpamFilename.to_string dlls);
-    List.iter (fun dll -> OpamFilename.copy_in dll bundle_dir) dlls;
-    List.map (fun dll -> OpamFilename.(basename dll |> Base.to_string)) dlls
-  in
-  let image_file ~default:(name, content) data_path =
-    match data_path with
-    | Some path -> path
-    | None ->
-      let dst = OpamFilename.Op.(tmp_dir // name) in
-      OpamFilename.write dst content;
-      OpamFilename.to_string dst
-  in
-  let wix_icon_file = image_file ~default:Data.IMAGES.logo desc.wix_icon_file in
-  let wix_dlg_bmp_file =
-    image_file ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file
-  in
-  let wix_banner_bmp_file =
-    image_file ~default:Data.IMAGES.banbmp desc.wix_banner_bmp_file
-  in
+  add_dlls_to_bundle ~bundle_dir exec_file;
+  let icon = data_file ~tmp_dir ~default:Data.IMAGES.logo desc.wix_icon_file in
+  let banner = data_file ~tmp_dir ~default:Data.IMAGES.banbmp desc.wix_banner_bmp_file in
+  let background = data_file ~tmp_dir ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file in
+  let license = data_file ~tmp_dir ~default:Data.LICENSES.gpl3 desc.wix_license_file in
   let info = Wix.{
-      wix_path = (*Filename.basename @@*) OpamFilename.Dir.to_string bundle_dir;
-      wix_name = desc.name;
-      wix_version = desc.version;
-      wix_description = desc.description;
-      wix_manufacturer = desc.manufacturer;
-      wix_guid = conf.conf_package_guid;
-      wix_tags = desc.wix_tags;
-      wix_exec_file;
-      wix_dlls;
-      wix_icon_file;
-      wix_dlg_bmp_file;
-      wix_banner_bmp_file;
-      wix_environment = desc.wix_environment;
-      wix_embedded_dirs =
-        List.map (fun (base, dir) ->
-            (* FIXME: do we need absolute dir ? *)
-            let base = OpamFilename.Base.to_string base in
-            base, component_group base, dir_ref base, OpamFilename.Dir.to_string dir)
-          (desc.wix_embedded_dirs @
-           List.map2 (fun base dir -> OpamFilename.Base.of_string base, dir)
-             desc.wix_additional_embedded_name
-             desc.wix_additional_embedded_dir);
-      wix_embedded_files =
-        List.map (fun (base, _) ->
-            OpamFilename.Base.to_string base)
-          desc.wix_embedded_files;
+      (* wix_guid = conf.conf_package_guid; *)
+      unique_id = sanitize_id (String.concat "." [desc.manufacturer; desc.name]);
+      organization = desc.manufacturer;
+      short_name = desc.name;
+      long_name = desc.name;
+      version = desc.version;
+      description = desc.description;
+      keywords = String.concat " " desc.wix_tags;
+      directory = OpamFilename.Dir.to_string bundle_dir;
+      (* wix_exec_file; wix_dlls; wix_embedded_dirs = []; wix_embedded_files = []; *)
+      shortcuts = [];
+      environment =
+        List.map (fun (var_name, var_value) ->
+            { var_name; var_value; var_part = All }
+          ) desc.wix_environment;
+      registry = [];
+      icon;
+      banner;
+      background;
+      license;
     }
   in
-  let wxs = Wix.main_wxs info in
+  let (extra, content) = Data.WIX.custom_app in
+  let extra_path = OpamFilename.Op.(tmp_dir // extra) in
+  OpamFilename.write extra_path content;
   let name = Filename.chop_extension exec_file in
-  let (addwxs1, content1) = Data.WIX.custom_install_dir in
-  OpamFilename.write OpamFilename.Op.(tmp_dir//addwxs1) content1;
-  let (addwxs2, content2) = Data.WIX.custom_install_dir_dlg in
-  OpamFilename.write OpamFilename.Op.(tmp_dir//addwxs2) content2;
-  let additional_wxs =
-    List.map (fun d ->
-        OpamFilename.to_string d |> System.cyg_win_path `WinAbs)
-      OpamFilename.Op.[ tmp_dir//addwxs1; tmp_dir//addwxs2 ]
-  in
   let main_path = OpamFilename.Op.(tmp_dir // (name ^ ".wxs")) in
   OpamConsole.formatted_msg "Preparing main WiX file...\n";
-  Wix.write_wxs (OpamFilename.to_string main_path) wxs;
+  let oc = open_out (OpamFilename.to_string main_path) in
+  let fmt = Format.formatter_of_out_channel oc in
+  Wix.print_wix fmt info;
+  close_out oc;
   let wxs_files =
-    (OpamFilename.to_string main_path |> System.cyg_win_path `WinAbs)
-    :: additional_wxs
+    (OpamFilename.to_string main_path |> System.cyg_win_path `WinAbs) ::
+    (OpamFilename.to_string extra_path |> System.cyg_win_path `WinAbs) :: []
   in
   if conf.conf_keep_wxs then
     List.iter (fun file ->

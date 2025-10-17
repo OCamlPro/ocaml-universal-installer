@@ -70,6 +70,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          opam install conf-mingw-w64-gcc-x86_64 conf-mingw-w64-gcc-i686 conf-mingw-w64-g++-x86_64 conf-mingw-w64-g++-i686 mingw-w64-shims
           opam install . --deps-only -t
           opam clean
 
@@ -85,13 +86,25 @@ jobs:
       - name: Install
         run: opam install .
 
+      - name: "Test: install target opam package"
+        run: opam install ocp-indent.1.8.1
+
       - name: "Test: create package"
-        run: |
-          opam install ocp-indent.1.8.1
-          opam exec -- opam-oui ocp-indent
+        run: opam exec -- opam-oui --keep-wxs ocp-indent
 
       - name: "Test: install package"
-        run: msiexec /i ocp-indent.1.8.1.msi /qn /L*v wixlog.txt
+        run: msiexec /i ocp-indent.1.8.1.msi /qn /L*v wixlog.txt ALLUSERS=2 MSIINSTALLPERUSER=
+
+      - name: "Test: execute binary"
+        run: |
+          & "C:\Program Files (x86)\ocp-indent\ocp-indent.exe" --version
+
+      - name: Upload package.wxs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: package.wxs
+          path: ocp-indent.wxs
 
       - name: Upload wixlog.txt
         if: ${{ failure() }}
@@ -99,7 +112,3 @@ jobs:
         with:
           name: wixlog.txt
           path: wixlog.txt
-
-      - name: "Test: execute binary"
-        run: |
-          & "C:\Program Files (x86)\ocp-indent.1.8.1-ocp-indent\ocp-indent.exe" --version
