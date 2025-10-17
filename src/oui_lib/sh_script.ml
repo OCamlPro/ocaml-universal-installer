@@ -20,6 +20,7 @@ type condition =
 type command =
   | Exit of int
   | Echo of string
+  | Assign of {var: string; value: string}
   | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
@@ -28,7 +29,7 @@ type command =
   | Set_permissions_in of
       {on: find_type; permissions: int; starting_point: string}
   | Copy_all_in of {src: string; dst: string; except: string}
-  | If of {condition : condition; then_ : command list}
+  | If of {condition : condition; then_ : command list; else_: command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
 and case =
@@ -40,13 +41,14 @@ type t = command list
 
 let exit i = Exit i
 let echof fmt = Format.kasprintf (fun s -> Echo s) fmt
+let assign ~var ~value = Assign {var; value}
 let mkdir ?permissions dirs = Mkdir {permissions; dirs}
 let chmod permissions files = Chmod {permissions; files}
 let cp ~src ~dst = Cp {src; dst}
 let rm files = Rm {rec_ = false; files}
 let rm_rf files = Rm {rec_ = true; files}
 let symlink ~target ~link = Symlink {target; link}
-let if_ condition then_ = If {condition; then_}
+let if_ condition then_ ?(else_=[]) () = If {condition; then_; else_}
 let prompt ~question ~varname = Prompt {question; varname}
 let case varname cases = Case {varname; cases}
 
@@ -73,6 +75,7 @@ let rec pp_sh_command ~indent fmtr command =
   match command with
   | Exit i -> fpf "exit %d" i
   | Echo s -> fpf "echo %S" s
+  | Assign {var; value} -> fpf "%s=%S" var value
   | Mkdir {permissions = None; dirs} -> fpf "mkdir -p %a" pp_files dirs
   | Mkdir {permissions = Some perm; dirs} ->
     fpf "mkdir -p -m %i %a" perm pp_files dirs
@@ -90,9 +93,14 @@ let rec pp_sh_command ~indent fmtr command =
     fpf
       "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %s \\;"
       src except dst
-  | If {condition; then_} ->
+  | If {condition; then_; else_} ->
     fpf "if [ %a ]; then" pp_sh_condition condition;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) then_;
+    (match else_ with
+     | [] -> ()
+     | _ ->
+       fpf "else";
+       List.iter (pp_sh_command ~indent:(indent + 2) fmtr) else_);
     fpf "fi"
   | Prompt {question; varname} ->
     fpf {|printf "%s "|} question;
