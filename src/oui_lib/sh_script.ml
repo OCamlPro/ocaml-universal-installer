@@ -27,6 +27,7 @@ type command =
   | Symlink of {target: string; link: string}
   | Set_permissions_in of
       {on: find_type; permissions: int; starting_point: string}
+  | Copy_all_in of {src: string; dst: string; except: string}
   | If of {condition : condition; then_ : command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
@@ -51,6 +52,8 @@ let case varname cases = Case {varname; cases}
 
 let set_permissions_in ~on ~permissions starting_point =
   Set_permissions_in {on; permissions; starting_point}
+
+let copy_all_in ~src ~dst ~except = Copy_all_in {src; dst; except}
 
 let pp_sh_find_type fmtr ft =
   match ft with
@@ -83,6 +86,10 @@ let rec pp_sh_command ~indent fmtr command =
       starting_point
       pp_sh_find_type on
       permissions
+  | Copy_all_in {src; dst; except} ->
+    fpf
+      "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %s \\;"
+      src except dst
   | If {condition; then_} ->
     fpf "if [ %a ]; then" pp_sh_condition condition;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) then_;

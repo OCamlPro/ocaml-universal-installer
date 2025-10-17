@@ -50,18 +50,12 @@ let%expect_test "install_script: one binary" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p /opt/aaa /opt/aaa/bin
-    cp aaa-command /opt/aaa/bin
-    cp aaa-utility /opt/aaa/bin
-    find /opt/aaa -type d -exec chmod 755 {} +
-    find /opt/aaa -type f -exec chmod 644 {} +
-    find /opt/aaa/bin -type f -exec chmod 755 {} +
+    mkdir -p -m 755 /opt/aaa
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/aaa \;
     echo "Adding aaa-command to /usr/local/bin"
-    ln -s /opt/aaa/bin/aaa-command /usr/local/bin/aaa-command
+    ln -s /opt/aaa/aaa-command /usr/local/bin/aaa-command
     echo "Adding aaa-utility to /usr/local/bin"
-    ln -s /opt/aaa/bin/aaa-utility /usr/local/bin/aaa-utility
-    cp uninstall.sh /opt/aaa
-    chmod 755 /opt/aaa/uninstall.sh
+    ln -s /opt/aaa/aaa-utility /usr/local/bin/aaa-utility
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run /opt/aaa/uninstall.sh."
     |}]

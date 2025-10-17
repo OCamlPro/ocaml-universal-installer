@@ -33,39 +33,25 @@ let install_script (ic : Installer_config.t) =
   let package = ic.name in
   let version = ic.version in
   let prefix = "/opt" / package in
-  let bin = prefix / "bin" in
   let usrbin = "/usr/local/bin" in
   let setup =
     [ echof "Installing %s.%s to %s" package version prefix
     ; check_run_as_root
-    ; mkdir [prefix; bin]
+    ; mkdir ~permissions:755 [prefix]
     ]
+  in
+  let install_bundle =
+    Sh_script.copy_all_in ~src:"." ~dst:prefix ~except:install_script_name
   in
   let binaries = ic.exec_files in
-  let install_binaries =
-    List.map
-      (fun binary -> cp ~src:binary ~dst:bin)
-      binaries
-  in
-  let set_permissions =
-    [ set_permissions_in prefix ~on:Dirs ~permissions:755
-    ; set_permissions_in prefix ~on:Files ~permissions:644
-    ; set_permissions_in bin ~on:Files ~permissions:755
-    ]
-  in
   let add_symlinks_to_usrbin =
     List.concat_map
       (fun binary ->
          [ echof "Adding %s to %s" binary usrbin
-         ; symlink ~target:(bin / binary) ~link:(usrbin / binary)
+         ; symlink ~target:(prefix / binary) ~link:(usrbin / binary)
          ]
       )
       binaries
-  in
-  let install_uninstall_sh =
-    [ cp ~src:uninstall_script_name ~dst:prefix
-    ; chmod 755 [prefix / uninstall_script_name]
-    ]
   in
   let notify_install_complete =
     [ echof "Installation complete!"
@@ -75,10 +61,8 @@ let install_script (ic : Installer_config.t) =
     ]
   in
   setup
-  @ install_binaries
-  @ set_permissions
+  @ [install_bundle]
   @ add_symlinks_to_usrbin
-  @ install_uninstall_sh
   @ notify_install_complete
 
 let uninstall_script (ic : Installer_config.t) =
@@ -156,6 +140,7 @@ let create_installer
   Sh_script.save install_script install_sh;
   Sh_script.save uninstall_script uninstall_sh;
   System.call_unit Chmod (755, install_sh);
+  System.call_unit Chmod (755, uninstall_sh);
   let args : System.makeself =
     { archive_dir = bundle_dir
     ; installer

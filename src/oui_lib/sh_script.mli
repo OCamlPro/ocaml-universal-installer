@@ -27,6 +27,7 @@ type command =
   | Symlink of {target: string; link: string}
   | Set_permissions_in of
       {on: find_type; permissions: int; starting_point: string}
+  | Copy_all_in of {src: string; dst: string; except: string}
   | If of {condition : condition; then_ : command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
@@ -74,6 +75,8 @@ val if_ : condition -> command list -> command
 (** [set_permissions_in starting_point ~on ~permissions] is
     ["find starting_point -type find_type -exec chmod permissions {} +"] *)
 val set_permissions_in : on: find_type -> permissions: int -> string -> command
+
+val copy_all_in : src: string -> dst: string -> except: string -> command
 
 (** [promt ~question ~varname] is ["printf \"question \""] followed by
     [read varname]. *)
