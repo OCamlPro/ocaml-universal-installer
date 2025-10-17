@@ -85,6 +85,7 @@ let%expect_test "install_script: one binary" =
     else
       MAN_DEST="usr/local/man"
     fi
+    echo "Installing manpages to $MAN_DEST..."
     mkdir -p -m 755 $MAN_DEST/man1
     ln -s /opt/aaa/man/man1/aaa-command.1 $MAN_DEST/man1/aaa-command.1
     ln -s /opt/aaa/man/man1/aaa-utility.1 $MAN_DEST/man1/aaa-utility.1
