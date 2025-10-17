@@ -42,7 +42,7 @@ type cygpath_out = [
   | `CygAbs (** Absolute Path Cygwin *)
   ]
 
-(** External commands that could be called and handled by {b opam-wix}. *)
+(** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
   | Cygcheck: string command   (** {b cygcheck} command to get binaries' DLLs paths *)

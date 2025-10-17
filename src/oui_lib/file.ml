@@ -10,7 +10,7 @@
 
 open OpamPp.Op
 
-let conf_default = OpamFilename.of_string "opam-wix.conf"
+let conf_default = OpamFilename.of_string "opam-oui.conf"
 
 module Syntax = struct
   let internal = "conf"

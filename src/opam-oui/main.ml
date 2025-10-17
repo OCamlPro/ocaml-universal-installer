@@ -43,7 +43,7 @@ let create_bundle cli =
            let dst = OpamFilename.of_string output in
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst)
   in
-  OpamArg.mk_command ~cli OpamArg.cli_original "opam-make-installer"
+  OpamArg.mk_command ~cli OpamArg.cli_original "opam-oui"
     ~doc ~man:[]
     Term.(const create_bundle
           $ OpamArg.global_options cli
