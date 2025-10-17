@@ -20,6 +20,7 @@ type condition =
 type command =
   | Exit of int
   | Echo of string
+  | Assign of {var: string; value: string}
   | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
@@ -28,7 +29,7 @@ type command =
   | Set_permissions_in of
       {on: find_type; permissions: int; starting_point: string}
   | Copy_all_in of {src: string; dst: string; except: string}
-  | If of {condition : condition; then_ : command list}
+  | If of {condition : condition; then_ : command list; else_: command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
 and case =
@@ -43,6 +44,9 @@ val pp_sh : Format.formatter -> t -> unit
 
 (** [exit i] is ["exit i"] *)
 val exit : int -> command
+
+(** [assign ~var:"VAR" ~value:"value"] is ["VAR=\"value\""] *)
+val assign : var: string -> value: string -> command
 
 (** [echo fmt args] is ["echo \"s\""] where [s] is the expanded format
     string. *)
@@ -70,7 +74,12 @@ val symlink : target: string -> link: string -> command
     ["if [ condition ]; then
       commands
     fi"] *)
-val if_ : condition -> command list -> command
+val if_ :
+  condition ->
+  command list ->
+  ?else_: command list ->
+  unit ->
+  command
 
 (** [set_permissions_in starting_point ~on ~permissions] is
     ["find starting_point -type find_type -exec chmod permissions {} +"] *)
