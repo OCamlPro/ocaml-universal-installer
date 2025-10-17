@@ -20,13 +20,14 @@ type condition =
 type command =
   | Exit of int
   | Echo of string
-  | Mkdir of string list
+  | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
   | Rm of {rec_: bool; files : string list}
   | Symlink of {target: string; link: string}
   | Set_permissions_in of
       {on: find_type; permissions: int; starting_point: string}
+  | Copy_all_in of {src: string; dst: string; except: string}
   | If of {condition : condition; then_ : command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
@@ -39,7 +40,7 @@ type t = command list
 
 let exit i = Exit i
 let echof fmt = Format.kasprintf (fun s -> Echo s) fmt
-let mkdir dirs = Mkdir dirs
+let mkdir ?permissions dirs = Mkdir {permissions; dirs}
 let chmod permissions files = Chmod {permissions; files}
 let cp ~src ~dst = Cp {src; dst}
 let rm files = Rm {rec_ = false; files}
@@ -51,6 +52,8 @@ let case varname cases = Case {varname; cases}
 
 let set_permissions_in ~on ~permissions starting_point =
   Set_permissions_in {on; permissions; starting_point}
+
+let copy_all_in ~src ~dst ~except = Copy_all_in {src; dst; except}
 
 let pp_sh_find_type fmtr ft =
   match ft with
@@ -70,7 +73,9 @@ let rec pp_sh_command ~indent fmtr command =
   match command with
   | Exit i -> fpf "exit %d" i
   | Echo s -> fpf "echo %S" s
-  | Mkdir dirs -> fpf "mkdir -p %a" pp_files dirs
+  | Mkdir {permissions = None; dirs} -> fpf "mkdir -p %a" pp_files dirs
+  | Mkdir {permissions = Some perm; dirs} ->
+    fpf "mkdir -p -m %i %a" perm pp_files dirs
   | Chmod {permissions; files} -> fpf "chmod %i %a" permissions pp_files files
   | Cp {src; dst} -> fpf "cp %s %s" src dst
   | Rm {rec_ = true; files} -> fpf "rm -rf %a" pp_files files
@@ -81,6 +86,10 @@ let rec pp_sh_command ~indent fmtr command =
       starting_point
       pp_sh_find_type on
       permissions
+  | Copy_all_in {src; dst; except} ->
+    fpf
+      "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %s \\;"
+      src except dst
   | If {condition; then_} ->
     fpf "if [ %a ]; then" pp_sh_condition condition;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) then_;
