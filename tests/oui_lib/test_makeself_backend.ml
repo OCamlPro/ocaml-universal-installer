@@ -117,11 +117,19 @@ let%expect_test "uninstall_script: one binary" =
       echo "Please run again as root."
       exit 1
     fi
+    if [ -d "/usr/local/share/man" ]; then
+      MAN_DEST="/usr/local/share/man"
+    else
+      MAN_DEST="usr/local/man"
+    fi
     echo "About to uninstall aaa."
     echo "The following files and folders will be removed from the system:"
     echo "- /opt/aaa"
     echo "- /usr/local/bin/aaa-command"
     echo "- /usr/local/bin/aaa-utility"
+    echo "- $MAN_DEST/man1/aaa-command.1"
+    echo "- $MAN_DEST/man1/aaa-utility.1"
+    echo "- $MAN_DEST/man5/aaa-file.1"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -142,11 +150,6 @@ let%expect_test "uninstall_script: one binary" =
     if [ -L "/usr/local/bin/aaa-utility" ]; then
       echo "Removing symlink /usr/local/bin/aaa-utility..."
       rm -f /usr/local/bin/aaa-utility
-    fi
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
-    else
-      MAN_DEST="usr/local/man"
     fi
     if [ -L "$MAN_DEST/man1/aaa-command.1" ]; then
       echo "Removing manpage $MAN_DEST/man1/aaa-command.1..."
