@@ -43,17 +43,7 @@ let set_man_dest =
 let manpages_to_list (mnpgs : Installer_config.manpages option) =
   match mnpgs with
   | None -> []
-  | Some mnpgs ->
-    [ ("man1", mnpgs.man1)
-    ; ("man2", mnpgs.man2)
-    ; ("man3", mnpgs.man3)
-    ; ("man4", mnpgs.man4)
-    ; ("man5", mnpgs.man5)
-    ; ("man6", mnpgs.man6)
-    ; ("man7", mnpgs.man7)
-    ; ("man8", mnpgs.man8)
-    ]
-    |> List.filter (function (_, []) -> false | _ -> true)
+  | Some mnpgs -> Installer_config.manpages_to_list mnpgs
 
 let install_manpages ~prefix manpages =
   let open Sh_script in
