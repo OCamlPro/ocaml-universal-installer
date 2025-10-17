@@ -55,6 +55,15 @@ type t = {
   }
 [@@deriving yojson]
 
+(** Converts the manpages record to an association list for ease of use. *)
+val manpages_to_list : manpages -> (string * (string list)) list
+
+(** Converts an association list to a manpage record, do not use on user
+    provided data, only on trusted sources.
+    @return [None] on empty lists, [Some manpages] otherwise.
+    @raise [Invalid_argument msg] on invalid or duplicate keys. *)
+val manpages_of_list : (string * (string list)) list -> manpages option
+
 val load : OpamFilename.t -> t
 val save : t -> OpamFilename.t -> unit
 

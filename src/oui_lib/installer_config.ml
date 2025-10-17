@@ -65,6 +65,53 @@ type t = {
   }
 [@@deriving yojson]
 
+let manpages_to_list mnpgs =
+  [ ("man1", mnpgs.man1)
+  ; ("man2", mnpgs.man2)
+  ; ("man3", mnpgs.man3)
+  ; ("man4", mnpgs.man4)
+  ; ("man5", mnpgs.man5)
+  ; ("man6", mnpgs.man6)
+  ; ("man7", mnpgs.man7)
+  ; ("man8", mnpgs.man8)
+  ]
+  |> List.filter (function (_, []) -> false | _ -> true)
+
+let manpages_of_list = function
+  | [] -> None
+  | l ->
+    let init =
+      { man1 = []; man2 = []; man3 = []; man4 = []; man5 = []; man6 = []
+      ; man7 = []; man8 = [] }
+    in
+    let mnpgs =
+      List.fold_left
+        (fun acc (section, pages) ->
+           match acc, section with
+           | {man1 = []; _}, "man1" -> {acc with man1 = pages}
+           | {man2 = []; _}, "man2" -> {acc with man2 = pages}
+           | {man3 = []; _}, "man3" -> {acc with man3 = pages}
+           | {man4 = []; _}, "man4" -> {acc with man4 = pages}
+           | {man5 = []; _}, "man5" -> {acc with man5 = pages}
+           | {man6 = []; _}, "man6" -> {acc with man6 = pages}
+           | {man7 = []; _}, "man7" -> {acc with man7 = pages}
+           | {man8 = []; _}, "man8" -> {acc with man8 = pages}
+           | _, ("man1"|"man2"|"man3"|"man4"|"man5"|"man6"|"man7"|"man8") ->
+             invalid_arg @@
+             Printf.sprintf
+               "%s: multiple occurences of the same section."
+               __FUNCTION__
+           | _, _ ->
+             invalid_arg @@
+             Printf.sprintf
+               "%s: Invalid manpage section %S."
+               __FUNCTION__
+               section)
+        init
+        l
+    in
+    Some mnpgs
+
 exception Invalid_file of string
 
 let invalid_file fmt =
