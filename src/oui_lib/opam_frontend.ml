@@ -314,6 +314,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
      wix_icon_file = Option.map OpamFilename.to_string conf.conf_icon_file;
      wix_dlg_bmp_file = Option.map OpamFilename.to_string conf.conf_dlg_bmp;
      wix_banner_bmp_file = Option.map OpamFilename.to_string conf.conf_ban_bmp;
+     wix_license_file = None; (* TODO *)
      wix_environment =
        package_environment ~conffile ~embedded_dirs ~embedded_files;
      wix_embedded_dirs = embedded_dirs ;

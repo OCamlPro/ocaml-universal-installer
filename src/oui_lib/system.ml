@@ -33,7 +33,6 @@ type _ command =
   | Cygcheck : string command
   | Ldd : string command
   | Cygpath : (cygpath_out * string) command
-  | Uuidgen : uuid_mode command
   | Wix : wix command
   | Makeself : makeself command
   | Chmod : (int * OpamFilename.t) command
@@ -58,12 +57,6 @@ let call_inner : type a. a command -> a -> string * string list =
       | `CygAbs -> "-ua"
     in
     "cygpath", [ opts; path ]
-  | Uuidgen, Rand ->
-    "uuidgen", []
-  | Uuidgen, Exec (p,e,v) ->
-    "uuidgen", ["--md5"; "--namespace"; "@dns"; "--name";
-      Format.sprintf "opam.%s.%s%s" p e
-        (if v = None then "" else "."^ Option.get v)]
   | Wix, {wix_wix_path; wix_files; wix_exts; wix_out} ->
     let wix = Filename.concat wix_wix_path "wix.exe" in
     let args = "build" ::

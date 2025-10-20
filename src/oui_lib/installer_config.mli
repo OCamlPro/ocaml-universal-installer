@@ -31,6 +31,7 @@ type t = {
     wix_banner_bmp_file : string option;
     (* Banner bmp filename, used by WiX. Defaults to our
        data/images/bannrbmp.bmp *)
+    wix_license_file : string option;
     wix_embedded_dirs : (OpamFilename.Base.t * OpamFilename.Dir.t) list;
     (** Embedded directories information (reference another wxs file) *)
     wix_additional_embedded_name : string list ;
