@@ -237,8 +237,7 @@ let manpages changes =
          | s -> s
        in
        let page = Filename.basename page in
-
-       OpamStd.String.Map.add_to_list section page map)
+       OpamStd.String.Map.update section (fun l -> page::l) [page] map)
     OpamStd.String.Map.empty
     manpages
   |> OpamStd.String.Map.bindings
