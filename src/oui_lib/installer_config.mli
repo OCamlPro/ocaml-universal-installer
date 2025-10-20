@@ -8,6 +8,17 @@
 (*                                                                        *)
 (**************************************************************************)
 
+type manpages =
+  { man1 : string list
+  ; man2 : string list
+  ; man3 : string list
+  ; man4 : string list
+  ; man5 : string list
+  ; man6 : string list
+  ; man7 : string list
+  ; man8 : string list
+  }
+
 (** Information module used to generated main wxs document. *)
 type t = {
     name : string;
@@ -20,6 +31,7 @@ type t = {
     manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     exec_files : string list; (** Filenames of bundled .exe binary. *)
+    makeself_manpages : manpages option; (** Paths to manpages, split by sections. *)
     wix_guid : string option;
     (** Package UID, used by WiX backend. Should be equal for every version of
         given package. If not specified, generated new UID *)
@@ -42,6 +54,15 @@ type t = {
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
   }
 [@@deriving yojson]
+
+(** Converts the manpages record to an association list for ease of use. *)
+val manpages_to_list : manpages -> (string * (string list)) list
+
+(** Converts an association list to a manpage record, do not use on user
+    provided data, only on trusted sources.
+    @return [None] on empty lists, [Some manpages] otherwise.
+    @raise [Invalid_argument msg] on invalid or duplicate keys. *)
+val manpages_of_list : (string * (string list)) list -> manpages option
 
 val load : OpamFilename.t -> t
 val save : t -> OpamFilename.t -> unit

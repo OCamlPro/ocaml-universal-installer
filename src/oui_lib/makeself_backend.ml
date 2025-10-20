@@ -10,6 +10,11 @@
 
 let install_script_name = "install.sh"
 let uninstall_script_name = "uninstall.sh"
+let man_dst = "MAN_DEST"
+let man_dst_var = "$" ^ man_dst
+let usrbin = "/usr/local/bin"
+let usrshareman = "/usr/local/share/man"
+let usrman = "usr/local/man"
 
 let check_makeself_installed () =
   match Sys.command "command -v makeself.sh >/dev/null 2>&1" with
@@ -26,6 +31,41 @@ let check_run_as_root =
     ; echof "Please run again as root."
     ; exit 1
     ]
+    ()
+
+let set_man_dest =
+  let open Sh_script in
+  if_ (Dir_exists usrshareman)
+    [assign ~var:man_dst ~value:usrshareman]
+    ~else_:[assign ~var:man_dst ~value:usrman]
+    ()
+
+let manpages_to_list (mnpgs : Installer_config.manpages option) =
+  match mnpgs with
+  | None -> []
+  | Some mnpgs -> Installer_config.manpages_to_list mnpgs
+
+let install_manpages ~prefix manpages =
+  let open Sh_script in
+  let (/) = Filename.concat in
+  let install_page ~section page =
+    let name = Filename.basename page in
+    symlink ~target:(prefix / page) ~link:(section / name)
+  in
+  match manpages with
+  | [] -> []
+  | _ ->
+    let install_manpages =
+      List.concat_map
+        (fun (section, pages) ->
+           let section = man_dst_var / section in
+           mkdir ~permissions:755 [section]
+           :: (List.map (install_page ~section) pages))
+        manpages
+    in
+    set_man_dest
+    :: echof "Installing manpages to %s..." man_dst_var
+    :: install_manpages
 
 let install_script (ic : Installer_config.t) =
   let open Sh_script in
@@ -33,7 +73,6 @@ let install_script (ic : Installer_config.t) =
   let package = ic.name in
   let version = ic.version in
   let prefix = "/opt" / package in
-  let usrbin = "/usr/local/bin" in
   let setup =
     [ echof "Installing %s.%s to %s" package version prefix
     ; check_run_as_root
@@ -53,6 +92,8 @@ let install_script (ic : Installer_config.t) =
       )
       binaries
   in
+  let manpages = manpages_to_list ic.makeself_manpages in
+  let install_manpages = install_manpages ~prefix manpages in
   let notify_install_complete =
     [ echof "Installation complete!"
     ; echof
@@ -63,6 +104,7 @@ let install_script (ic : Installer_config.t) =
   setup
   @ [install_bundle]
   @ add_symlinks_to_usrbin
+  @ install_manpages
   @ notify_install_complete
 
 let uninstall_script (ic : Installer_config.t) =
@@ -72,18 +114,30 @@ let uninstall_script (ic : Installer_config.t) =
   let prefix = "/opt" / package in
   let usrbin = "/usr/local/bin" in
   let binaries = ic.exec_files in
+  let manpages = manpages_to_list ic.makeself_manpages in
   let display_symlinks =
     List.map
       (fun binary -> echof "- %s/%s" usrbin binary)
       binaries
   in
+  let display_manpages =
+    List.concat_map
+      (fun (section, pages) ->
+         List.map
+           (fun page ->
+              echof "- %s/%s/%s" man_dst_var section (Filename.basename page))
+           pages)
+      manpages
+  in
   let setup =
     [ check_run_as_root
+    ; set_man_dest
     ; echof "About to uninstall %s." package
     ; echof "The following files and folders will be removed from the system:"
     ; echof "- %s" prefix
     ]
     @ display_symlinks
+    @ display_manpages
   in
   let confirm_uninstall =
     [ prompt ~question:"Proceed? [y/N]" ~varname:"ans"
@@ -98,25 +152,41 @@ let uninstall_script (ic : Installer_config.t) =
         [ echof "Removing %s..." prefix
         ; rm_rf [prefix]
         ]
+        ()
     ]
   in
   let remove_symlinks =
-    List.concat_map
+    List.map
       (fun binary ->
          let link = usrbin / binary in
-         [ if_ (Link_exists link)
-             [ echof "Removink symlink %s..." link
-             ; rm [link]
-             ]
-         ]
+         if_ (Link_exists link)
+           [ echof "Removing symlink %s..." link
+           ; rm [link]
+           ]
+           ()
       )
       binaries
+  in
+  let remove_manpages =
+    List.concat_map
+      (fun (section, pages) ->
+         List.map
+           (fun page ->
+              let path = man_dst_var / section / (Filename.basename page) in
+              if_ (Link_exists path)
+                [ echof "Removing manpage %s..." path
+                ; rm [path]
+                ]
+                ())
+           pages)
+      manpages
   in
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
   setup
   @ confirm_uninstall
   @ remove_install_folder
   @ remove_symlinks
+  @ remove_manpages
   @ notify_uninstall_complete
 
 let add_sos_to_bundle ~bundle_dir binary =

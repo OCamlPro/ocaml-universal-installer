@@ -220,6 +220,54 @@ let conf_embedded ~global_state ~switch_state ~env conffile =
         Some (Copy_external path))
     conffile.File.Conf.c_embedded
 
+let manpages changes =
+  let manpages =
+    List.filter_map
+      (fun path ->
+         let prefix = if Sys.win32 then "man\\" else "man/" in
+         let page = OpamStd.String.remove_prefix ~prefix path in
+         if String.equal path page then None else Some page)
+      changes
+  in
+  List.fold_left
+    (fun map page ->
+       let section =
+         match Filename.dirname page with
+         | "man1M" -> "man8"
+         | s -> s
+       in
+       let page = Filename.basename page in
+       OpamStd.String.Map.update section (fun l -> page::l) [page] map)
+    OpamStd.String.Map.empty
+    manpages
+  |> OpamStd.String.Map.bindings
+
+let copy_manpages_to_bundle ~opam_man_dir ~bundle_dir manpages =
+  match manpages with
+  | [] -> ()
+  | _ ->
+    let man_dir = OpamFilename.Op.(bundle_dir / "man") in
+    OpamFilename.mkdir man_dir;
+    List.iter
+      (fun (section, pages) ->
+         let section_dir = OpamFilename.Op.(man_dir / section) in
+         OpamFilename.mkdir section_dir;
+         List.iter
+           (fun page ->
+              let src = OpamFilename.Op.(opam_man_dir / section // page) in
+              let dst = OpamFilename.Op.(section_dir // page) in
+              OpamFilename.copy ~src ~dst)
+           pages)
+      manpages
+
+let manpages_paths manpages =
+  let (/) = Filename.concat in
+  List.map
+    (fun (section, pages) ->
+       let pages_paths = List.map (fun page -> "man" / section / page) pages in
+       section, pages_paths)
+    manpages
+
 let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
     package_name =
   let package =
@@ -261,30 +309,37 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
          ~dst:(OpamFilename.create bundle_dir exe_base))
     binaries_path
     exe_bases;
+  let manpages = manpages changes in
+  let opam_man_dir =
+    OpamPath.Switch.man_dir global_state.root switch_state.switch
+      switch_state.switch_config
+  in
+  copy_manpages_to_bundle ~opam_man_dir ~bundle_dir manpages;
+  let manpages_paths = manpages_paths manpages in
   let emb_modes = conf_embedded ~global_state ~switch_state ~env conffile in
   let (embedded_dirs : (basename * dirname) list),
       (embedded_files : (basename * filename) list) =
     List.fold_left
       (fun (dirs, files) -> function
-        | Copy_alias (dirname, alias) when Sys.is_directory dirname ->
-          let dir =
-            copy_embedded (module System.DIR_IMPL) ~env ~bundle_dir dirname alias
-          in
-          (dir::dirs, files)
-        | Copy_alias (filename, alias) ->
-          let file =
-            copy_embedded (module System.FILE_IMPL) ~env ~bundle_dir filename alias
-          in
-          (dirs, file::files)
-        | Copy_opam path ->
-          let prefix =
-            OpamPath.Switch.root global_state.root switch_state.switch
-          in
-          copy_include path prefix opam_dir;
-          (dirs, files)
-        | Copy_external path ->
-          copy_include path (OpamFilename.Dir.of_string ".") external_dir;
-          (dirs, files))
+         | Copy_alias (dirname, alias) when Sys.is_directory dirname ->
+           let dir =
+             copy_embedded (module System.DIR_IMPL) ~env ~bundle_dir dirname alias
+           in
+           (dir::dirs, files)
+         | Copy_alias (filename, alias) ->
+           let file =
+             copy_embedded (module System.FILE_IMPL) ~env ~bundle_dir filename alias
+           in
+           (dirs, file::files)
+         | Copy_opam path ->
+           let prefix =
+             OpamPath.Switch.root global_state.root switch_state.switch
+           in
+           copy_include path prefix opam_dir;
+           (dirs, files)
+         | Copy_external path ->
+           copy_include path (OpamFilename.Dir.of_string ".") external_dir;
+           (dirs, files))
       ([],[])
       emb_modes
   in
@@ -299,7 +354,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
       | Some (false) -> ["external"], [ external_dir ]
     in (opam_base @ external_base), (opam_dir @ external_dir)
   in
-  OpamConsole.formatted_msg "Bundle created.";
+  OpamConsole.formatted_msg "Bundle created.\n";
   let open Installer_config in
   (bundle_dir,
    {
@@ -321,6 +376,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
      wix_additional_embedded_name = additional_embedded_name ;
      wix_embedded_files = embedded_files ;
      wix_additional_embedded_dir = additional_embedded_dir;
+     makeself_manpages = Installer_config.manpages_of_list manpages_paths;
    })
 
 let with_opam_and_conf cli global_options conf f =

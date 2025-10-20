@@ -21,7 +21,7 @@ let package =
 let save_bundle_and_conf ~(installer_config : Installer_config.t) ~bundle_dir
     dst =
   OpamFilename.move_dir ~src:bundle_dir ~dst;
-  let conf_path = OpamFilename.Op.(dst // "installer-config.json") in
+  let conf_path = OpamFilename.Op.(dst // "oui.json") in
   Installer_config.save installer_config conf_path
 
 let create_bundle cli =
