@@ -15,12 +15,12 @@ for your OCaml applications, be it for Linux, Windows or macOS.
    paths, relative to the installation bundle's root, to files or folders
    that require special treatment during the install such as binaries or
    manpages. The full file format is described in the
-   [`oui.json` file format](ouijson-file-format) section.
+   [`oui.json` file format](#ouijson-file-format) section.
 
 Unless you are relying on one of `oui`'s frontend to build them, you will
 need to provide both those things. The
 [Generating a binary installer for your dune
-project](generating-a-binary-installer-for-your-dune-project) section
+project](#generating-a-binary-installer-for-your-dune-project) section
 provides a good example on how to build them.
 
 ## `oui.json` file format
