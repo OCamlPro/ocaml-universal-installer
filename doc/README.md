@@ -15,23 +15,21 @@ main platform it supports.
 ### Linux
 
 Executing a `.run` produced by oui will install the application in
-`/opt/<appname>`:
+`/opt/<appname>`. The installation folder structure will be the same
+as the install bundle you fed to `oui`.
 
-```
-/opt/<appname>/
-├── bin
-│   ├── <binary1>
-│   └── <binary2>
-└── uninstall.sh
-```
+The installer will add a symlink to all your application binaries
+in `/usr/local/bin`.
 
-the `bin/` subfolder will contain all executables for the application.
-A symlink to those will also be written to `/usr/local/bin/`.
+It will also add symlinks to all your application manpages. It will
+install them in the relevant section of the following folders, by order
+of priority:
+1. `/usr/local/share/man`
+2. `/usr/local/man` if **1.** does not exist
 
 An `uninstall.sh` script is also installed alongside the application
-that can be run to cleanly remove it from the system.
-
-
+that can be run to cleanly remove it from the system. It will remove
+the installation folder and all symlinks created during the installation.
 
 ### Windows / WiX
 
