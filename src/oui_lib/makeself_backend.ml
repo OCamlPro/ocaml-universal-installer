@@ -40,6 +40,12 @@ let set_man_dest =
     ~else_:[assign ~var:man_dst ~value:usrman]
     ()
 
+let add_symlink ~prefix ~in_ bundle_path =
+  let open Sh_script in
+  let (/) = Filename.concat in
+  let base = Filename.basename bundle_path in
+  symlink ~target:(prefix / bundle_path) ~link:(in_ / base)
+
 let manpages_to_list (mnpgs : Installer_config.manpages option) =
   match mnpgs with
   | None -> []
@@ -48,10 +54,7 @@ let manpages_to_list (mnpgs : Installer_config.manpages option) =
 let install_manpages ~prefix manpages =
   let open Sh_script in
   let (/) = Filename.concat in
-  let install_page ~section page =
-    let name = Filename.basename page in
-    symlink ~target:(prefix / page) ~link:(section / name)
-  in
+  let install_page ~section page = add_symlink ~prefix ~in_:section page in
   match manpages with
   | [] -> []
   | _ ->
@@ -87,7 +90,7 @@ let install_script (ic : Installer_config.t) =
     List.concat_map
       (fun binary ->
          [ echof "Adding %s to %s" binary usrbin
-         ; symlink ~target:(prefix / binary) ~link:(usrbin / binary)
+         ; add_symlink ~prefix ~in_:usrbin binary
          ]
       )
       binaries

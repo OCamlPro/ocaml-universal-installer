@@ -185,7 +185,7 @@ let%expect_test "install_script: binary in sub folder" =
     mkdir -p -m 755 /opt/name
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
     echo "Adding bin/do to /usr/local/bin"
-    ln -s /opt/name/bin/do /usr/local/bin/bin/do
+    ln -s /opt/name/bin/do /usr/local/bin/do
     echo "Installation complete!"
     echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
     |}]
