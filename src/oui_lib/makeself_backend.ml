@@ -8,6 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+let (/) = Filename.concat
 let install_script_name = "install.sh"
 let uninstall_script_name = "uninstall.sh"
 let man_dst = "MAN_DEST"
@@ -40,6 +41,20 @@ let set_man_dest =
     ~else_:[assign ~var:man_dst ~value:usrman]
     ()
 
+let add_symlink ~prefix ~in_ bundle_path =
+  let open Sh_script in
+  let base = Filename.basename bundle_path in
+  symlink ~target:(prefix / bundle_path) ~link:(in_ / base)
+
+let remove_symlink ?(name="symlink") ~in_ bundle_path =
+  let open Sh_script in
+  let link = in_ / (Filename.basename bundle_path) in
+  if_ (Link_exists link)
+    [ echof "Removing %s %s..." name link
+    ; rm [link]
+    ]
+    ()
+
 let manpages_to_list (mnpgs : Installer_config.manpages option) =
   match mnpgs with
   | None -> []
@@ -47,11 +62,7 @@ let manpages_to_list (mnpgs : Installer_config.manpages option) =
 
 let install_manpages ~prefix manpages =
   let open Sh_script in
-  let (/) = Filename.concat in
-  let install_page ~section page =
-    let name = Filename.basename page in
-    symlink ~target:(prefix / page) ~link:(section / name)
-  in
+  let install_page ~section page = add_symlink ~prefix ~in_:section page in
   match manpages with
   | [] -> []
   | _ ->
@@ -69,7 +80,6 @@ let install_manpages ~prefix manpages =
 
 let install_script (ic : Installer_config.t) =
   let open Sh_script in
-  let (/) = Filename.concat in
   let package = ic.name in
   let version = ic.version in
   let prefix = "/opt" / package in
@@ -87,7 +97,7 @@ let install_script (ic : Installer_config.t) =
     List.concat_map
       (fun binary ->
          [ echof "Adding %s to %s" binary usrbin
-         ; symlink ~target:(prefix / binary) ~link:(usrbin / binary)
+         ; add_symlink ~prefix ~in_:usrbin binary
          ]
       )
       binaries
@@ -155,29 +165,12 @@ let uninstall_script (ic : Installer_config.t) =
         ()
     ]
   in
-  let remove_symlinks =
-    List.map
-      (fun binary ->
-         let link = usrbin / binary in
-         if_ (Link_exists link)
-           [ echof "Removing symlink %s..." link
-           ; rm [link]
-           ]
-           ()
-      )
-      binaries
-  in
+  let remove_symlinks = List.map (remove_symlink ~in_:usrbin) binaries in
   let remove_manpages =
     List.concat_map
       (fun (section, pages) ->
          List.map
-           (fun page ->
-              let path = man_dst_var / section / (Filename.basename page) in
-              if_ (Link_exists path)
-                [ echof "Removing manpage %s..." path
-                ; rm [path]
-                ]
-                ())
+           (remove_symlink ~name:"manpage" ~in_:(man_dst_var / section))
            pages)
       manpages
   in

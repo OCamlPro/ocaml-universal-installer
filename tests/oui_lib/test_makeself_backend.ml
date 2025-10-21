@@ -24,8 +24,8 @@ let make_manpages
   {man1; man2; man3; man4; man5; man6; man7; man8}
 
 let make_config
-    ?(name="")
-    ?(version="")
+    ?(name="name")
+    ?(version="version")
     ?(exec_files=[])
     ?makeself_manpages
     () : Installer_config.t
@@ -50,7 +50,7 @@ let make_config
   ; wix_environment = []
   }
 
-let%expect_test "install_script: one binary" =
+let%expect_test "install_script: simple" =
   let makeself_manpages =
     make_manpages
       ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
@@ -95,7 +95,7 @@ let%expect_test "install_script: one binary" =
     echo "If you want to safely uninstall aaa, please run /opt/aaa/uninstall.sh."
     |}]
 
-let%expect_test "uninstall_script: one binary" =
+let%expect_test "uninstall_script: simple" =
   let makeself_manpages =
     make_manpages
       ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
@@ -167,3 +167,68 @@ let%expect_test "uninstall_script: one binary" =
     echo "Uninstallation complete!"
     |}]
 
+(* Regression test that ensures that if the binaries are not at the bundle's
+   root, the symlink are still installed correctly. *)
+let%expect_test "install_script: binary in sub folder" =
+  let config = make_config ~exec_files:["bin/do"] () in
+  let install_script = Makeself_backend.install_script config in
+  Format.printf "%a" Sh_script.pp_sh install_script;
+  [%expect {|
+    #!/bin/sh
+    set -e
+    echo "Installing name.version to /opt/name"
+    if [ "$(id -u)" -ne 0 ]; then
+      echo "Not running as root. Aborting."
+      echo "Please run again as root."
+      exit 1
+    fi
+    mkdir -p -m 755 /opt/name
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
+    echo "Adding bin/do to /usr/local/bin"
+    ln -s /opt/name/bin/do /usr/local/bin/do
+    echo "Installation complete!"
+    echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
+    |}]
+
+(* Regression test that ensures that if the binaries are not at the bundle's
+   root, the symlinks are correctly removed by the uninstall script. *)
+let%expect_test "uninstall_script: binary in sub folder" =
+  let config = make_config ~exec_files:["bin/do"] () in
+  let uninstall_script = Makeself_backend.uninstall_script config in
+  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  [%expect {|
+    #!/bin/sh
+    set -e
+    if [ "$(id -u)" -ne 0 ]; then
+      echo "Not running as root. Aborting."
+      echo "Please run again as root."
+      exit 1
+    fi
+    if [ -d "/usr/local/share/man" ]; then
+      MAN_DEST="/usr/local/share/man"
+    else
+      MAN_DEST="usr/local/man"
+    fi
+    echo "About to uninstall name."
+    echo "The following files and folders will be removed from the system:"
+    echo "- /opt/name"
+    echo "- /usr/local/bin/bin/do"
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
+    if [ -d "/opt/name" ]; then
+      echo "Removing /opt/name..."
+      rm -rf /opt/name
+    fi
+    if [ -L "/usr/local/bin/do" ]; then
+      echo "Removing symlink /usr/local/bin/do..."
+      rm -f /usr/local/bin/do
+    fi
+    echo "Uninstallation complete!"
+    |}]
