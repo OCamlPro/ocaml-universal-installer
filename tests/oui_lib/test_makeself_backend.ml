@@ -190,3 +190,45 @@ let%expect_test "install_script: binary in sub folder" =
     echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
     |}]
 
+(* Regression test that ensures that if the binaries are not at the bundle's
+   root, the symlinks are correctly removed by the uninstall script. *)
+let%expect_test "uninstall_script: binary in sub folder" =
+  let config = make_config ~exec_files:["bin/do"] () in
+  let uninstall_script = Makeself_backend.uninstall_script config in
+  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  [%expect {|
+    #!/bin/sh
+    set -e
+    if [ "$(id -u)" -ne 0 ]; then
+      echo "Not running as root. Aborting."
+      echo "Please run again as root."
+      exit 1
+    fi
+    if [ -d "/usr/local/share/man" ]; then
+      MAN_DEST="/usr/local/share/man"
+    else
+      MAN_DEST="usr/local/man"
+    fi
+    echo "About to uninstall name."
+    echo "The following files and folders will be removed from the system:"
+    echo "- /opt/name"
+    echo "- /usr/local/bin/bin/do"
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
+    if [ -d "/opt/name" ]; then
+      echo "Removing /opt/name..."
+      rm -rf /opt/name
+    fi
+    if [ -L "/usr/local/bin/bin/do" ]; then
+      echo "Removing symlink /usr/local/bin/bin/do..."
+      rm -f /usr/local/bin/bin/do
+    fi
+    echo "Uninstallation complete!"
+    |}]
