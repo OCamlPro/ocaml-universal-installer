@@ -226,9 +226,9 @@ let%expect_test "uninstall_script: binary in sub folder" =
       echo "Removing /opt/name..."
       rm -rf /opt/name
     fi
-    if [ -L "/usr/local/bin/bin/do" ]; then
-      echo "Removing symlink /usr/local/bin/bin/do..."
-      rm -f /usr/local/bin/bin/do
+    if [ -L "/usr/local/bin/do" ]; then
+      echo "Removing symlink /usr/local/bin/do..."
+      rm -f /usr/local/bin/do
     fi
     echo "Uninstallation complete!"
     |}]
