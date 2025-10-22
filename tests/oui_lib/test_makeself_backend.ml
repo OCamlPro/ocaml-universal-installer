@@ -48,6 +48,8 @@ let make_config
   ; wix_additional_embedded_dir = []
   ; wix_embedded_files = []
   ; wix_environment = []
+  ; macos_bundle_id = None
+  ; macos_manpages = None
   }
 
 let%expect_test "install_script: simple" =

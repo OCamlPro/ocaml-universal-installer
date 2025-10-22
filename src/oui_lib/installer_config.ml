@@ -62,6 +62,8 @@ type t = {
     wix_additional_embedded_dir : Yojsonable.dirname list; [@default []]
     wix_embedded_files : (Yojsonable.basename * Yojsonable.filename) list; [@default []]
     wix_environment : (string * string) list; [@default []]
+    macos_bundle_id : string option; [@default None]
+    macos_manpages : manpages option; [@default None]
   }
 [@@deriving yojson]
 
