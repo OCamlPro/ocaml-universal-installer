@@ -35,6 +35,8 @@ let run conf backend installer_config bundle_dir output =
             dst)
   | Makeself ->
       Makeself_backend.create_installer ~installer_config ~bundle_dir dst
+  | Pkgbuild ->
+      Pkgbuild_backend.create_installer ~installer_config ~bundle_dir dst
 
 let cmd =
   let term =

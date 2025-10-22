@@ -41,7 +41,10 @@ let create_bundle cli =
            Wix_backend.create_bundle ~tmp_dir ~bundle_dir conf installer_config dst
          | Some Makeself ->
            let dst = OpamFilename.of_string output in
-           Makeself_backend.create_installer ~installer_config ~bundle_dir dst)
+           Makeself_backend.create_installer ~installer_config ~bundle_dir dst
+         | Some Pkgbuild ->
+           let dst = OpamFilename.of_string output in
+           Pkgbuild_backend.create_installer ~installer_config ~bundle_dir dst)
   in
   OpamArg.mk_command ~cli OpamArg.cli_original "opam-oui"
     ~doc ~man:[]
