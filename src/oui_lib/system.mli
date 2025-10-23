@@ -47,6 +47,7 @@ type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
   | Cygcheck: string command   (** {b cygcheck} command to get binaries' DLLs paths *)
   | Ldd : string command (** {b ldd} command to get binaries .so paths *)
+  | Otool : string command (** {b otool} command to get binaries dylib paths on macOS *)
   | Cygpath : (cygpath_out * string) command (** {b cygpath} command to translate path between cygwin and windows and vice-versa *)
   | Wix : wix command
   | Makeself : makeself command (** {b makeself.sh} command to generate linux installer. *)
