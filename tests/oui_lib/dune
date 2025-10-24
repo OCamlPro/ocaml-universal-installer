@@ -9,9 +9,19 @@
 ;------------------------------------------------------------------------;
 
 (library
- (name test)
+ (name linux_tests)
  (inline_tests)
- (enabled_if (= %{os_type} "Unix"))
+ (modules test_ldd test_makeself_backend)
+ (enabled_if (= %{system} "linux"))
+ (preprocess
+  (pps ppx_expect))
+ (libraries oui.lib opam-format))
+
+(library
+ (name macos_tests)
+ (inline_tests)
+ (modules test_otool)
+ (enabled_if (= %{system} "macosx"))
  (preprocess
   (pps ppx_expect))
  (libraries oui.lib opam-format))
