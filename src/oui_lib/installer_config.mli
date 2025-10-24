@@ -52,6 +52,10 @@ type t = {
     (** Embedded files *)
     wix_environment : (string * string) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
+    macos_bundle_id : string option;
+    (** macOS bundle identifier (reverse DNS format). *)
+    macos_manpages : manpages option;
+    (** Man pages to install on macOS. Same structure as makeself_manpages. *)
   }
 [@@deriving yojson]
 

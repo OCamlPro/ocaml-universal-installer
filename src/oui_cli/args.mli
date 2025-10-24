@@ -15,7 +15,7 @@ val config : Oui.Types.config Cmdliner.Term.t
 (** Cmdliner term evaluating to the config compiled from relevant CLI args and
     options. Note that this consumes the first positional argument. *)
 
-type backend = Wix | Makeself
+type backend = Wix | Makeself | Pkgbuild
 
 val backend : backend Cmdliner.Term.t
 (** --backend option to overwrite the default backend detection mechanism,

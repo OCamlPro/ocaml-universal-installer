@@ -32,6 +32,7 @@ type _ command =
   | Which : string command
   | Cygcheck : string command
   | Ldd : string command
+  | Otool : string command
   | Cygpath : (cygpath_out * string) command
   | Wix : wix command
   | Makeself : makeself command
@@ -47,6 +48,8 @@ let call_inner : type a. a command -> a -> string * string list =
     "cygcheck", [ path ]
   | Ldd, path ->
     "ldd", [ path ]
+  | Otool, path ->
+    "otool", [ "-L"; path ]
   | Chmod, (perm, file) ->
     "chmod", [ string_of_int perm; OpamFilename.to_string file ]
   | Cygpath, (out, path) ->

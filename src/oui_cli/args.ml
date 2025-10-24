@@ -107,22 +107,34 @@ let config =
     const apply $ conffile $ wix_version
     $ wix_path $ package_guid $ icon_file $ dlg_bmp $ ban_bmp $ keep_wxs)
 
-type backend = Wix | Makeself
+type backend = Wix | Makeself | Pkgbuild
 
 let pp_backend fmt t =
   match t with
   | Wix -> Fmt.pf fmt "wix"
   | Makeself -> Fmt.pf fmt "makeself"
+  | Pkgbuild -> Fmt.pf fmt "pkgbuild"
 
 type 'a choice = Autodetect | Forced of 'a
 
 let autodetect_backend () =
-  match Sys.unix with
-  | true ->
+  match OpamStd.Sys.os () with
+  | OpamStd.Sys.Darwin ->
+    OpamConsole.formatted_msg
+      "Detected macOS system: using pkgbuild backend.\n";
+    Pkgbuild
+  | OpamStd.Sys.Linux
+  | OpamStd.Sys.FreeBSD
+  | OpamStd.Sys.OpenBSD
+  | OpamStd.Sys.NetBSD
+  | OpamStd.Sys.DragonFly
+  | OpamStd.Sys.Unix
+  | OpamStd.Sys.Other _ ->
     OpamConsole.formatted_msg
       "Detected UNIX system: using makeself.sh backend.\n";
     Makeself
-  | false ->
+  | OpamStd.Sys.Win32
+  | OpamStd.Sys.Cygwin ->
     OpamConsole.formatted_msg "Detected Windows system: using WiX backend.\n";
     Wix
 
@@ -131,6 +143,7 @@ let backend_conv ~make ~print =
     match String.lowercase_ascii s with
     | "wix" -> make (Some Wix)
     | "makeself" -> make (Some Makeself)
+    | "pkgbuild" -> make (Some Pkgbuild)
     | "none" -> make None
     | _ -> Error (Format.sprintf "Unsupported backend %S" s)
   in
@@ -161,7 +174,7 @@ let backend =
           | None -> Error "Unsupported backend \"none\""
           | Some b -> Ok (Forced b))
   in
-  let doc = backend_doc ~choices:["wix"; "makeself"] in
+  let doc = backend_doc ~choices:["wix"; "makeself"; "pkgbuild"] in
   let arg = opt conv Autodetect & info [ "backend" ] ~doc ~docv in
   let choose = function Autodetect -> autodetect_backend () | Forced x -> x in
   Cmdliner.Term.(const choose $ value arg)
@@ -175,7 +188,7 @@ let backend_opt =
   in
   let conv = backend_conv ~make:(fun opt -> Ok (Forced opt)) ~print in
   let doc =
-    backend_doc ~choices:["wix"; "backend"; "none"]
+    backend_doc ~choices:["wix"; "makeself"; "pkgbuild"; "none"]
     ^
     "When $(b,none), disables backend, making the command generate a bundle \
      with an installer config that can later be fed into any of the existing \
@@ -209,5 +222,6 @@ let output_name ~output ~backend (ic : Installer_config.t) =
       | None -> ""
       | Some Wix -> ".msi"
       | Some Makeself -> ".run"
+      | Some Pkgbuild -> ".pkg"
     in
     base ^ ext
