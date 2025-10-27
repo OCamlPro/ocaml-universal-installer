@@ -58,6 +58,16 @@ type codesign_verify_args = {
   verbose : bool;
 }
 
+(** Arguments for pkgbuild command *)
+type pkgbuild_args = {
+  root : OpamFilename.Dir.t; (** Root directory to package *)
+  identifier : string; (** Package identifier (reverse-DNS format) *)
+  version : string; (** Package version *)
+  install_location : string; (** Installation path *)
+  scripts : OpamFilename.Dir.t option; (** Optional scripts directory *)
+  output : OpamFilename.t; (** Output .pkg file *)
+}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
@@ -71,6 +81,7 @@ type _ command =
   | InstallNameTool : install_name_tool_args command (** {b install_name_tool} command to modify dylib paths in macOS binaries *)
   | Codesign : codesign_args command (** {b codesign} command to sign macOS binaries and app bundles *)
   | CodesignVerify : codesign_verify_args command (** {b codesign --verify} command to verify code signatures *)
+  | Pkgbuild : pkgbuild_args command (** {b pkgbuild} command to create macOS component packages *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)
