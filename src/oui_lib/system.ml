@@ -51,6 +51,11 @@ type pkgbuild_args = {
   output : OpamFilename.t;
 }
 
+type productbuild_args = {
+  package : OpamFilename.t;
+  output : OpamFilename.t;
+}
+
 type _ command =
   | Which : string command
   | Cygcheck : string command
@@ -64,6 +69,7 @@ type _ command =
   | Codesign : codesign_args command
   | CodesignVerify : codesign_verify_args command
   | Pkgbuild : pkgbuild_args command
+  | Productbuild : productbuild_args command
 
 exception System_error of string
 
@@ -133,6 +139,11 @@ let call_inner : type a. a command -> a -> string * string list =
       | None -> args
     in
     "pkgbuild", args @ [ OpamFilename.to_string output ]
+  | Productbuild, { package; output } ->
+    "productbuild", [
+      "--package"; OpamFilename.to_string package;
+      OpamFilename.to_string output
+    ]
 
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)
