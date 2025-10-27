@@ -36,6 +36,13 @@ type cygpath_out = [
   | `CygAbs (** Absolute Path Cygwin *)
   ]
 
+(** Arguments for install_name_tool command *)
+type install_name_tool_args = {
+  change_from : string; (** Original dylib path to replace *)
+  change_to : string; (** New dylib path *)
+  binary : OpamFilename.t; (** Binary to modify *)
+}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
@@ -46,6 +53,7 @@ type _ command =
   | Wix : wix command
   | Makeself : makeself command (** {b makeself.sh} command to generate linux installer. *)
   | Chmod : (int * OpamFilename.t) command
+  | InstallNameTool : install_name_tool_args command (** {b install_name_tool} command to modify dylib paths in macOS binaries *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)
