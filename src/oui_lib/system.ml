@@ -29,6 +29,19 @@ type install_name_tool_args = {
   binary : OpamFilename.t;
 }
 
+type codesign_args = {
+  binary : OpamFilename.t;
+  identity : string; (* "-" for ad-hoc, or certificate name *)
+  force : bool;
+  timestamp : bool;
+  entitlements : string option;
+}
+
+type codesign_verify_args = {
+  binary : OpamFilename.t;
+  verbose : bool;
+}
+
 type _ command =
   | Which : string command
   | Cygcheck : string command
@@ -39,6 +52,8 @@ type _ command =
   | Makeself : makeself command
   | Chmod : (int * OpamFilename.t) command
   | InstallNameTool : install_name_tool_args command
+  | Codesign : codesign_args command
+  | CodesignVerify : codesign_verify_args command
 
 exception System_error of string
 
@@ -82,6 +97,20 @@ let call_inner : type a. a command -> a -> string * string list =
   | InstallNameTool, { change_from; change_to; binary } ->
     let path = OpamFilename.to_string binary in
     "install_name_tool", [ "-change"; change_from; change_to; path ]
+  | Codesign, { binary; identity; force; timestamp; entitlements } ->
+    let path = OpamFilename.to_string binary in
+    let args = [ "-s"; identity ] in
+    let args = if force then args @ [ "-f" ] else args in
+    let args = if timestamp then args @ [ "--timestamp" ] else args in
+    let args = match entitlements with
+      | Some ent_path -> args @ [ "--entitlements"; ent_path ]
+      | None -> args
+    in
+    "codesign", args @ [ path ]
+  | CodesignVerify, { binary; verbose } ->
+    let path = OpamFilename.to_string binary in
+    let args = [ "--verify" ] @ (if verbose then [ "--verbose" ] else []) @ [ path ] in
+    "codesign", args
 
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)

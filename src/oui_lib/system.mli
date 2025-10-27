@@ -43,6 +43,21 @@ type install_name_tool_args = {
   binary : OpamFilename.t; (** Binary to modify *)
 }
 
+(** Arguments for codesign command *)
+type codesign_args = {
+  binary : OpamFilename.t; (** Binary to sign *)
+  identity : string; (** Signing identity: "-" for ad-hoc, or certificate name *)
+  force : bool;
+  timestamp : bool; (** Add timestamp *)
+  entitlements : string option; (** Optional path to entitlements file *)
+}
+
+(** Arguments for codesign verify command *)
+type codesign_verify_args = {
+  binary : OpamFilename.t; (** Binary to verify *)
+  verbose : bool;
+}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
@@ -54,6 +69,8 @@ type _ command =
   | Makeself : makeself command (** {b makeself.sh} command to generate linux installer. *)
   | Chmod : (int * OpamFilename.t) command
   | InstallNameTool : install_name_tool_args command (** {b install_name_tool} command to modify dylib paths in macOS binaries *)
+  | Codesign : codesign_args command (** {b codesign} command to sign macOS binaries and app bundles *)
+  | CodesignVerify : codesign_verify_args command (** {b codesign --verify} command to verify code signatures *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)
