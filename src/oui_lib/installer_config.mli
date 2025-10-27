@@ -32,17 +32,13 @@ type t = {
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     exec_files : string list; (** Filenames of bundled .exe binary. *)
     makeself_manpages : manpages option; (** Paths to manpages, split by sections. *)
-    wix_guid : string option;
-    (** Package UID, used by WiX backend. Should be equal for every version of
-        given package. If not specified, generated new UID *)
     wix_tags : string list; (** Package tags, used by WiX. *)
     wix_icon_file : string option;
     (** Icon filename, used by WiX. Defaults to our data/images/logo.ico file. *)
     wix_dlg_bmp_file : string option;
     (** Dialog bmp filename, used by WiX. Default to our data/images/dlgbmp.bmp *)
     wix_banner_bmp_file : string option;
-    (* Banner bmp filename, used by WiX. Defaults to our
-       data/images/bannrbmp.bmp *)
+    (** Banner bmp filename, used by WiX. Defaults to our data/images/bannrbmp.bmp *)
     wix_license_file : string option;
     wix_embedded_dirs : (OpamFilename.Base.t * OpamFilename.Dir.t) list;
     (** Embedded directories information (reference another wxs file) *)

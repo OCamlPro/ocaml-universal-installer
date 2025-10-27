@@ -8,7 +8,21 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Types
+let check_wix_installed () =
+  let wix_bin_exists () =
+    match Sys.command "wix --version" with
+    | 0 -> true
+    | _ -> false
+  in
+  if wix_bin_exists ()
+  then
+    System.call_list [
+      Which, "cygcheck";
+      Which, "cygpath";
+    ]
+  else
+    raise @@ System.System_error
+      (Format.sprintf "Wix binaries couldn't be found.")
 
 let sanitize_id id =
   String.map (fun c ->
@@ -40,9 +54,8 @@ let data_file ~tmp_dir ~default:(name, content) data_path =
       OpamFilename.write dst content;
       OpamFilename.to_string dst
 
-let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
-  let wix_path = System.normalize_path conf.conf_wix_path in
-  System.check_available_commands wix_path;
+let create_bundle ~tmp_dir ~bundle_dir (conf : Config.config) (desc : Installer_config.t) dst =
+  check_wix_installed ();
   OpamConsole.header_msg "Preparing MSI installer using WiX";
   let exec_file =
     match desc.exec_files with
@@ -57,7 +70,6 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
   let background = data_file ~tmp_dir ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file in
   let license = data_file ~tmp_dir ~default:Data.LICENSES.gpl3 desc.wix_license_file in
   let info = Wix.{
-      (* wix_guid = conf.conf_package_guid; *)
       unique_id = sanitize_id (String.concat "." [desc.manufacturer; desc.name]);
       organization = desc.manufacturer;
       short_name = desc.name;
@@ -93,13 +105,12 @@ let create_bundle ~tmp_dir ~bundle_dir conf (desc : Installer_config.t) dst =
     (OpamFilename.to_string main_path |> System.cyg_win_path `WinAbs) ::
     (OpamFilename.to_string extra_path |> System.cyg_win_path `WinAbs) :: []
   in
-  if conf.conf_keep_wxs then
+  if conf.conf_wix_keep_wxs then
     List.iter (fun file ->
         OpamFilename.copy_in (OpamFilename.of_string file)
         @@ OpamFilename.cwd ()) (* we are altering current dir !! *)
       wxs_files;
   let wix = System.{
-      wix_wix_path = wix_path;
       wix_files = wxs_files;
       wix_exts = ["WixToolset.UI.wixext"; "WixToolset.Util.wixext"];
       wix_out = (name ^ ".msi")

@@ -37,7 +37,6 @@ let make_config
   ; description = ""
   ; manufacturer = ""
   ; makeself_manpages
-  ; wix_guid = None
   ; wix_tags = []
   ; wix_icon_file = None
   ; wix_dlg_bmp_file = None
