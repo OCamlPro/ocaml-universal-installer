@@ -49,6 +49,7 @@ let make_config
   ; wix_environment = []
   ; macos_bundle_id = None
   ; macos_manpages = None
+  ; macos_symlink_dirs = []
   }
 
 let%expect_test "install_script: simple" =

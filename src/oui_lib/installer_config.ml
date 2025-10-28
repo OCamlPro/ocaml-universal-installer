@@ -63,6 +63,7 @@ type t = {
     wix_environment : (string * string) list; [@default []]
     macos_bundle_id : string option; [@default None]
     macos_manpages : manpages option; [@default None]
+    macos_symlink_dirs : string list; [@default []]
   }
 [@@deriving yojson]
 

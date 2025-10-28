@@ -52,6 +52,9 @@ type t = {
     (** macOS bundle identifier (reverse DNS format). *)
     macos_manpages : manpages option;
     (** Man pages to install on macOS. Same structure as makeself_manpages. *)
+    macos_symlink_dirs : string list;
+    (** Directories to symlink from Contents/ to Resources/ for dune-site relocatable support.
+        Example: ["lib"; "share"] creates Contents/lib -> Resources/lib and Contents/share -> Resources/share *)
   }
 [@@deriving yojson]
 

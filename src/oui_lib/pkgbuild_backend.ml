@@ -95,6 +95,22 @@ let create_installer
 
   copy_manpages bundle ~bundle_dir ~manpages:installer_config.macos_manpages;
 
+  (* Create symlinks for dune-site relocatable support *)
+  List.iter (fun dir_name ->
+      let src_dir = bundle.resources / dir_name in
+      let link_path =
+        OpamFilename.Dir.to_string bundle.contents ^ "/" ^ dir_name
+      in
+      if OpamFilename.exists_dir src_dir then 
+        (OpamConsole.msg "Creating symlink: Contents/%s -> Resources/%s\n"
+           dir_name dir_name;
+         Unix.symlink ("Resources/" ^ dir_name) link_path)
+      else
+        OpamConsole.warning
+          "Directory %s not found in Resources, skipping symlink"
+          dir_name
+    ) installer_config.macos_symlink_dirs;
+
   (* Create postinstall script *)
   let scripts_dir = work_dir / "scripts" in
   let postinstall_content = Macos_postinstall.generate_postinstall_script
