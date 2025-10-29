@@ -31,7 +31,7 @@ type t = {
     manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     exec_files : string list; (** Filenames of bundled .exe binary. *)
-    makeself_manpages : manpages option; (** Paths to manpages, split by sections. *)
+    manpages : manpages option; (** Paths to manpages, split by sections. *)
     wix_tags : string list; (** Package tags, used by WiX. *)
     wix_icon_file : string option;
     (** Icon filename, used by WiX. Defaults to our data/images/logo.ico file. *)
@@ -48,6 +48,11 @@ type t = {
     (** Embedded files *)
     wix_environment : (string * string) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
+    macos_bundle_id : string option;
+    (** macOS bundle identifier (reverse DNS format). *)
+    macos_symlink_dirs : string list;
+    (** Directories to symlink from Contents/ to Resources/ for dune-site relocatable support.
+        Example: ["lib"; "share"] creates Contents/lib -> Resources/lib and Contents/share -> Resources/share *)
   }
 [@@deriving yojson]
 

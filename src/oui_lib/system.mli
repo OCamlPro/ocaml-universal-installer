@@ -36,15 +36,59 @@ type cygpath_out = [
   | `CygAbs (** Absolute Path Cygwin *)
   ]
 
+(** Arguments for install_name_tool command *)
+type install_name_tool_args = {
+  change_from : string; (** Original dylib path to replace *)
+  change_to : string; (** New dylib path *)
+  binary : OpamFilename.t; (** Binary to modify *)
+}
+
+(** Arguments for codesign command *)
+type codesign_args = {
+  binary : OpamFilename.t; (** Binary to sign *)
+  identity : string; (** Signing identity: "-" for ad-hoc, or certificate name *)
+  force : bool;
+  timestamp : bool; (** Add timestamp *)
+  entitlements : string option; (** Optional path to entitlements file *)
+}
+
+(** Arguments for codesign verify command *)
+type codesign_verify_args = {
+  binary : OpamFilename.t; (** Binary to verify *)
+  verbose : bool;
+}
+
+(** Arguments for pkgbuild command *)
+type pkgbuild_args = {
+  root : OpamFilename.Dir.t; (** Root directory to package *)
+  identifier : string; (** Package identifier (reverse-DNS format) *)
+  version : string; (** Package version *)
+  install_location : string; (** Installation path *)
+  scripts : OpamFilename.Dir.t option; (** Optional scripts directory *)
+  output : OpamFilename.t; (** Output .pkg file *)
+}
+
+(** Arguments for productbuild command *)
+type productbuild_args = {
+  package : OpamFilename.t; (** Component package to wrap *)
+  output : OpamFilename.t; (** Output .pkg file *)
+}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
   | Cygcheck: string command   (** {b cygcheck} command to get binaries' DLLs paths *)
   | Ldd : string command (** {b ldd} command to get binaries .so paths *)
+  | Otool : string command (** {b otool} command to get binaries dylib paths on macOS *)
   | Cygpath : (cygpath_out * string) command (** {b cygpath} command to translate path between cygwin and windows and vice-versa *)
   | Wix : wix command
   | Makeself : makeself command (** {b makeself.sh} command to generate linux installer. *)
   | Chmod : (int * OpamFilename.t) command
+  | InstallNameTool : install_name_tool_args command (** {b install_name_tool} command to modify dylib paths in macOS binaries *)
+  | Codesign : codesign_args command (** {b codesign} command to sign macOS binaries and app bundles *)
+  | CodesignVerify : codesign_verify_args command (** {b codesign --verify} command to verify code signatures *)
+  | Pkgbuild : pkgbuild_args command (** {b pkgbuild} command to create macOS component packages *)
+  | Productbuild : productbuild_args command (** {b productbuild} command to create macOS installer packages *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)

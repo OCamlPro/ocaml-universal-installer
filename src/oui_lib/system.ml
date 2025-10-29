@@ -23,14 +23,53 @@ type makeself = {
 
 type cygpath_out = [ `Win | `WinAbs | `Cyg | `CygAbs ]
 
+type install_name_tool_args = {
+  change_from : string;
+  change_to : string;
+  binary : OpamFilename.t;
+}
+
+type codesign_args = {
+  binary : OpamFilename.t;
+  identity : string; (* "-" for ad-hoc, or certificate name *)
+  force : bool;
+  timestamp : bool;
+  entitlements : string option;
+}
+
+type codesign_verify_args = {
+  binary : OpamFilename.t;
+  verbose : bool;
+}
+
+type pkgbuild_args = {
+  root : OpamFilename.Dir.t;
+  identifier : string;
+  version : string;
+  install_location : string;
+  scripts : OpamFilename.Dir.t option;
+  output : OpamFilename.t;
+}
+
+type productbuild_args = {
+  package : OpamFilename.t;
+  output : OpamFilename.t;
+}
+
 type _ command =
   | Which : string command
   | Cygcheck : string command
   | Ldd : string command
+  | Otool : string command
   | Cygpath : (cygpath_out * string) command
   | Wix : wix command
   | Makeself : makeself command
   | Chmod : (int * OpamFilename.t) command
+  | InstallNameTool : install_name_tool_args command
+  | Codesign : codesign_args command
+  | CodesignVerify : codesign_verify_args command
+  | Pkgbuild : pkgbuild_args command
+  | Productbuild : productbuild_args command
 
 exception System_error of string
 
@@ -42,6 +81,8 @@ let call_inner : type a. a command -> a -> string * string list =
     "cygcheck", [ path ]
   | Ldd, path ->
     "ldd", [ path ]
+  | Otool, path ->
+    "otool", [ "-L"; path ]
   | Chmod, (perm, file) ->
     "chmod", [ string_of_int perm; OpamFilename.to_string file ]
   | Cygpath, (out, path) ->
@@ -69,6 +110,40 @@ let call_inner : type a. a command -> a -> string * string list =
       ]
     in
     makeself, args
+  | InstallNameTool, { change_from; change_to; binary } ->
+    let path = OpamFilename.to_string binary in
+    "install_name_tool", [ "-change"; change_from; change_to; path ]
+  | Codesign, { binary; identity; force; timestamp; entitlements } ->
+    let path = OpamFilename.to_string binary in
+    let args = [ "-s"; identity ] in
+    let args = if force then args @ [ "-f" ] else args in
+    let args = if timestamp then args @ [ "--timestamp" ] else args in
+    let args = match entitlements with
+      | Some ent_path -> args @ [ "--entitlements"; ent_path ]
+      | None -> args
+    in
+    "codesign", args @ [ path ]
+  | CodesignVerify, { binary; verbose } ->
+    let path = OpamFilename.to_string binary in
+    let args = [ "--verify" ] @ (if verbose then [ "--verbose" ] else []) @ [ path ] in
+    "codesign", args
+  | Pkgbuild, { root; identifier; version; install_location; scripts; output } ->
+    let args = [
+      "--root"; OpamFilename.Dir.to_string root;
+      "--identifier"; identifier;
+      "--version"; version;
+      "--install-location"; install_location;
+    ] in
+    let args = match scripts with
+      | Some dir -> args @ [ "--scripts"; OpamFilename.Dir.to_string dir ]
+      | None -> args
+    in
+    "pkgbuild", args @ [ OpamFilename.to_string output ]
+  | Productbuild, { package; output } ->
+    "productbuild", [
+      "--package"; OpamFilename.to_string package;
+      OpamFilename.to_string output
+    ]
 
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)
