@@ -90,10 +90,13 @@ jobs:
         run: opam install ocp-indent.1.8.1
 
       - name: "Test: create package"
-        run: opam exec -- opam-oui --keep-wxs ocp-indent
+        run: |
+          $env:PATH = $env:WIX6 + ";" + $env:PATH
+          opam exec -- opam-oui --keep-wxs ocp-indent
 
       - name: "Test: install package"
-        run: msiexec /i ocp-indent.1.8.1.msi /qn /L*v wixlog.txt ALLUSERS=2 MSIINSTALLPERUSER=
+        run: |
+          msiexec /i ocp-indent-1.8.1.msi /qn /L*v wixlog.txt ALLUSERS=2 MSIINSTALLPERUSER= 
 
       - name: "Test: execute binary"
         run: |
@@ -112,3 +115,10 @@ jobs:
         with:
           name: wixlog.txt
           path: wixlog.txt
+
+      - name: Upload package.msi
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: package.msi
+          path: ocp-indent-1.8.1.msi
