@@ -54,7 +54,8 @@ let data_file ~tmp_dir ~default:(name, content) data_path =
       OpamFilename.write dst content;
       OpamFilename.to_string dst
 
-let create_bundle ~tmp_dir ~bundle_dir (conf : Config.config) (desc : Installer_config.t) dst =
+let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
+    (desc : Installer_config.t) dst =
   check_wix_installed ();
   OpamConsole.header_msg "Preparing MSI installer using WiX";
   let exec_file =
@@ -105,7 +106,7 @@ let create_bundle ~tmp_dir ~bundle_dir (conf : Config.config) (desc : Installer_
     (OpamFilename.to_string main_path |> System.cyg_win_path `WinAbs) ::
     (OpamFilename.to_string extra_path |> System.cyg_win_path `WinAbs) :: []
   in
-  if conf.conf_wix_keep_wxs then
+  if keep_wxs then
     List.iter (fun file ->
         OpamFilename.copy_in (OpamFilename.of_string file)
         @@ OpamFilename.cwd ()) (* we are altering current dir !! *)
