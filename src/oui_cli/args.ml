@@ -20,24 +20,15 @@ let opam_dirname =
   let conv, pp = OpamArg.dirname in
   ((fun dirname_arg -> System.normalize_path dirname_arg |> conv), pp)
 
-let conf_file =
+let opam_conf_file =
   value
   & opt (some opam_filename) None
   & info [ "conf"; "c" ] ~docv:"PATH" ~docs:Man.Section.bin_args
       ~doc:
-        "Configuration file for the binary to install. See $(i,Configuration) \
-         section"
+        "Configuration file for opam-oui, defaults to opam-oui.conf. \
+         See $(i,Configuration) section"
 
 let wix_keep_wxs = value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
-
-let config =
-  let apply conf_file conf_wix_keep_wxs =
-    Config.{
-      conf_file;
-      conf_wix_keep_wxs;
-    }
-  in
-  Term.(const apply $ conf_file $ wix_keep_wxs)
 
 type backend = Wix | Makeself | Pkgbuild
 

@@ -9,9 +9,9 @@
 (**************************************************************************)
 
 val create_bundle :
+  ?keep_wxs: bool ->
   tmp_dir:OpamFilename.Dir.t ->
   bundle_dir:OpamFilename.Dir.t ->
-  Config.config ->
   Installer_config.t ->
   OpamFilename.t ->
   unit

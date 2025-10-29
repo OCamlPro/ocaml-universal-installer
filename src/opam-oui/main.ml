@@ -26,9 +26,10 @@ let save_bundle_and_conf ~(installer_config : Installer_config.t) ~bundle_dir
 
 let create_bundle cli =
   let doc = "Extract package installer bundle" in
-  let create_bundle global_options conf backend output package () =
-    Opam_frontend.with_install_bundle cli global_options conf package
-      (fun conf installer_config ~bundle_dir ~tmp_dir ->
+  let create_bundle global_options conf_file keep_wxs backend output
+      package () =
+    Opam_frontend.with_install_bundle ?conf_file cli global_options package
+      (fun installer_config ~bundle_dir ~tmp_dir ->
          let output =
            Oui_cli.Args.output_name ~output ~backend installer_config
          in
@@ -38,7 +39,8 @@ let create_bundle cli =
            save_bundle_and_conf ~installer_config ~bundle_dir dst
          | Some Wix ->
            let dst = OpamFilename.of_string output in
-           Wix_backend.create_bundle ~tmp_dir ~bundle_dir conf installer_config dst
+           Wix_backend.create_bundle ~keep_wxs ~tmp_dir ~bundle_dir
+             installer_config dst
          | Some Makeself ->
            let dst = OpamFilename.of_string output in
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst
@@ -50,7 +52,8 @@ let create_bundle cli =
     ~doc ~man:[]
     Term.(const create_bundle
           $ OpamArg.global_options cli
-          $ Oui_cli.Args.config
+          $ Oui_cli.Args.opam_conf_file
+          $ Oui_cli.Args.wix_keep_wxs
           $ Oui_cli.Args.backend_opt
           $ Oui_cli.Args.output
           $ package)
