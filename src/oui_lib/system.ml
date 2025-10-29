@@ -8,12 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-type uuid_mode =
-  | Rand
-  | Exec of string * string * string option
-
 type wix = {
-  wix_wix_path : string;
   wix_files : string list;
   wix_exts : string list;
   wix_out : string
@@ -57,8 +52,8 @@ let call_inner : type a. a command -> a -> string * string list =
       | `CygAbs -> "-ua"
     in
     "cygpath", [ opts; path ]
-  | Wix, {wix_wix_path; wix_files; wix_exts; wix_out} ->
-    let wix = Filename.concat wix_wix_path "wix.exe" in
+  | Wix, { wix_files; wix_exts; wix_out } ->
+    let wix = "wix.exe" in
     let args = "build" ::
       List.flatten (List.map (fun e -> ["-ext"; e]) wix_exts)
       @ wix_files @ ["-o"; wix_out]
@@ -145,21 +140,6 @@ let path_str path =
     |> String.concat "/"
   else
     OpamFilename.to_string path
-
-let check_available_commands wix_path =
-  let wix_bin_exists bin =
-    Sys.file_exists @@ Filename.concat wix_path bin
-  in
-  if wix_bin_exists "wix.exe"
-  then
-    call_list [
-      Which, "cygcheck";
-      Which, "cygpath";
-      Which, "uuidgen";
-    ]
-  else
-    raise @@ System_error
-      (Format.sprintf "Wix binaries couldn't be found in %s directory." wix_path)
 
 open OpamTypes
 

@@ -11,9 +11,9 @@
 val with_install_bundle :
   OpamCLIVersion.Sourced.t ->
   OpamArg.global_options ->
-  Types.config ->
+  Config.config ->
   OpamTypes.name ->
-  (Types.config ->
+  (Config.config ->
    Installer_config.t ->
    bundle_dir:OpamFilename.Dir.t ->
    tmp_dir:OpamFilename.Dir.t -> unit) ->

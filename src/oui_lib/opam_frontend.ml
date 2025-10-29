@@ -10,29 +10,26 @@
 
 open OpamTypes
 open OpamStateTypes
-open Types
 
-let normalize_conf env conf file =
-  let open File.Conf in
-  (* argument has precedence over config *)
-  let merge_opt first second =
-    match first with
-    | None -> second
-    | _ -> first
-  in
+type embedded =
+  | Copy_alias of string * string
+  | Copy_external of string
+  | Copy_opam of string
+
+let normalize_conf_file env conf_file =
+  let open Opam_conf_file.Conf in
+  let process f = OpamFilename.to_string (System.resolve_file_path env f) in
   {
-    conf with
-    conf_wix_version = merge_opt conf.conf_wix_version file.c_wix_version;
-    conf_icon_file = merge_opt conf.conf_icon_file
-        (Option.map (System.resolve_file_path env) file.c_images.ico);
-    conf_dlg_bmp = merge_opt conf.conf_dlg_bmp
-        (Option.map (System.resolve_file_path env) file.c_images.dlg);
-    conf_ban_bmp = merge_opt conf.conf_ban_bmp
-        (Option.map (System.resolve_file_path env) file.c_images.ban);
+    conf_file with
+    c_images = {
+      ico = Option.map process conf_file.c_images.ico;
+      dlg = Option.map process conf_file.c_images.dlg;
+      ban = Option.map process conf_file.c_images.ban;
+    }
   }
 
-let wix_version ~conf package =
-  match conf.conf_wix_version with
+let wix_version ~conf_file package =
+  match conf_file.Opam_conf_file.Conf.c_wix_version with
   | Some v -> v
   | None ->
     let pkg_version =
@@ -103,7 +100,7 @@ let package_description ~opam package =
   let summary = Printf.sprintf "Package %s" (OpamPackage.to_string package) in
   synopsis ^ descr ^ summary
 
-let package_environment ~conffile ~embedded_dirs ~embedded_files =
+let package_environment ~conf_file ~embedded_dirs ~embedded_files =
   let all_paths =
     let paths =
       List.fold_left (fun paths (base, _dirname) ->
@@ -131,7 +128,7 @@ let package_environment ~conffile ~embedded_dirs ~embedded_files =
           env content
       in
       var, content)
-    conffile.File.Conf.c_envvar
+    conf_file.Opam_conf_file.Conf.c_envvar
 
 (* search and copy embedded elements *)
 let copy_embedded
@@ -176,7 +173,7 @@ let copy_include path src_dir dst_dir =
 
 (* Extract and specifies extra files to embed in the install archive as
    described by the configuration file. *)
-let conf_embedded ~global_state ~switch_state ~env conffile =
+let conf_embedded ~global_state ~switch_state ~env conf_file =
   List.filter_map (fun (path,alias) ->
       let path = OpamFilter.expand_string env path in
       let prefix =
@@ -218,7 +215,7 @@ let conf_embedded ~global_state ~switch_state ~env conffile =
             "Couldn't find relative path to embed: %s."
             (OpamConsole.colorise `bold path);
         Some (Copy_external path))
-    conffile.File.Conf.c_embedded
+    conf_file.Opam_conf_file.Conf.c_embedded
 
 let manpages changes =
   let manpages =
@@ -268,7 +265,7 @@ let manpages_paths manpages =
        section, pages_paths)
     manpages
 
-let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
+let create_bundle ~global_state ~switch_state ~env ~tmp_dir _conf conf_file
     package_name =
   let package =
     try
@@ -279,7 +276,6 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
         (OpamConsole.colorise `bold (OpamPackage.Name.to_string package_name))
         (OpamConsole.colorise `bold ("opam install " ^ (OpamPackage.Name.to_string package_name)))
   in
-  let version = wix_version ~conf package in
   let opam = OpamSwitchState.opam switch_state package in
   let changes : string list =
     OpamPath.Switch.changes global_state.root switch_state.switch package_name
@@ -316,7 +312,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
   in
   copy_manpages_to_bundle ~opam_man_dir ~bundle_dir manpages;
   let manpages_paths = manpages_paths manpages in
-  let emb_modes = conf_embedded ~global_state ~switch_state ~env conffile in
+  let emb_modes = conf_embedded ~global_state ~switch_state ~env conf_file in
   let (embedded_dirs : (basename * dirname) list),
       (embedded_files : (basename * filename) list) =
     List.fold_left
@@ -360,18 +356,17 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
    {
      name = OpamPackage.Name.to_string (OpamPackage.name package);
      fullname = OpamPackage.to_string package;
-     version;
+     version = wix_version ~conf_file package;
      description = package_description ~opam package;
      manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam);
-     wix_guid = conf.conf_package_guid;
      wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
      exec_files = List.map OpamFilename.Base.to_string exe_bases;
-     wix_icon_file = Option.map OpamFilename.to_string conf.conf_icon_file;
-     wix_dlg_bmp_file = Option.map OpamFilename.to_string conf.conf_dlg_bmp;
-     wix_banner_bmp_file = Option.map OpamFilename.to_string conf.conf_ban_bmp;
+     wix_icon_file = conf_file.c_images.ico;
+     wix_dlg_bmp_file = conf_file.c_images.dlg;
+     wix_banner_bmp_file = conf_file.c_images.ban;
      wix_license_file = None; (* TODO *)
      wix_environment =
-       package_environment ~conffile ~embedded_dirs ~embedded_files;
+       package_environment ~conf_file ~embedded_dirs ~embedded_files;
      wix_embedded_dirs = embedded_dirs ;
      wix_additional_embedded_name = additional_embedded_name ;
      wix_embedded_files = embedded_files ;
@@ -380,9 +375,9 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
    })
 
 let with_opam_and_conf cli global_options conf f =
-  let conffile =
-    let file = OpamStd.Option.default File.conf_default conf.conf_file in
-    File.Conf.safe_read (OpamFile.make file)
+  let conf_file =
+    let file = OpamStd.Option.default Opam_conf_file.conf_default conf.Config.conf_file in
+    Opam_conf_file.Conf.safe_read (OpamFile.make file)
   in
   OpamConsole.header_msg "Initialising opam";
   OpamArg.apply_global_options cli global_options;
@@ -391,18 +386,18 @@ let with_opam_and_conf cli global_options conf f =
   OpamSwitchState.with_ `Lock_read global_state
   @@ fun switch_state ->
   let env = OpamPackageVar.resolve ?opam:None ?local:None switch_state in
-  let conf = normalize_conf env conf conffile in
-  OpamFilename.with_tmp_dir @@
-  fun tmp_dir ->
-  f ~global_state ~switch_state ~env ~tmp_dir conf conffile;
+  let conf_file = normalize_conf_file env conf_file in
+  OpamFilename.with_tmp_dir
+  @@ fun tmp_dir ->
+  f ~global_state ~switch_state ~env ~tmp_dir conf conf_file;
   OpamSwitchState.drop switch_state;
   OpamGlobalState.drop global_state
 
 let with_install_bundle cli global_options conf package f =
   with_opam_and_conf cli global_options conf
-    (fun ~global_state ~switch_state ~env ~tmp_dir conf conffile ->
+    (fun ~global_state ~switch_state ~env ~tmp_dir conf conf_file ->
        let bundle_dir, desc =
-         create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conffile
+         create_bundle ~global_state ~switch_state ~env ~tmp_dir conf conf_file
            package
        in
        f conf desc ~bundle_dir ~tmp_dir)

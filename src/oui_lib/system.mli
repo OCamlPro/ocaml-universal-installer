@@ -12,15 +12,9 @@
     Contains command's output. *)
 exception System_error of string
 
-(** Configuration option for {i uuidgen} command used as a seed for generator. *)
-type uuid_mode =
-  | Rand (** Random seed *)
-  | Exec of string * string * string option (** Seed based on metadata information about package, its version and name of binary. *)
-
-(** Configuration options for {i wix} command as a part of WiX tools. Consists of the path to
-    WiX toolset binaries, input files, extensions to be used and output file path. *)
+(** Configuration options for {i wix} command as a part of WiX tools.
+    Consists of input files, extensions to be used and output file path. *)
 type wix = {
-  wix_wix_path : string;
   wix_files : string list;
   wix_exts : string list;
   wix_out : string
@@ -61,9 +55,6 @@ val call_unit : 'a command -> 'a -> unit
 
 (** Same as [call_unit], but calls commands simultaneously. *)
 val call_list : ('a command * 'a) list -> unit
-
-(** Checks if all handled commands are available system-widely. *)
-val check_available_commands : string -> unit
 
 (** Performs path translations between Windows and Cygwin. See [System.cygpath_out] for more details. *)
 val cyg_win_path : cygpath_out -> string -> string

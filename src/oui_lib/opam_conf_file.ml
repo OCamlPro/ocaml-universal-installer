@@ -18,16 +18,17 @@ module Syntax = struct
   type images = { ico: string option; dlg: string option; ban: string option }
   type t = {
     c_version: OpamVersion.t;
+    c_wix_version: Wix.Version.t option;
     c_images: images;
     c_binary_path: string option;
     c_binary: string option;
-    c_wix_version: Wix.Version.t option;
     c_embedded : (string * string option) list;
     c_envvar: (string * string) list;
   }
 
   let empty = {
     c_version = format_version;
+    c_wix_version = None;
     c_images = {
       ico = None;
       dlg = None;
@@ -35,7 +36,6 @@ module Syntax = struct
     };
     c_binary_path = None;
     c_binary = None;
-    c_wix_version = None;
     c_embedded = [];
     c_envvar = [];
   }
@@ -57,6 +57,10 @@ module Syntax = struct
     "opamwix-version", OpamPp.ppacc
       (fun c_version t -> { t with c_version}) (fun t -> t.c_version)
       (OpamFormat.V.string -| OpamPp.of_module "version" (module OpamVersion));
+    "wix-version", OpamPp.ppacc_opt
+      (fun c_wix_version t -> { t with c_wix_version = Some c_wix_version })
+      (fun t -> t.c_wix_version)
+      (OpamFormat.V.string -| OpamPp.of_module "wix_version" (module Wix.Version));
     "ico", OpamPp.ppacc_opt
       (fun ico t -> { t with c_images = { t.c_images with ico = Some ico } })
       (fun t -> t.c_images.ico)
@@ -76,10 +80,6 @@ module Syntax = struct
     "binary", OpamPp.ppacc_opt
       (fun binary t -> { t with c_binary = Some binary }) (fun t -> t.c_binary)
       OpamFormat.V.string;
-    "wix-version", OpamPp.ppacc_opt
-      (fun c_wix_version t -> { t with c_wix_version = Some c_wix_version })
-      (fun t -> t.c_wix_version)
-      (OpamFormat.V.string -| OpamPp.of_module "wix_version" (module Wix.Version));
     "embedded", OpamPp.ppacc
       (fun file t -> { t with c_embedded = file }) (fun t -> t.c_embedded)
       (OpamFormat.V.map_list ~depth:2 embedded_pp);

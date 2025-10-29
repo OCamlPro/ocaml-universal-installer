@@ -51,7 +51,6 @@ type t = {
     manufacturer : string;
     exec_files : string list;
     makeself_manpages : manpages option; [@default None]
-    wix_guid : string option; [@default None]
     wix_tags : string list; [@default []]
     wix_icon_file : string option; [@default None]
     wix_dlg_bmp_file : string option; [@default None]
