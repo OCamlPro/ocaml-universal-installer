@@ -27,7 +27,7 @@ let make_config
     ?(name="name")
     ?(version="version")
     ?(exec_files=[])
-    ?makeself_manpages
+    ?manpages
     () : Installer_config.t
   =
   { name
@@ -36,7 +36,7 @@ let make_config
   ; fullname = ""
   ; description = ""
   ; manufacturer = ""
-  ; makeself_manpages
+  ; manpages
   ; wix_tags = []
   ; wix_icon_file = None
   ; wix_dlg_bmp_file = None
@@ -48,12 +48,11 @@ let make_config
   ; wix_embedded_files = []
   ; wix_environment = []
   ; macos_bundle_id = None
-  ; macos_manpages = None
   ; macos_symlink_dirs = []
   }
 
 let%expect_test "install_script: simple" =
-  let makeself_manpages =
+  let manpages =
     make_manpages
       ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
       ~man5:["man/man5/aaa-file.1"]
@@ -62,7 +61,7 @@ let%expect_test "install_script: simple" =
   let config =
     make_config ~name:"aaa" ~version:"x.y.z"
       ~exec_files:["aaa-command"; "aaa-utility"]
-      ~makeself_manpages
+      ~manpages
       ()
   in
   let install_script = Makeself_backend.install_script config in
@@ -98,7 +97,7 @@ let%expect_test "install_script: simple" =
     |}]
 
 let%expect_test "uninstall_script: simple" =
-  let makeself_manpages =
+  let manpages =
     make_manpages
       ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
       ~man5:["man/man5/aaa-file.1"]
@@ -107,7 +106,7 @@ let%expect_test "uninstall_script: simple" =
   let config =
     make_config ~name:"aaa"
       ~exec_files:["aaa-command"; "aaa-utility"]
-      ~makeself_manpages
+      ~manpages
       ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in

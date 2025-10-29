@@ -50,7 +50,7 @@ type t = {
     description : string;
     manufacturer : string;
     exec_files : string list;
-    makeself_manpages : manpages option; [@default None]
+    manpages : manpages option; [@default None]
     wix_tags : string list; [@default []]
     wix_icon_file : string option; [@default None]
     wix_dlg_bmp_file : string option; [@default None]
@@ -62,7 +62,6 @@ type t = {
     wix_embedded_files : (Yojsonable.basename * Yojsonable.filename) list; [@default []]
     wix_environment : (string * string) list; [@default []]
     macos_bundle_id : string option; [@default None]
-    macos_manpages : manpages option; [@default None]
     macos_symlink_dirs : string list; [@default []]
   }
 [@@deriving yojson]

@@ -102,7 +102,7 @@ let install_script (ic : Installer_config.t) =
       )
       binaries
   in
-  let manpages = manpages_to_list ic.makeself_manpages in
+  let manpages = manpages_to_list ic.manpages in
   let install_manpages = install_manpages ~prefix manpages in
   let notify_install_complete =
     [ echof "Installation complete!"
@@ -124,7 +124,7 @@ let uninstall_script (ic : Installer_config.t) =
   let prefix = "/opt" / package in
   let usrbin = "/usr/local/bin" in
   let binaries = ic.exec_files in
-  let manpages = manpages_to_list ic.makeself_manpages in
+  let manpages = manpages_to_list ic.manpages in
   let display_symlinks =
     List.map
       (fun binary -> echof "- %s/%s" usrbin binary)

@@ -182,7 +182,7 @@ Here is the `oui.json` file we'd use to generate `alt-ergo`'s installer:
   "description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
   "manufacturer": "alt-ergo@ocamlpro.com",
   "exec_files": ["bin/alt-ergo"],
-  "makeself_manpages": {
+  "manpages": {
     "man1": [
       "man/man1/alt-ergo.1"
     ]

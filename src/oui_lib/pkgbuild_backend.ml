@@ -93,7 +93,7 @@ let create_installer
 
   create_info_plist bundle ~installer_config;
 
-  copy_manpages bundle ~bundle_dir ~manpages:installer_config.macos_manpages;
+  copy_manpages bundle ~bundle_dir ~manpages:installer_config.manpages;
 
   (* Create symlinks for dune-site relocatable support *)
   List.iter (fun dir_name ->
@@ -101,7 +101,7 @@ let create_installer
       let link_path =
         OpamFilename.Dir.to_string bundle.contents ^ "/" ^ dir_name
       in
-      if OpamFilename.exists_dir src_dir then 
+      if OpamFilename.exists_dir src_dir then
         (OpamConsole.msg "Creating symlink: Contents/%s -> Resources/%s\n"
            dir_name dir_name;
          Unix.symlink ("Resources/" ^ dir_name) link_path)
