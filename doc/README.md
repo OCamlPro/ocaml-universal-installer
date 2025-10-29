@@ -318,6 +318,50 @@ A registry entry requires the following information:
 
 ### macOS / Application Bundle
 
-To be written.
+Executing a `.pkg` produced by oui will install the application as a standard
+macOS application bundle in `/Applications/<AppName>.app`.
+
+The application bundle follows the standard macOS structure:
+
+```
+/Applications/<AppName>.app/
+├── Contents/
+│   ├── Info.plist              # Application metadata (bundle ID, version, etc.)
+│   ├── MacOS/
+│   │   └── <binary>            # Main executable
+│   ├── Frameworks/
+│   │   └── *.dylib             # Dynamic libraries
+│   └── Resources/
+│       └── ...                 # Everything else that is needed for the application.
+```
+
+#### Post-installation setup
+
+The installer runs a postinstall script that performs the following:
+
+1. **Binary wrapper**: Creates a wrapper script in `/usr/local/bin/<binary-name>`
+   that executes the actual binary from the .app bundle.
+
+2. **Man pages**: If man pages are present in `Contents/Resources/man/`, creates
+   symlinks in `/usr/local/share/man/<section>/` for each man page, making them
+   accessible via the `man` command.
+
+#### Dynamic library handling
+
+All external dynamic libraries (`.dylib` files) detected by the installer are:
+- Copied to the `Contents/Frameworks/` directory
+- Relocated using `install_name_tool` to use `@executable_path/../Frameworks/`
+  relative paths, ensuring the application bundle is self-contained.
+
+#### dune-site support
+
+For applications using `dune-site`, you can specify
+directories to symlink from `Contents/` to `Contents/Resources/` via the
+`macos_symlink_dirs` configuration option. For example, specifying
+`["lib", "share"]` will create:
+- `Contents/lib -> Resources/lib`
+- `Contents/share -> Resources/share`
+
+This ensures dune-site's plugin discovery mechanism works correctly within the .app bundle structure.
 
 
