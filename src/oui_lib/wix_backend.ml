@@ -10,7 +10,7 @@
 
 let check_wix_installed () =
   let wix_bin_exists () =
-    match Sys.command "wix --version" with
+    match Sys.command "wix.exe --version" with
     | 0 -> true
     | _ -> false
   in
