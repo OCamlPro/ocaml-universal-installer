@@ -56,6 +56,9 @@ type productbuild_args = {
   output : OpamFilename.t;
 }
 
+type patchelf_args =
+  | Set_rpath of {rpath: string; binary: OpamFilename.t}
+
 type _ command =
   | Which : string command
   | Cygcheck : string command
@@ -70,6 +73,7 @@ type _ command =
   | CodesignVerify : codesign_verify_args command
   | Pkgbuild : pkgbuild_args command
   | Productbuild : productbuild_args command
+  | Patchelf : patchelf_args command
 
 exception System_error of string
 
@@ -144,6 +148,8 @@ let call_inner : type a. a command -> a -> string * string list =
       "--package"; OpamFilename.to_string package;
       OpamFilename.to_string output
     ]
+  | Patchelf, (Set_rpath {rpath; binary}) ->
+    "patchelf", ["--set-rpath"; rpath; OpamFilename.to_string binary]
 
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)

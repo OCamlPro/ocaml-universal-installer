@@ -74,6 +74,10 @@ type productbuild_args = {
   output : OpamFilename.t; (** Output .pkg file *)
 }
 
+(** Arguments for patchelf command *)
+type patchelf_args =
+  | Set_rpath of {rpath: string; binary: OpamFilename.t}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
@@ -89,6 +93,7 @@ type _ command =
   | CodesignVerify : codesign_verify_args command (** {b codesign --verify} command to verify code signatures *)
   | Pkgbuild : pkgbuild_args command (** {b pkgbuild} command to create macOS component packages *)
   | Productbuild : productbuild_args command (** {b productbuild} command to create macOS installer packages *)
+  | Patchelf : patchelf_args command
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)

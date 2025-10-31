@@ -183,13 +183,14 @@ let uninstall_script (ic : Installer_config.t) =
   @ notify_uninstall_complete
 
 let add_sos_to_bundle ~bundle_dir binary =
-  let sos = Ldd.get_sos OpamFilename.Op.(bundle_dir // binary) in
+  let binary = OpamFilename.Op.(bundle_dir // binary) in
+  let sos = Ldd.get_sos binary in
   match sos with
   | [] -> ()
   | _ ->
-    let lib_dir = OpamFilename.Op.(bundle_dir / "lib") in
-    OpamFilename.mkdir lib_dir;
-    List.iter (fun so -> OpamFilename.copy_in so lib_dir) sos
+    let dst_dir = OpamFilename.dirname binary in
+    List.iter (fun so -> OpamFilename.copy_in so dst_dir) sos;
+    System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
 
 let create_installer
     ~(installer_config : Installer_config.t) ~bundle_dir installer =
