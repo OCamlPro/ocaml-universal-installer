@@ -15,11 +15,7 @@ let check_wix_installed () =
     | _ -> false
   in
   if wix_bin_exists ()
-  then
-    System.call_list [
-      Which, "cygcheck";
-      Which, "cygpath";
-    ]
+  then System.call_list [ Which, "cygpath" ]
   else
     raise @@ System.System_error
       (Format.sprintf "Wix binaries couldn't be found.")
@@ -35,7 +31,7 @@ let sanitize_id id =
     ) id
 
 let add_dlls_to_bundle ~bundle_dir binary =
-  let dlls = Cygcheck.get_dlls OpamFilename.Op.(bundle_dir // binary) in
+  let dlls = Win_ldd.get_dlls OpamFilename.Op.(bundle_dir // binary) in
   match dlls with
   | [] -> ()
   | _ ->
@@ -117,7 +113,7 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
       wix_out = (name ^ ".msi")
     }
   in
-  OpamConsole.formatted_msg "Producing final msi...\n";
+  OpamConsole.formatted_msg "Producing final msi (%s.wxs)...\n" name;
   System.call_unit System.Wix wix;
   OpamFilename.remove (OpamFilename.of_string (name ^ ".wixpdb"));
   OpamFilename.move
