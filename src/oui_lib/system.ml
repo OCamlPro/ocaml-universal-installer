@@ -61,7 +61,6 @@ type patchelf_args =
 
 type _ command =
   | Which : string command
-  | Cygcheck : string command
   | Ldd : string command
   | Otool : string command
   | Cygpath : (cygpath_out * string) command
@@ -81,8 +80,6 @@ let call_inner : type a. a command -> a -> string * string list =
   fun command args -> match command, args with
   | Which, (path : string) ->
     "which", [ path ]
-  | Cygcheck, path ->
-    "cygcheck", [ path ]
   | Ldd, path ->
     "ldd", [ path ]
   | Otool, path ->
