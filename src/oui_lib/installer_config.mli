@@ -32,6 +32,8 @@ type t = {
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     exec_files : string list; (** Filenames of bundled .exe binary. *)
     manpages : manpages option; (** Paths to manpages, split by sections. *)
+    environment : (string * string) list;
+    (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
     wix_tags : string list; (** Package tags, used by WiX. *)
     wix_icon_file : string option;
     (** Icon filename, used by WiX. Defaults to our data/images/logo.ico file. *)
@@ -40,14 +42,6 @@ type t = {
     wix_banner_bmp_file : string option;
     (** Banner bmp filename, used by WiX. Defaults to our data/images/bannrbmp.bmp *)
     wix_license_file : string option;
-    wix_embedded_dirs : (OpamFilename.Base.t * OpamFilename.Dir.t) list;
-    (** Embedded directories information (reference another wxs file) *)
-    wix_additional_embedded_name : string list ;
-    wix_additional_embedded_dir : OpamFilename.Dir.t list;
-    wix_embedded_files : (OpamFilename.Base.t * OpamTypes.filename) list;
-    (** Embedded files *)
-    wix_environment : (string * string) list;
-    (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
     macos_bundle_id : string option;
     (** macOS bundle identifier (reverse DNS format). *)
     macos_symlink_dirs : string list;

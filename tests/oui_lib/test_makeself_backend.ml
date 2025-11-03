@@ -37,16 +37,12 @@ let make_config
   ; description = ""
   ; manufacturer = ""
   ; manpages
+  ; environment = []
   ; wix_tags = []
   ; wix_icon_file = None
   ; wix_dlg_bmp_file = None
   ; wix_banner_bmp_file = None
   ; wix_license_file = None
-  ; wix_embedded_dirs = []
-  ; wix_additional_embedded_name = []
-  ; wix_additional_embedded_dir = []
-  ; wix_embedded_files = []
-  ; wix_environment = []
   ; macos_bundle_id = None
   ; macos_symlink_dirs = []
   }
