@@ -339,17 +339,6 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
       ([],[])
       emb_modes
   in
-  let additional_embedded_name, additional_embedded_dir =
-    let opam_base, opam_dir =
-      match OpamFilename.dir_is_empty opam_dir with
-      | None | Some (true) -> [], []
-      | Some (false) -> ["opam"], [ opam_dir ]
-    and external_base, external_dir =
-      match OpamFilename.dir_is_empty external_dir with
-      | None | Some (true) -> [], []
-      | Some (false) -> ["external"], [ external_dir ]
-    in (opam_base @ external_base), (opam_dir @ external_dir)
-  in
   OpamConsole.formatted_msg "Bundle created.\n";
   let open Installer_config in
   (bundle_dir,
@@ -359,19 +348,14 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
      version = wix_version ~opam_oui_conf package;
      description = package_description ~opam package;
      manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam);
-     wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
      exec_files = List.map OpamFilename.Base.to_string exe_bases;
+     manpages = Installer_config.manpages_of_list manpages_paths;
+     environment = package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
+     wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
      wix_icon_file = opam_oui_conf.c_images.ico;
      wix_dlg_bmp_file = opam_oui_conf.c_images.dlg;
      wix_banner_bmp_file = opam_oui_conf.c_images.ban;
      wix_license_file = None; (* TODO *)
-     wix_environment =
-       package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
-     wix_embedded_dirs = embedded_dirs ;
-     wix_additional_embedded_name = additional_embedded_name ;
-     wix_embedded_files = embedded_files ;
-     wix_additional_embedded_dir = additional_embedded_dir;
-     manpages = Installer_config.manpages_of_list manpages_paths;
      macos_bundle_id = None; (* TODO *)
      macos_symlink_dirs = []; (* TODO *)
    })

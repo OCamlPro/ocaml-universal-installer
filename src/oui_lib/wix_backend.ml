@@ -75,12 +75,11 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
       description = desc.description;
       keywords = String.concat " " desc.wix_tags;
       directory = OpamFilename.Dir.to_string bundle_dir;
-      (* wix_exec_file; wix_dlls; wix_embedded_dirs = []; wix_embedded_files = []; *)
       shortcuts = [];
       environment =
         List.map (fun (var_name, var_value) ->
             { var_name; var_value; var_part = All }
-          ) desc.wix_environment;
+          ) desc.environment;
       registry = [];
       icon;
       banner;
