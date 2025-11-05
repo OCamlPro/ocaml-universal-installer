@@ -22,9 +22,25 @@ let should_embed (name, _) =
   | "libm"::_ -> false
   | _ -> true
 
+let elf_magic_number = "\x7FELF"
+
+let is_elf file =
+  let ic = open_in_bin file in
+  let is_elf =
+    try
+      let header = really_input_string ic 4 in
+      String.equal header elf_magic_number
+    with End_of_file ->
+      false
+  in
+  close_in ic;
+  is_elf
+
 let get_sos binary =
   let path = OpamFilename.to_string binary in
-  let output = System.call Ldd path in
-  let shared_libs = List.filter_map parse_true_so_line output in
-  let to_embed = List.filter should_embed shared_libs in
-  List.map snd to_embed
+  if is_elf path then
+    let output = System.call Ldd path in
+    let shared_libs = List.filter_map parse_true_so_line output in
+    let to_embed = List.filter should_embed shared_libs in
+    List.map snd to_embed
+  else []
