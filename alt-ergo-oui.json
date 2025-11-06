@@ -1,0 +1,15 @@
+{
+  "name": "alt-ergo",
+  "fullname": "alt-ergo.dev",
+  "version": "dev",
+  "description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
+  "manufacturer": "alt-ergo@ocamlpro.com",
+  "exec_files": ["bin/alt-ergo"],
+  "manpages": {
+    "man1": [
+      "man/man1/alt-ergo.1"
+    ]
+  },
+  "macos_bundle_id":"com.ocamlpro.alt-ergo",
+  "macos_symlink_dirs": ["lib", "share"]
+}

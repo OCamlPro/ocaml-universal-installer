@@ -1,0 +1,373 @@
+.\" Pipe this output to groff -m man -K utf8 -T utf8 | less -R
+.\"
+.mso an.tmac
+.TH "ALT-ERGO" 1 "" "Alt-ergo dev" "Alt-ergo Manual"
+.\" Disable hyphenation and ragged-right
+.nh
+.ad l
+.SH NAME
+.P
+alt\N'45'ergo \N'45' Execute Alt\N'45'Ergo on the given file\N'46'
+.SH SYNOPSIS
+.P
+\fBalt\N'45'ergo\fR [\fIOPTION\fR]… [\fIFILE\fR]
+.SH ARGUMENTS
+.TP 4
+\fIFILE\fR
+Source file\N'46' Must be suffixed by \fI\N'46'ae\fR, (\fI\N'46'mlw\fR and \fI\N'46'why\fR are deprecated), \fI\N'46'smt2\fR or \fI\N'46'psmt2\fR\N'46'
+.SH OPTIONS
+.TP 4
+\fB\N'45'd\fR \fIDEBUG\fR, \fB\N'45'\N'45'debug\fR=\fIDEBUG\fR
+Set the debugging flags with light verbosity, \fIDEBUG\fR must be one of \fBdebug\fR, \fBac\fR, \fBadt\fR, \fBarith\fR, \fBarrays\fR, \fBbitv\fR, \fBsum\fR, \fBite\fR, \fBcc\fR, \fBcombine\fR, \fBconstr\fR, \fBexplanations\fR, \fBfm\fR, \fBfpa\fR, \fBgc\fR, \fBinterpretation\fR, \fBintervals\fR, \fBmatching\fR, \fBsat\fR, \fBsplit\fR, \fBtriggers\fR, \fBtypes\fR, \fBtyping\fR, \fBuf\fR, \fBunsat\N'45'core\fR, \fBuse\fR, \fBwarnings\fR, \fBcommands\fR or \fBoptimize\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'dddebug\fR=\fIDEBUG\fR, \fB\N'45'\N'45'ddd\fR=\fIDEBUG\fR
+Set the debugging flags with full verbosity, \fIDEBUG\fR must be one of \fBdebug\fR, \fBac\fR, \fBadt\fR, \fBarith\fR, \fBarrays\fR, \fBbitv\fR, \fBsum\fR, \fBite\fR, \fBcc\fR, \fBcombine\fR, \fBconstr\fR, \fBexplanations\fR, \fBfm\fR, \fBfpa\fR, \fBgc\fR, \fBinterpretation\fR, \fBintervals\fR, \fBmatching\fR, \fBsat\fR, \fBsplit\fR, \fBtriggers\fR, \fBtypes\fR, \fBtyping\fR, \fBuf\fR, \fBunsat\N'45'core\fR, \fBuse\fR, \fBwarnings\fR, \fBcommands\fR or \fBoptimize\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'ddebug\fR=\fIDEBUG\fR, \fB\N'45'\N'45'dd\fR=\fIDEBUG\fR
+Set the debugging flags with medium verbosity, \fIDEBUG\fR must be one of \fBdebug\fR, \fBac\fR, \fBadt\fR, \fBarith\fR, \fBarrays\fR, \fBbitv\fR, \fBsum\fR, \fBite\fR, \fBcc\fR, \fBcombine\fR, \fBconstr\fR, \fBexplanations\fR, \fBfm\fR, \fBfpa\fR, \fBgc\fR, \fBinterpretation\fR, \fBintervals\fR, \fBmatching\fR, \fBsat\fR, \fBsplit\fR, \fBtriggers\fR, \fBtypes\fR, \fBtyping\fR, \fBuf\fR, \fBunsat\N'45'core\fR, \fBuse\fR, \fBwarnings\fR, \fBcommands\fR or \fBoptimize\fR\N'46'
+.TP 4
+\fB\N'45'i\fR \fIFMT\fR, \fB\N'45'\N'45'input\fR=\fIFMT\fR
+Set the default input format to \fIFMT\fR and must be one of \fBnative\fR, \fBaltergo\fR, \fBalt\N'45'ergo\fR, \fBsmtlib2\fR, \fBsmt\N'45'lib2\fR, \fBpsmt2\fR, \fBsmtlib2\N'45'v2\N'46'6\fR or \fBwhy3\fR\N'46' Useful when the extension does not allow to automatically select a parser (eg\N'46' JS mode, GUI mode, \N'46'\N'46'\N'46')\N'46'
+.TP 4
+\fB\N'45'o\fR \fIFMT\fR, \fB\N'45'\N'45'output\fR=\fIFMT\fR
+Control the output format of the solver, \fIFMT\fR must be either \fBnative\fR or \fBsmtlib2\fR\N'46'The alt\N'45'ergo native format outputs Valid/Invalid/I don\N'39't know\N'46'The smtlib2 format outputs unsat/sat/unknown\N'46'If left unspecified, Alt\N'45'Ergo will use its heuristics to determine the adequate output format according to the input format\N'46'It must be noticed that not specifying an output format will let Alt\N'45'Ergo set it according to the input file\N'39's extension\N'46'
+.TP 4
+\fB\N'45'\N'45'objectives\N'45'in\N'45'model\fR, \fB\N'45'\N'45'objectives\N'45'in\N'45'interpretation\fR, \fB\N'45'\N'45'obj\N'45'in\N'45'model\fR, \fB\N'45'\N'45'obj\N'45'in\N'45'interpretation\fR
+ inline pretty\N'45'printing of optimized expressions in the model instead of a dedicated section \N'39'(objectives \N'46'\N'46'\N'46')\N'39'\N'46' Be aware that a part of the model may be shrunk or not accurate if some expressions to optimize are unbounded\N'46'
+.TP 4
+\fB\N'45'p\fR, \fB\N'45'\N'45'pretty\N'45'output\fR
+Print output with formatting rules, headers and colors
+.TP 4
+\fB\N'45'r\fR, \fB\N'45'\N'45'replay\N'45'used\N'45'context\fR
+Replay with axioms and predicates saved in \fI\N'46'used\fR file\N'46'
+.TP 4
+\fB\N'45'\N'45'rule\fR=\fITR\fR (absent=\fBnone\fR)
+Output rule used on stderr, \fITR\fR must be one of \fBparsing\fR, \fBtyping\fR, \fBsat\fR, \fBcc\fR, \fBarith\fR or \fBnone\fR\N'46'
+.TP 4
+\fB\N'45'S\fR \fISTEPS\fR, \fB\N'45'\N'45'steps\N'45'bound\fR=\fISTEPS\fR (absent=\fB\N'45'1\fR)
+Set the maximum number of steps\N'46'
+.TP 4
+\fB\N'45's\fR, \fB\N'45'\N'45'save\N'45'used\N'45'context\fR
+Save used axioms and predicates in a \fI\N'46'used\fR file\N'46' This option implies \fB\N'45'\N'45'unsat\N'45'core\fR\N'46'
+.TP 4
+\fB\N'45't\fR \fIVAL\fR, \fB\N'45'\N'45'timelimit\fR=\fIVAL\fR
+Set the time limit to \fIVAL\fR seconds (not supported on Windows)\N'46'
+.TP 4
+\fB\N'45'v\fR, \fB\N'45'\N'45'verbose\fR
+Set the verbose mode\N'46'
+.SH EXECUTION OPTIONS
+.TP 4
+\fB\N'45'\N'45'add\N'45'parser\fR=\fIVAL\fR
+Register a new parser for Alt\N'45'Ergo\N'46'
+.TP 4
+\fB\N'45'\N'45'colors\N'45'in\N'45'output\fR
+Print output with colors\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'forced\N'45'flush\N'45'in\N'45'output\fR
+Print output without forced flush at the end of each print\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'formatting\N'45'in\N'45'output\fR
+Don not use formatting rule in output\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'headers\N'45'in\N'45'output\fR
+Print output without headers\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'locs\N'45'in\N'45'answers\fR
+Do not show the locations of goals when printing solver\N'39's answers\N'46'
+.TP 4
+\fB\N'45'\N'45'parse\N'45'only\fR
+Stop after parsing\N'46'
+.TP 4
+\fB\N'45'\N'45'prelude\fR=\fIVAL\fR
+Add a file that will be loaded as a prelude\N'46' The command is cumulative, and the order of successive preludes is preserved\N'46'
+.TP 4
+\fB\N'45'\N'45'type\N'45'only\fR
+Stop after typing\N'46'
+.TP 4
+\fB\N'45'\N'45'type\N'45'smt2\fR
+Stop after SMT2 typing\N'46'
+.TP 4
+(Deprecated) \fB\N'45'\N'45'frontend\fR=\fIFTD\fR (absent=\fBdolmen\fR)
+Select the parsing and typing frontend\N'46' Support for non\N'45'default frontends is deprecated and will be removed in the next release\N'46'
+.SH LIMIT OPTIONS
+.TP 4
+\fB\N'45'\N'45'age\N'45'bound\fR=\fIAGE\fR (absent=\fB50\fR)
+Set the age limit bound\N'46'
+.TP 4
+\fB\N'45'\N'45'fm\N'45'cross\N'45'limit\fR=\fIVAL\fR (absent=\fB10000\fR)
+Skip Fourier\N'45'Motzkin variables elimination steps that may produce a number of inequalities that is greater than the given limit\N'46' However, unit eliminations are always done\N'46'
+.TP 4
+\fB\N'45'\N'45'timelimit\N'45'interpretation\fR=\fISEC\fR
+Set the time limit to \fISEC\fR seconds for model generation (not supported on Windows)\N'46'
+.TP 4
+\fB\N'45'\N'45'timelimit\N'45'per\N'45'goal\fR
+Set the timelimit given by the \fI\N'45'\N'45'timelimit\fR option to apply for each goal, in case of multiple goals per file\N'46' In this case, time spent in preprocessing is separated from resolution time\N'46' Not relevant for GUI\N'45'mode\N'46'
+.SH INTERNAL OPTIONS
+.TP 4
+\fB\N'45'\N'45'continue\N'45'on\N'45'error\fR
+Sets Alt\N'45'ergo\N'39's behavior to continue on errors
+.TP 4
+\fB\N'45'\N'45'disable\N'45'weaks\fR
+Prevent the GC from collecting hashconsed data structrures that are not reachable (useful for more determinism)\N'46'
+.TP 4
+\fB\N'45'\N'45'enable\N'45'assertions\fR
+Enable verification of some heavy invariants\N'46'
+.TP 4
+\fB\N'45'\N'45'gc\N'45'policy\fR=\fIPLCY\fR (absent=\fB0\fR)
+Set the gc policy allocation\N'46' 0 = next\N'45'fit policy, 1 = first\N'45'fit policy, 2 = best\N'45'fit policy\N'46' See the Gc module of the OCaml distribution for more informations\N'46'
+.TP 4
+\fB\N'45'\N'45'warning\N'45'as\N'45'error\fR
+Enable warning as error
+.SH OUTPUT OPTIONS
+.TP 4
+\fB\N'45'u\fR, \fB\N'45'\N'45'unsat\N'45'core\fR
+Experimental support for computing and printing unsat\N'45'cores\N'46'
+.SH CONTEXT OPTIONS
+.TP 4
+\fB\N'45'\N'45'replay\fR
+Replay session saved in \fIfile_name\N'46'agr\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'replay\N'45'all\N'45'used\N'45'context\fR
+Replay with all axioms and predicates saved in \fI\N'46'used\fR files of the current directory\N'46'
+.SH PROFILING OPTIONS
+.TP 4
+\fB\N'45'\N'45'cumulative\N'45'time\N'45'profiling\fR
+Record the time spent in called functions in callers
+.TP 4
+\fB\N'45'\N'45'profiling\fR=\fIDELAY\fR
+Activate the profiling module with the given frequency\N'46' Use Ctrl\N'45'C to switch between different views and "Ctrl + AltGr + \N'92' " to exit\N'46'
+.TP 4
+\fB\N'45'\N'45'profiling\N'45'plugin\fR=\fIPGN\fR
+Use the given profiling plugin\N'46'
+.SH SAT OPTIONS
+.TP 4
+\fB\N'45'\N'45'bottom\N'45'classes\fR
+Show equivalence classes at each bottom of the sat\N'46'
+.TP 4
+\fB\N'45'\N'45'disable\N'45'flat\N'45'formulas\N'45'simplification\fR
+Disable facts simplifications in satML\N'39's flat formulas\N'46'
+.TP 4
+\fB\N'45'\N'45'enable\N'45'restarts\fR
+For satML: enable restarts or not\N'46' Default behavior is \N'39'false\N'39'\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'arith\N'45'matching\fR
+Disable (the weak form of) matching modulo linear arithmetic\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'backjumping\fR
+Disable backjumping mechanism in the functional SAT solver\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'backward\fR
+Disable backward reasoning step (starting from the goal) done in the default SAT solver before deciding\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'decisions\fR
+Disable decisions at the SAT level\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'decisions\N'45'on\fR=\fI[INST1; INST2; \N'46'\N'46'\N'46']\fR
+Disable decisions at the SAT level for the instances generated from the given axioms\N'46' Arguments should be separated with a comma\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'minimal\N'45'bj\fR
+Disable minimal backjumping in satML CDCL solver\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'sat\N'45'learning\fR
+Disable learning/caching of unit facts in the Default SAT\N'46' These facts are used to improve bcp\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'tableaux\N'45'cdcl\N'45'in\N'45'instantiation\fR
+When satML is used, this disables the use of a tableaux\N'45'like method for instantiations with the CDCL solver\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'tableaux\N'45'cdcl\N'45'in\N'45'theories\fR
+When satML is used, this disables the use of a tableaux\N'45'like method for theories with the CDCL solver\N'46'
+.TP 4
+\fB\N'45'\N'45'sat\N'45'solver\fR=\fISAT\fR (absent=\fBCDCL\N'45'Tableaux\fR)
+Choose the SAT solver to use\N'46' Default value is CDCL\N'45'Tableaux (i\N'46'e\N'46' satMLsolver)\N'46' Possible options are one of \fBCDCL\fR, \fBsatML\fR, \fBCDCL\N'45'Tableaux\fR, \fBsatML\N'45'Tableaux\fR or \fBTableaux\N'45'CDCL\fR\N'46'
+.SH QUANTIFIERS OPTIONS
+.TP 4
+\fB\N'45'\N'45'inst\N'45'after\N'45'bj\fR
+Make a (normal) instantiation round after every backjump/backtrack\N'46'
+.TP 4
+\fB\N'45'\N'45'instantiation\N'45'heuristic\fR=\fIVAL\fR (absent=\fBauto\fR)
+Change the instantiation heuristic\N'46' \fIVAL\fR must be one of \fBnormal\fR, \fBauto\fR or \fBgreedy\fR\N'46' By default \N'39'auto\N'39' is used for both sat solvers\N'46' \N'39'normal\N'39' does one less phase of instantiation\N'46' \N'39'greedy\N'39' use all available ground terms in instantiation\N'46'
+.TP 4
+\fB\N'45'\N'45'max\N'45'multi\N'45'triggers\N'45'size\fR=\fIVAL\fR (absent=\fB4\fR)
+Maximum size of multi\N'45'triggers, i\N'46'e\N'46' the maximum number of independent patterns in a multi\N'45'trigger\N'46'
+.TP 4
+\fB\N'45'\N'45'nb\N'45'triggers\fR=\fIVAL\fR (absent=\fB2\fR)
+Maximum number of triggers used (including regular and multi triggers)\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'ematching\fR
+Disable matching modulo ground equalities\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'user\N'45'triggers\fR
+Ignore user triggers, except for triggers of theories\N'39' axioms
+.TP 4
+\fB\N'45'\N'45'normalize\N'45'instances\fR
+Normalize generated substitutions by matching w\N'46'r\N'46't\N'46' the state of the theory\N'46' This means that only terms that are greater (w\N'46'r\N'46't\N'46' depth) than the initial terms of the problem are normalized\N'46'
+.TP 4
+\fB\N'45'\N'45'triggers\N'45'var\fR
+Allows variables as triggers\N'46'
+.SH TERM OPTIONS
+.TP 4
+\fB\N'45'\N'45'disable\N'45'ites\fR
+Disable handling of ite(s) on terms in the backend\N'46'
+.TP 4
+\fB\N'45'\N'45'inline\N'45'lets\fR
+Enable substitution of variables bounds by Let\N'46' The default behavior is to only substitute variables that are bound to a constant, or that appear at most once\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'term\N'45'like\N'45'pp\fR
+Do not output semantic values as terms\N'46'
+.TP 4
+\fB\N'45'\N'45'rwt\fR, \fB\N'45'\N'45'rewriting\fR
+Use rewriting instead of axiomatic approach\N'46'
+.SH THEORY OPTIONS
+.TP 4
+\fB\N'45'\N'45'disable\N'45'theory\fR=\fITHEORY\fR, \fB\N'45'\N'45'disable\N'45'theories\fR=\fITHEORY\fR
+Disable builtin theory, multiple comma\N'45'separated values are supported\N'46' THEORY must be one of \fBadt\fR, \fBac\fR, \fBfpa\fR, \fBria\fR or \fBnra\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'enable\N'45'theory\fR=\fITHEORY\fR, \fB\N'45'\N'45'enable\N'45'theories\fR=\fITHEORY\fR
+Enable builtin theory, multiple comma\N'45'separated values are supported\N'46' \fITHEORY\fR must be one of \fBadt\fR, \fBac\fR, \fBfpa\fR, \fBria\fR or \fBnra\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'inequalities\N'45'plugin\fR=\fIVAL\fR
+Use the given module to handle inequalities of linear arithmetic\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'contracongru\fR
+Disable contracongru\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'fm\fR
+Disable Fourier\N'45'Motzkin algorithm\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'nla\fR
+Disable non\N'45'linear arithmetic reasoning (i\N'46'e\N'46' non\N'45'linear multplication, division and modulo on integers and rationals)\N'46' Non\N'45'linear multiplication remains AC\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'tcp\fR
+Deactivate Boolean Constant Propagation (BCP) modulo theories\N'46'
+.TP 4
+\fB\N'45'\N'45'no\N'45'theory\fR
+Completely deactivate theory reasoning\N'46'
+.TP 4
+\fB\N'45'\N'45'restricted\fR
+Restrict set of decision procedures (equality, arithmetic and AC)\N'46'
+.TP 4
+\fB\N'45'\N'45'tighten\N'45'vars\fR
+Compute the best bounds for arithmetic variables\N'46'
+.TP 4
+(Deprecated) \fB\N'45'\N'45'disable\N'45'adts\fR
+Disable Algebraic Datatypes theory\N'46' Deprecated alias for `\N'45'\N'45'disable\N'45'theories adt`\N'46'
+.TP 4
+(Deprecated) \fB\N'45'\N'45'no\N'45'ac\fR
+Disable the AC theory of Associative and Commutative function symbols\N'46' Deprecated alias for `\N'45'\N'45'disable\N'45'theories ac`\N'46'
+.TP 4
+(Deprecated) \fB\N'45'\N'45'use\N'45'fpa\fR
+Floating\N'45'point builtins are always enabled and this option has no effect anymore\N'46' It will be removed in a future version\N'46'
+.SH CASE SPLIT OPTIONS
+.TP 4
+\fB\N'45'\N'45'case\N'45'split\N'45'policy\fR=\fIPLCY\fR (absent=\fBafter\N'45'theory\N'45'assume\fR)
+Case\N'45'split policy\N'46' Set the case\N'45'split policy to use\N'46' Possible values are one of \fBafter\N'45'theory\N'45'assume\fR, \fBbefore\N'45'matching\fR or \fBafter\N'45'matching\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'enable\N'45'adts\N'45'cs\fR
+Enable case\N'45'split for Algebraic Datatypes theory\N'46'
+.TP 4
+\fB\N'45'\N'45'enable\N'45'sat\N'45'cs\fR
+Enable case\N'45'split in the SAT solver (Experts only)
+.TP 4
+\fB\N'45'\N'45'max\N'45'split\fR=\fIVAL\fR (absent=\fB1000000\fR)
+Maximum size of case\N'45'split\N'46'
+.SH HALTING OPTIONS
+.TP 4
+\fB\N'45'\N'45'version\N'45'info\fR
+Print some info about this version (version, date released, date commited) \N'46'
+.TP 4
+\fB\N'45'\N'45'where\fR=\fIDIR\fR
+Print the directory of \fIDIR\fR\N'46' Possible arguments are either \fBplugins\fR or \fBpreludes\fR\N'46'
+.SH FORMATTER OPTIONS
+.TP 4
+\fB\N'45'\N'45'diagnostic\N'45'output\fR=\fIOUTPUT\fR (absent=\fBstderr\fR)
+Set the diagnostic output used by default to print error, debug and warning informations\N'46' Possible values are one of \fBstdout\fR, \fBstderr\fR or \fB<filename>\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'regular\N'45'output\fR=\fIOUTPUT\fR (absent=\fBstdout\fR)
+Set the regular output used by default to print the results, models and unsat cores\N'46' Possible values are one of \fBstdout\fR, \fBstderr\fR or \fB<filename>\fR\N'46'
+.SH MODEL OPTIONS
+.TP 4
+\fB\N'45'\N'45'dump\N'45'models\fR
+Display a model each time the result is unknown (implies \N'45'\N'45'interpretation last)
+.TP 4
+\fB\N'45'\N'45'dump\N'45'models\N'45'on\fR=\fIVAL\fR (absent=\fBstderr\fR)
+Select a channel to output the models dumped by the option \N'45'\N'45'dump\N'45'model\N'46'
+.TP 4
+\fB\N'45'\N'45'interpretation\fR=\fIVAL\fR (absent=\fBnone\fR)
+Best effort support for counter\N'45'example generation\N'46' \fIVAL\fR must be one of \fBnone\fR, \fBfirst\fR, \fBevery\fR or \fBlast\fR\N'46' \N'39'first\N'39' shows the first computed interpretation\N'46' \N'39'every\N'39' compute an interpretation before every decision, and \N'39'last\N'39' only before returning unknown\N'46' Note that \fB \N'45'\N'45'max\N'45'split\fR limitation will be ignored in model generation phase\N'46'
+.TP 4
+\fB\N'45'\N'45'mt\fR=\fIMTYP\fR, \fB\N'45'\N'45'model\N'45'type\fR=\fIMTYP\fR
+Control the output model type of the solver, \fIMTYP\fR must be either \fBvalue\fR or \fBconstraints\fR\N'46'
+.TP 4
+\fB\N'45'\N'45'produce\N'45'models\fR
+Enable model generation (equivalent to \N'45'\N'45'interpretation last)\N'46'
+.TP 4
+\fB\N'45'\N'45'strict\fR
+Enable strict mode (compliance with SMT\N'45'LIB standard)
+.TP 4
+(Deprecated) \fB\N'45'\N'45'use\N'45'underscore\fR, \fB\N'45'\N'45'interpretation\N'45'use\N'45'underscore\fR
+Output "_" instead of fresh value in interpretation
+.SH DEBUG OPTIONS
+.P
+These options are used to output debug info for the concerned part of the solver\N'46'They are \fBnot\fR used to check internal consistency\N'46'
+.SH COMMON OPTIONS
+.TP 4
+\fB\N'45'\N'45'help\fR[=\fIFMT\fR] (default=\fBauto\fR)
+Show this help in format \fIFMT\fR\N'46' The value \fIFMT\fR must be one of \fBauto\fR, \fBpager\fR, \fBgroff\fR or \fBplain\fR\N'46' With \fBauto\fR, the format is \fBpager\fR or \fBplain\fR whenever the \fBTERM\fR env var is \fBdumb\fR or undefined\N'46'
+.TP 4
+\fB\N'45'\N'45'version\fR
+Show version information\N'46'
+.SH EXIT STATUS
+.P
+\fBalt\N'45'ergo\fR exits with:
+.TP 4
+0
+on success\N'46'
+.TP 4
+1
+on default errors
+.TP 4
+123
+on indiscriminate errors reported on standard error\N'46'
+.TP 4
+124
+on command line parsing errors\N'46'
+.TP 4
+125
+on unexpected internal errors (bugs)\N'46'
+.TP 4
+142
+on timeout errors
+.SH BUGS
+.P
+You can open an issue on: https://github\N'46'com/OCamlPro/alt\N'45'ergo/issues
+.P
+.nf
+Or you can write to: 
+   alt\N'45'ergo@ocamlpro\N'46'com
+.fi
+.SH AUTHORS
+.P
+.nf
+CURRENT AUTHORS
+   Guillaume Bury
+   Basile Clément
+   Steven de Olivera
+   Hichem Rami Ait El Hara
+   Pierre Villemot
+.fi
+.P
+.nf
+PREVIOUS AUTHORS
+   Albin Coquereau
+   Mattias Roux
+.fi
+.P
+.nf
+ORIGINAL AUTHORS
+   Sylvain Conchon
+   Evelyne Contejean
+   Mohamed Iguernlala
+   Stephane Lescuyer
+   Alain Mebsout
+
+.fi
