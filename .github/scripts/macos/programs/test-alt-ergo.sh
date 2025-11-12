@@ -3,7 +3,7 @@ set -euo pipefail
 
 # This script tests .pkg installer creation, installation, and functionality
 
-REMOTE_USER="arozovyk"
+REMOTE_USER="origin"
 REMOTE_BRANCH="alt-ergo-mac-builds"
 ARTIFACTS=(alt-ergo alt-ergo-oui.json semantic_triggers.ae)
 PACKAGE_NAME="alt-ergo-dev.pkg"
@@ -19,7 +19,6 @@ error() {
 }
 
 log "Fetching alt-ergo artifacts from ${REMOTE_USER}/${REMOTE_BRANCH}"
-git remote add ${REMOTE_USER} https://github.com/${REMOTE_USER}/ocaml-universal-installer.git 2>/dev/null || true
 git fetch ${REMOTE_USER} ${REMOTE_BRANCH}
 git checkout ${REMOTE_USER}/${REMOTE_BRANCH} -- ${ARTIFACTS[*]}
 
