@@ -1,0 +1,55 @@
+version = "dev"
+description = ""
+requires =
+"alt-ergo-lib.__private__.alt_ergo_prelude
+ 
+ camlzip
+ 
+ dolmen
+ 
+ dolmen_loop
+ 
+ dolmen_type
+ 
+ dune-build-info
+ 
+ dynlink
+ 
+ fmt
+ 
+ logs
+ 
+ logs.fmt
+ 
+ ocplib-simplex
+ 
+ ppx_deriving.runtime
+ 
+ seq
+ 
+ stdlib-shims
+ 
+ str
+ 
+ unix
+ 
+ zarith"
+archive(byte) = "AltErgoLib.cma"
+archive(native) = "AltErgoLib.cmxa"
+plugin(byte) = "AltErgoLib.cma"
+plugin(native) = "AltErgoLib.cmxs"
+jsoo_runtime = "missing_primitives.js"
+package "__private__" (
+  directory = "__private__"
+  package "alt_ergo_prelude" (
+    directory = "alt_ergo_prelude"
+    version = "dev"
+    description = ""
+    requires = ""
+    archive(byte) = "alt_ergo_prelude.cma"
+    archive(native) = "alt_ergo_prelude.cmxa"
+    plugin(byte) = "alt_ergo_prelude.cma"
+    plugin(native) = "alt_ergo_prelude.cmxs"
+  )
+  version = "v2.6.0-dirty"
+)
