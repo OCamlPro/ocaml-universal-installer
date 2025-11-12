@@ -1,0 +1,71 @@
+package "__private__" (
+  directory = "__private__"
+  package "alt_ergo_common" (
+    directory = "alt_ergo_common"
+    version = "dev"
+    description = ""
+    requires =
+    "alt-ergo-lib
+     
+     
+     
+     
+     
+     camlzip
+     
+     
+     
+     
+     
+     cmdliner
+     
+     
+     
+     
+     
+     dune-private-libs.dune-section
+     
+     
+     
+     
+     
+     dune-site
+     
+     
+     
+     
+     
+     dune-site.plugins
+     
+     
+     
+     
+     
+     ppx_deriving.runtime
+     
+     
+     
+     
+     
+     stdlib-shims"
+    archive(byte) = "alt_ergo_common.cma"
+    archive(native) = "alt_ergo_common.cmxa"
+    plugin(byte) = "alt_ergo_common.cma"
+    plugin(native) = "alt_ergo_common.cmxs"
+  )
+  version = "2.1.0-1205-g22f29ed"
+)
+package "plugins" (
+  directory = "plugins"
+  package "fm-simplex" (
+    directory = "fm-simplex"
+    version = "dev"
+    description = ""
+    requires = "alt-ergo-lib"
+    archive(byte) = "FmSimplexPlugin.cma"
+    archive(native) = "FmSimplexPlugin.cmxa"
+    plugin(byte) = "FmSimplexPlugin.cma"
+    plugin(native) = "FmSimplexPlugin.cmxs"
+  )
+  version = "2.1.0-1205-g22f29ed"
+)
