@@ -29,3 +29,6 @@ jobs:
       - run: opam config report
       - run: opam install .
       - run: opam exec opam-oui --help
+
+      - name: Test alt-ergo package
+        run: bash .github/scripts/linux/programs/test-alt-ergo.sh

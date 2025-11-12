@@ -102,7 +102,7 @@ let call_inner : type a. a command -> a -> string * string list =
     in
     wix, args
   | Makeself, { archive_dir; installer; description; startup_script } ->
-    let makeself = "makeself.sh" in
+    let makeself = "makeself" in
     let args =
       [ OpamFilename.Dir.to_string archive_dir
       ; OpamFilename.to_string installer

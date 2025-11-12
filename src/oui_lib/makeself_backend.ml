@@ -18,11 +18,11 @@ let usrshareman = "/usr/local/share/man"
 let usrman = "usr/local/man"
 
 let check_makeself_installed () =
-  match Sys.command "command -v makeself.sh >/dev/null 2>&1" with
+  match Sys.command "command -v makeself >/dev/null 2>&1" with
   | 0 -> ()
   | _ ->
     failwith
-      "Could not find makeself.sh, \
+      "Could not find makeself, \
        Please install makeself and run this command again."
 
 let check_run_as_root =

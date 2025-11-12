@@ -85,7 +85,7 @@ type _ command =
   | Otool : string command (** {b otool} command to get binaries dylib paths on macOS *)
   | Cygpath : (cygpath_out * string) command (** {b cygpath} command to translate path between cygwin and windows and vice-versa *)
   | Wix : wix command
-  | Makeself : makeself command (** {b makeself.sh} command to generate linux installer. *)
+  | Makeself : makeself command (** {b makeself} command to generate linux installer. *)
   | Chmod : (int * OpamFilename.t) command
   | InstallNameTool : install_name_tool_args command (** {b install_name_tool} command to modify dylib paths in macOS binaries *)
   | Codesign : codesign_args command (** {b codesign} command to sign macOS binaries and app bundles *)

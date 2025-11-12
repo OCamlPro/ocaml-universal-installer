@@ -54,7 +54,7 @@ let autodetect_backend () =
   | OpamStd.Sys.Unix
   | OpamStd.Sys.Other _ ->
     OpamConsole.formatted_msg
-      "Detected UNIX system: using makeself.sh backend.\n";
+      "Detected UNIX system: using makeself backend.\n";
     Makeself
   | OpamStd.Sys.Win32
   | OpamStd.Sys.Cygwin ->

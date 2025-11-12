@@ -23,6 +23,9 @@ depends: [
   "ppx_deriving_yojson"
   "ppx_expect" {with-test}
 ]
+depexts: [
+  ["makeself"] {os = "linux"}
+]
 build: [
     "dune"
     "build"
