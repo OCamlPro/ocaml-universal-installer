@@ -8,11 +8,31 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** [create_installer ~installer_config ~bundle_dir installer] creates
-    a standalone .pkg installer [installer] based on the given
-    bundle and installer configuration. *)
-val create_installer :
-  installer_config: Installer_config.internal ->
-  bundle_dir: OpamFilename.Dir.t ->
-  OpamFilename.t ->
-  unit
+open Oui
+
+let run installer_config bundle_dir =
+  let res =
+    let open Letop.Result in
+    let* user_config = Installer_config.load installer_config in
+    let+ _installer_config =
+      Installer_config.check_and_expand ~bundle_dir user_config
+    in
+    ()
+  in
+  let config_path = OpamFilename.to_string installer_config in
+  Oui_cli.Errors.handle ~config_path res
+
+let term =
+  let open Cmdliner.Term in
+  const run
+  $ Oui_cli.Args.installer_config
+  $ Oui_cli.Args.bundle_dir
+
+let cmd =
+  let info =
+    let doc =
+      "Check the consistency of the oui configuration and install bundle"
+    in
+    Cmdliner.Cmd.info ~doc "lint"
+  in
+  Cmdliner.Cmd.v info term

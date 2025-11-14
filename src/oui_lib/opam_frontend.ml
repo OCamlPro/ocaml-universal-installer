@@ -259,11 +259,16 @@ let copy_manpages_to_bundle ~opam_man_dir ~bundle_dir manpages =
 
 let manpages_paths manpages =
   let (/) = Filename.concat in
-  List.map
-    (fun (section, pages) ->
-       let pages_paths = List.map (fun page -> "man" / section / page) pages in
-       section, pages_paths)
-    manpages
+  let pages =
+    List.map
+      (fun (section, pages) ->
+         let pages_paths = List.map (fun page -> "man" / section / page) pages in
+         section, pages_paths)
+      manpages
+  in
+  match pages with
+  | [] -> None
+  | _ -> Some pages
 
 let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
     package_name =
@@ -349,7 +354,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
      description = package_description ~opam package;
      manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam);
      exec_files = List.map OpamFilename.Base.to_string exe_bases;
-     manpages = Installer_config.manpages_of_list manpages_paths;
+     manpages = manpages_paths;
      environment = package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
      wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
      wix_icon_file = opam_oui_conf.c_images.ico;

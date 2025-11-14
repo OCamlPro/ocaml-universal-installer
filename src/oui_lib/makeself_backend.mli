@@ -12,7 +12,7 @@
     a standalone makeself installer [installer] based on the given
     bundle and installer configuration. *)
 val create_installer :
-  installer_config: Installer_config.t ->
+  installer_config: Installer_config.internal ->
   bundle_dir: OpamFilename.Dir.t ->
   OpamFilename.t ->
   unit
@@ -21,6 +21,6 @@ val create_installer :
 
 (* Exposed for tests purposes only *)
 
-val install_script : Installer_config.t -> Sh_script.t
+val install_script : Installer_config.internal -> Sh_script.t
 
-val uninstall_script : Installer_config.t -> Sh_script.t
+val uninstall_script : Installer_config.internal -> Sh_script.t

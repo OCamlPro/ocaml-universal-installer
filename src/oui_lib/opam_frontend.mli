@@ -13,7 +13,7 @@ val with_install_bundle :
   OpamCLIVersion.Sourced.t ->
   OpamArg.global_options ->
   OpamTypes.name ->
-  (Installer_config.t ->
+  (Installer_config.internal ->
    bundle_dir:OpamFilename.Dir.t ->
    tmp_dir:OpamFilename.Dir.t -> unit) ->
   unit

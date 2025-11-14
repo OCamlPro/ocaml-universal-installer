@@ -33,7 +33,13 @@ val output : string option Cmdliner.Term.t
 val output_name :
   output: string option ->
   backend: backend option ->
-  Oui.Installer_config.t ->
+  _ Oui.Installer_config.t ->
   string
 (** Returns the approriate output name based on the value of the
     -o and --backend options. *)
+
+(** JSON oui config file positional argument, sits as first positional arg. *)
+val installer_config : OpamFilename.t Cmdliner.Term.t
+
+(** Installation bundle positional argument, sits as second positional arg. *)
+val bundle_dir : OpamFilename.Dir.t Cmdliner.Term.t

@@ -135,7 +135,7 @@ let output =
   & opt (some string) None
   & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]
 
-let output_name ~output ~backend (ic : Installer_config.t) =
+let output_name ~output ~backend (ic : _ Installer_config.t) =
   match output with
   | Some o -> o
   | None ->
@@ -148,3 +148,15 @@ let output_name ~output ~backend (ic : Installer_config.t) =
       | Some Pkgbuild -> ".pkg"
     in
     base ^ ext
+
+let installer_config =
+  let open Cmdliner.Arg in
+  let docv = "CONFIG" in
+  let doc = "Path to the oui.json installer config." in
+  required & pos 0 (some opam_filename) None & info [] ~docv ~doc
+
+let bundle_dir =
+  let open Cmdliner.Arg in
+  let docv = "BUNDLE_DIR" in
+  let doc = "Path to the directory containing the dirs and files to install." in
+  required & pos 1 (some opam_dirname) None & info [] ~docv ~doc

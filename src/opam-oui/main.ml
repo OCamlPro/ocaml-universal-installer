@@ -18,7 +18,7 @@ let package =
   & info [] ~docv:"PACKAGE" ~docs:Oui_cli.Man.Section.package_arg
       ~doc:"The package to create an installer for"
 
-let save_bundle_and_conf ~(installer_config : Installer_config.t) ~bundle_dir
+let save_bundle_and_conf ~(installer_config : Installer_config.user) ~bundle_dir
     dst =
   OpamFilename.move_dir ~src:bundle_dir ~dst;
   let conf_path = OpamFilename.Op.(dst // "oui.json") in
@@ -36,6 +36,11 @@ let create_bundle cli =
          match backend with
          | None ->
            let dst = OpamFilename.Dir.of_string output in
+           let manpages =
+             Option.map Installer_config.manpages_of_expanded
+               installer_config.manpages
+           in
+           let installer_config = {installer_config with manpages} in
            save_bundle_and_conf ~installer_config ~bundle_dir dst
          | Some Wix ->
            let dst = OpamFilename.of_string output in

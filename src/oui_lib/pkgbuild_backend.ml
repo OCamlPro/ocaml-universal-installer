@@ -21,8 +21,7 @@ let create_work_dir () =
 let copy_manpages bundle ~bundle_dir ~manpages =
   match manpages with
   | None -> ()
-  | Some pages ->
-    let man_sections = Installer_config.manpages_to_list pages in
+  | Some man_sections ->
     List.iter (fun (section, files) ->
         let relative_path = Filename.concat "man" section in
         let section_dir = Macos_app_bundle.add_subdir bundle ~relative_path in
@@ -64,7 +63,7 @@ let handle_dylibs bundle ~binary_dst =
 
 (** Create the .pkg installer from the bundle *)
 let create_installer
-    ~(installer_config : Installer_config.t) ~bundle_dir installer =
+    ~(installer_config : Installer_config.internal) ~bundle_dir installer =
   Random.self_init ();
 
   let work_dir = create_work_dir () in
