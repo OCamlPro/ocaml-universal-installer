@@ -8,6 +8,10 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(* This reverts some module shadowing due to opam indirect dependency on
+   extlib. *)
+open Stdlib
+
 let (/) = Filename.concat
 let install_script_name = "install.sh"
 let uninstall_script_name = "uninstall.sh"
@@ -55,11 +59,6 @@ let remove_symlink ?(name="symlink") ~in_ bundle_path =
     ]
     ()
 
-let manpages_to_list (mnpgs : Installer_config.manpages option) =
-  match mnpgs with
-  | None -> []
-  | Some mnpgs -> Installer_config.manpages_to_list mnpgs
-
 let install_manpages ~prefix manpages =
   let open Sh_script in
   let install_page ~section page = add_symlink ~prefix ~in_:section page in
@@ -78,7 +77,7 @@ let install_manpages ~prefix manpages =
     :: echof "Installing manpages to %s..." man_dst_var
     :: install_manpages
 
-let install_script (ic : Installer_config.t) =
+let install_script (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
   let version = ic.version in
@@ -102,7 +101,7 @@ let install_script (ic : Installer_config.t) =
       )
       binaries
   in
-  let manpages = manpages_to_list ic.manpages in
+  let manpages = Option.value ic.manpages ~default:[] in
   let install_manpages = install_manpages ~prefix manpages in
   let notify_install_complete =
     [ echof "Installation complete!"
@@ -117,19 +116,19 @@ let install_script (ic : Installer_config.t) =
   @ install_manpages
   @ notify_install_complete
 
-let uninstall_script (ic : Installer_config.t) =
+let uninstall_script (ic : Installer_config.internal) =
   let open Sh_script in
   let (/) = Filename.concat in
   let package = ic.name in
   let prefix = "/opt" / package in
   let usrbin = "/usr/local/bin" in
   let binaries = ic.exec_files in
-  let manpages = manpages_to_list ic.manpages in
   let display_symlinks =
     List.map
       (fun binary -> echof "- %s/%s" usrbin binary)
       binaries
   in
+  let manpages = Option.value ic.manpages ~default:[] in
   let display_manpages =
     List.concat_map
       (fun (section, pages) ->
@@ -193,7 +192,7 @@ let add_sos_to_bundle ~bundle_dir binary =
     System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
 
 let create_installer
-    ~(installer_config : Installer_config.t) ~bundle_dir installer =
+    ~(installer_config : Installer_config.internal) ~bundle_dir installer =
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
   List.iter (add_sos_to_bundle ~bundle_dir) installer_config.exec_files;

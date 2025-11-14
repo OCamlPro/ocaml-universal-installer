@@ -8,19 +8,30 @@
 (*                                                                        *)
 (**************************************************************************)
 
+type man_section =
+  | Man_dir of string
+  | Man_files of string list
+
 type manpages =
-  { man1 : string list
-  ; man2 : string list
-  ; man3 : string list
-  ; man4 : string list
-  ; man5 : string list
-  ; man6 : string list
-  ; man7 : string list
-  ; man8 : string list
+  { man1 : man_section
+  ; man2 : man_section
+  ; man3 : man_section
+  ; man4 : man_section
+  ; man5 : man_section
+  ; man6 : man_section
+  ; man7 : man_section
+  ; man8 : man_section
   }
 
-(** Information module used to generated main wxs document. *)
-type t = {
+(** Manpages as association list from man section name to list of manpages *)
+type expanded_manpages = (string * string list) list
+
+(** User provided installer configuration.
+    Describes the package, the content of the bundle and the paths to some
+    external files such as wix icons.
+    Parametrized by the type for manpages to allow both a JSON friendly format
+    and one easy to work with internally *)
+type 'manpages t = {
     name : string;
     (** Package name used as product name. Deduced from opam file *)
     fullname : string ;
@@ -31,7 +42,7 @@ type t = {
     manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     exec_files : string list; (** Filenames of bundled .exe binary. *)
-    manpages : manpages option; (** Paths to manpages, split by sections. *)
+    manpages : 'manpages option; (** Paths to manpages, split by sections. *)
     environment : (string * string) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
     wix_tags : string list; (** Package tags, used by WiX. *)
@@ -48,17 +59,28 @@ type t = {
     (** Directories to symlink from Contents/ to Resources/ for dune-site relocatable support.
         Example: ["lib"; "share"] creates Contents/lib -> Resources/lib and Contents/share -> Resources/share *)
   }
-[@@deriving yojson]
 
-(** Converts the manpages record to an association list for ease of use. *)
-val manpages_to_list : manpages -> (string * (string list)) list
+type user = manpages t
+
+type internal = expanded_manpages t
+
+(** Checks that directories and files specified in the given config exist
+    with the right permissions.
+    Returns the config with manpages expanded into a list of man section names
+    paired with the list of files for each of them by expanding [Man_dir "dir"]
+    into the list of files within ["dir"].
+    @raise [Inconsistent msgs] when the given config fails the checks. [msgs]
+    is the list of failure messages. *)
+val check_and_expand :
+  bundle_dir: OpamFilename.Dir.t ->
+  user ->
+  (internal, [> `Inconsistent_config of string list]) result
 
 (** Converts an association list to a manpage record, do not use on user
     provided data, only on trusted sources.
-    @return [None] on empty lists, [Some manpages] otherwise.
     @raise [Invalid_argument msg] on invalid or duplicate keys. *)
-val manpages_of_list : (string * (string list)) list -> manpages option
+val manpages_of_expanded : expanded_manpages -> manpages
 
-val load : OpamFilename.t -> t
-val save : t -> OpamFilename.t -> unit
+val load : OpamFilename.t -> (user, [> `Invalid_config of string]) result
+val save : user -> OpamFilename.t -> unit
 

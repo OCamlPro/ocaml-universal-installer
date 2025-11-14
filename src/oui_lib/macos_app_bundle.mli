@@ -29,7 +29,7 @@ type t = {
     - work_dir/AppName.app/Contents/Resources/
 *)
 val create :
-  installer_config:Installer_config.t ->
+  installer_config:Installer_config.internal ->
   work_dir:OpamFilename.Dir.t ->
   t
 
