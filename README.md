@@ -33,7 +33,7 @@ Our linux installers are built using [makeself](https://makeself.io/).
 The result is a `.run` self-extracting archive that will decompress itself
 and execute an installation script before cleaning up.
 
-To produce linux installer, the `makeself.sh` script must be in the `PATH`.
+To produce linux installer, the `makeself` script must be in the `PATH`.
 You can dowload the latest official release from the
 [official makeself website](https://makeself.io/).
 
