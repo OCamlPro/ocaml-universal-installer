@@ -1,49 +1,16 @@
-# OCaml Universal Installer
+# alt-ergo-linux-builds branch
 
-OCaml Universal Installer or `oui` is a command-line tool that produces
-standalone installers for your OCaml applications.
+Built from alt-ergo's `22f29edc24de72124b162186d314b6370d1dc573` revision.
 
-It can produce installers for Linux, Windows and macOS, installing pre-compiled
-binaries directly, no need to build anything on the target machine.
+This branch hosts a few files used by the Linux CI builds:
+- a precompiled `alt-ergo` installation bundle in `alt-ergo-bundle`, generated
+  following the suggested approach for a dune project
+  [here](https://github.com/OCamlPro/ocaml-universal-installer/blob/master/doc/README.md#generating-a-binary-installer-for-your-dune-project)
+- the corresponding `alt-ergo-oui.json` file
+- the `semantic_trigger.ae` alt-ergo input file used as input when running the
+  installed alt-ergo in our CI, copied from upstream alt-ergo's
+  `tests/cram.t/semantic_triggers.ae`.
 
-You won't need to teach your users how to install OCaml, Opam or any other
-tools that they don't need. Just download and run the installer and you're good
-to go.
-
-## Installation
-
-`oui` is still in development but if you wish to try the latest dev version, you
-can install it via opam:
-```
-opam pin oui.0.0.0 https://github.com/OCamlPro/ocaml-universal-installer.git#master
-```
-
-`oui` does require some opam libraries so you will need `opam.2.4.0` or higher.
-
-### Platform specific dependencies
-
-Producing installers for different platforms requires different extra tools.
-They do not need to be installed before `oui` but need to be available on the
-system when running it.
-
-#### Linux
-
-Our linux installers are built using [makeself](https://makeself.io/).
-
-The result is a `.run` self-extracting archive that will decompress itself
-and execute an installation script before cleaning up.
-
-To produce linux installer, the `makeself.sh` script must be in the `PATH`.
-You can dowload the latest official release from the
-[official makeself website](https://makeself.io/).
-
-#### Windows
-
-Windows MSI are built using the [Wix6 toolkit](https://wixtoolset.org/).
-
-## Documentation
-
-Detailed documentation can be found [here](doc/README.md).
-
-This project is built on top of `opam-wix`. The project's original documentation
-is still available [here](doc/opam-wix.md).
+If those files need to be regenerated, please follow the steps in the
+documentation section linked above and update the commit revision in this
+README.
