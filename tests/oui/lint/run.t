@@ -21,7 +21,11 @@ Lets consider the following, valid oui.json:
   >   "manpages": {
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"]
-  >   }
+  >   },
+  >   "wix_icon_file": "icon.jpg",
+  >   "wix_dlg_bmp_file": "dlg.bmp",
+  >   "wix_banner_bmp_file": "banner.bmp",
+  >   "macos_symlink_dirs": ["lib"]
   > }
   > EOF
 
@@ -33,13 +37,20 @@ report all errors:
   - exec_files: file $TESTCASE_ROOT/bundle/bin/app does not exist
   - manpages.man1: directory $TESTCASE_ROOT/bundle/man/man1 does not exist
   - manpages.man5: file $TESTCASE_ROOT/bundle/doc/file-format.1 does not exist
+  - wix_icon_file: file $TESTCASE_ROOT/icon.jpg does not exist
+  - wix_dlg_bmp_file: file $TESTCASE_ROOT/dlg.bmp does not exist
+  - wix_banner_bmp_file: file $TESTCASE_ROOT/banner.bmp does not exist
+  - macos_symlink_dirs: directory $TESTCASE_ROOT/bundle/lib does not exist
   [1]
 
 We had the right files and directories:
 
-  $ mkdir -p bundle/bin bundle/man/man1 bundle/doc
+  $ mkdir -p bundle/bin bundle/man/man1 bundle/doc bundle/lib
   $ touch bundle/bin/app
   $ touch bundle/doc/file-format.1
+  $ touch icon.jpg
+  $ touch dlg.bmp
+  $ touch banner.bmp
 
 If we run `oui lint` it should still complain about the executabe's permissions:
 

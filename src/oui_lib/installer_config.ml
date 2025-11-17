@@ -125,6 +125,14 @@ let collect_errors ~f l =
   List.map f l
   |> List.filter_map (function Ok _ -> None | Error msg -> Some msg)
 
+let collect_error_opt ~f x =
+  match x with
+  | None -> []
+  | Some x ->
+    match f x with
+    | Ok () -> []
+    | Error e -> [e]
+
 let guard cond fmt =
   if cond then Printf.ksprintf (fun _ -> Ok ()) fmt
   else errorf fmt
@@ -189,8 +197,29 @@ let check_and_expand ~bundle_dir user =
     collect_errors ~f:(check_man_section ~bundle_dir) manpages
     |> List.concat
   in
-  match exec_errors, manpages_errors with
-  | [], [] ->
+  let wix_icon_error =
+    collect_error_opt ~f:(check_file ~field:"wix_icon_file")
+      (Option.map OpamFilename.of_string user.wix_icon_file)
+  in
+  let wix_dlg_bmp_error =
+    collect_error_opt ~f:(check_file ~field:"wix_dlg_bmp_file")
+      (Option.map OpamFilename.of_string user.wix_dlg_bmp_file)
+  in
+  let wix_banner_bmp_error =
+    collect_error_opt ~f:(check_file ~field:"wix_banner_bmp_file")
+      (Option.map OpamFilename.of_string user.wix_banner_bmp_file)
+  in
+  let macos_symlink_dirs_errors =
+    collect_errors ~f:(check_dir ~field:"macos_symlink_dirs")
+      (List.map
+         (fun d -> OpamFilename.Op.(bundle_dir / d)) user.macos_symlink_dirs)
+  in
+  let all_errors =
+    exec_errors @ manpages_errors @ wix_icon_error @ wix_dlg_bmp_error
+    @ wix_banner_bmp_error @ macos_symlink_dirs_errors
+  in
+  match all_errors with
+  | [] ->
     let manpages =
       ListLabels.filter_map manpages
         ~f:(fun (section_name, man_section) ->
@@ -204,7 +233,7 @@ let check_and_expand ~bundle_dir user =
     in
     Ok {user with manpages}
   | _ ->
-    Error (`Inconsistent_config (exec_errors @ manpages_errors))
+    Error (`Inconsistent_config all_errors)
 
 let invalid_config fmt =
   Printf.ksprintf (fun s -> `Invalid_config s) fmt
