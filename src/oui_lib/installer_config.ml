@@ -129,37 +129,41 @@ let guard cond fmt =
   if cond then Printf.ksprintf (fun _ -> Ok ()) fmt
   else errorf fmt
 
+let check_dir ~field dir =
+  guard (OpamFilename.exists_dir dir)
+    "%s: directory %s does not exist"
+    field (OpamFilename.Dir.to_string dir)
+
+let check_file ~field file =
+  guard (OpamFilename.exists file)
+    "%s: file %s does not exist"
+    field (OpamFilename.to_string file)
+
 let check_exec ~bundle_dir rel_path =
   let open Letop.Result in
+  let field = "exec_files" in
   let path = OpamFilename.Op.(bundle_dir // rel_path) in
   let path_str = OpamFilename.to_string path in
-  let* () =
-    guard (OpamFilename.exists path)
-      "listed executable %s does not exist"
-      path_str
-  in
+  let* () = check_file ~field:"exec_files" path in
   let stats = Unix.stat path_str in
   let perm = stats.st_perm in
   guard (can_exec perm)
-    "listed executable %s does not have exec permissions"
-    path_str
+    "%s: file %s does not have exec permissions"
+    field path_str
 
-let check_man_section ~bundle_dir man_section =
+let check_man_section ~bundle_dir (name, man_section) =
+  let field = "manpages." ^ name in
   match man_section with
-  | name, Man_dir d ->
+  | Man_dir d ->
     let dir = OpamFilename.Op.(bundle_dir / d) in
-    guard (OpamFilename.exists_dir dir)
-      "listed %s directory %s does not exist"
-      name (OpamFilename.Dir.to_string dir)
+    check_dir ~field dir
     |> Result.map_error (fun msg -> [msg])
-  | name, Man_files l ->
+  | Man_files l ->
     let errs =
       collect_errors l
         ~f:(fun f ->
             let page = OpamFilename.Op.(bundle_dir // f) in
-            guard (OpamFilename.exists page)
-              "listed %s manpage %s does not exist"
-              name (OpamFilename.to_string page))
+            check_file ~field page)
     in
     match errs with
     | [] -> Ok ()

@@ -30,9 +30,9 @@ report all errors:
 
   $ oui lint oui.json bundle
   oui configuration $TESTCASE_ROOT/oui.json contain inconsistencies:
-  - listed executable $TESTCASE_ROOT/bundle/bin/app does not exist
-  - listed man1 directory $TESTCASE_ROOT/bundle/man/man1 does not exist
-  - listed man5 manpage $TESTCASE_ROOT/bundle/doc/file-format.1 does not exist
+  - exec_files: file $TESTCASE_ROOT/bundle/bin/app does not exist
+  - manpages.man1: directory $TESTCASE_ROOT/bundle/man/man1 does not exist
+  - manpages.man5: file $TESTCASE_ROOT/bundle/doc/file-format.1 does not exist
   [1]
 
 We had the right files and directories:
@@ -45,7 +45,7 @@ If we run `oui lint` it should still complain about the executabe's permissions:
 
   $ oui lint oui.json bundle
   oui configuration $TESTCASE_ROOT/oui.json contain inconsistencies:
-  - listed executable $TESTCASE_ROOT/bundle/bin/app does not have exec permissions
+  - exec_files: file $TESTCASE_ROOT/bundle/bin/app does not have exec permissions
   [1]
 
 Fixing this, it should now run smoothly:
