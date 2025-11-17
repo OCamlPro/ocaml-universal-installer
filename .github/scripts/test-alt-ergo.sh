@@ -38,7 +38,7 @@ git checkout origin/${BRANCH} -- ${ARTIFACTS[*]}
 
 # Build installer
 log "Building ${INSTALLER_NAME}"
-opam exec -- oui alt-ergo-oui.json alt-ergo-bundle
+opam exec -- oui build alt-ergo-oui.json alt-ergo-bundle
 [[ -f "${INSTALLER_NAME}" ]] || error "Package file not found: ${INSTALLER_NAME}"
 
 # Install package

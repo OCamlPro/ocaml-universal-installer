@@ -12,9 +12,11 @@ let info =
   let doc = "Create binary installers for your application and plugins" in
   Cmdliner.Cmd.info ~doc "oui"
 
+let help = Cmdliner.Term.(ret (const (`Help (`Auto, None))))
+
 let cmd =
   Cmdliner.Cmd.group
-    ~default:Build.term
+    ~default:help
     info
     [ Build.cmd; Lint.cmd ]
 
