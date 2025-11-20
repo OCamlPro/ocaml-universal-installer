@@ -23,9 +23,91 @@ need to provide both those things. The
 project](#generating-a-binary-installer-for-your-dune-project) section
 provides a good example on how to build them.
 
+Given that the information in the `oui.json` file is closely tighted to your
+project, we recommend committing it to the root of your repo.
+
 ## `oui.json` file format
 
-*TODO*
+The `oui.json` config file is composed of a main JSON object. The fields
+are:
+
+- `name`, **string**, **required**: the name of the app. This will define the
+  install folder name on the target system and where plugins will look for your
+  app when installing themselves. *Example:* `"oui"`.
+- `fullname`, **string**, **required**: *TODO* (remove or make wix specific?)
+- `version`, **string**, **required**: the version of the app. *Example:*
+  `"1.0.0"`.
+- `description`, **string**, **required**: *TODO* (remove or make wix specific?)
+- `manufacturer`, **string**, **required**: *TODO* (remove or make wix specific?)
+- `exec_files`, **string array**, **required**: The list of executables to
+  install from the bundle. Should be a list of paths, relative to the bundle
+  root, pointing to executable files that should be installed and made available
+  to the user. *Example:* `["bin/oui", "bin/opam-oui"]`.
+- `manpages`, **object**, **optional**: A JSON object describing where manpages
+  are located within the bundle so they can be properly installed on the target
+  system. See the [manpages object section](#manpages-object) for the object
+  format.
+- `environement`, **string array array**, **optional**: A list of environment
+  variables and associated values to set/unset in Windows terminal on
+  install/uninstall respectively. *Example:*
+  `[["VAR1", "value1"], ["VAR2", "value2"]]`.
+- `wix_tags`, **string array**, **optional**: List of package tags, used by Wix
+  backend only. *Example*: `["tag1", "tag2"]`.
+- `wix_icon_file`, **string**, **optional**: Path to the app icon file relative to
+  the `oui.json` file, used by Wix backend only. *Example*:
+  `"data/images/logo.ico"`.
+- `wix_dlg_bmp_file`, **string**, **optional**: Path to the installer dialog
+  image file, relative to the `oui.json` file, used by Wix backend only.
+  *Example*: `"data/images/dlg.bmp"`.
+- `wix_banner_bmp_file`, **string**, **optional**: Path to the app banner file
+  relative to the `oui.json` file, used by Wix backend only. *Example*:
+  `"data/images/banner.bmp"`.
+- `wix_license_file`, **string**, **optional**: Path to the license in *TODO*
+  format relative to the `oui.json` file, used by Wix backend only. *Example:*
+  `"license.TODO"`
+- `macos_bundle_id`, **string**, **optional**: macOS bundle identifier in
+  reverse DNS format, used by macOS backend only. *Example:* `TODO`.
+- `macos_symlink_dirs`: **string array**, **optional**: List of directories
+  within the bundle that are installed in `Resources/` but must be symlinked
+  in `Contents/`. Used by macOS backend only. See
+  [macOS / Application Bundle section](#macos--application-bundle) for details.
+  *Example:* `["lib", "share"]`.
+
+### manpages object
+
+The manpages object describes where in the installation bundle are manpages
+located and which man section they belong to.
+
+It's a JSON object with the following fields:
+- `man1`, **string** or **string array**, **optional**
+- `man2`, **string** or **string array**, **optional**
+- `man3`, **string** or **string array**, **optional**
+- `man4`, **string** or **string array**, **optional**
+- `man5`, **string** or **string array**, **optional**
+- `man6`, **string** or **string array**, **optional**
+- `man7`, **string** or **string array**, **optional**
+- `man8`, **string** or **string array**, **optional**
+
+Each field's value is interpreted as follows:
+- If the field is a JSON string, it is interpreted as a path, relative to the
+  bundle's root, pointing to a directory containing all manpages that should be
+  installed in this man section.
+- If the field is an array of JSON strings, each string is interpreted as a
+  path, relative to the bundle's root, pointing to a manpage file that should be
+  installe din this man section.
+
+*Example:*
+```json
+{
+  "man1": "doc/man/man1",
+  "man5": [ "config/spec/oui.json.1", "lib/save/oui.save.1" ]
+}
+```
+
+means that all files in `bundle/doc/man/man1` will be installed as manpages in
+man section `man1` and that `bundle/config/spec/oui.json.1` and
+`bundle/lib/save/oui.save.1` will be installed as manpages in the man section
+`man5` on the target system.
 
 ## Generating a binary installer for your dune project
 
