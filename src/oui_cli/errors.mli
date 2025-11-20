@@ -8,18 +8,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let info =
-  let doc = "Create binary installers for your application and plugins" in
-  Cmdliner.Cmd.info ~doc "oui"
-
-let help = Cmdliner.Term.(ret (const (`Help (`Auto, None))))
-
-let cmd =
-  Cmdliner.Cmd.group
-    ~default:help
-    info
-    [ Build.cmd; Lint.cmd ]
-
-let () =
-  let status = Cmdliner.Cmd.eval' cmd in
-  exit status
+val handle :
+  config_path:string ->
+  ( unit
+  , [< `Inconsistent_config of string list | `Invalid_config of string ]
+  ) result -> int

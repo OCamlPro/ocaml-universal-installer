@@ -8,18 +8,31 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let info =
-  let doc = "Create binary installers for your application and plugins" in
-  Cmdliner.Cmd.info ~doc "oui"
+open Oui
 
-let help = Cmdliner.Term.(ret (const (`Help (`Auto, None))))
+let run installer_config bundle_dir =
+  let res =
+    let open Letop.Result in
+    let* user_config = Installer_config.load installer_config in
+    let+ _installer_config =
+      Installer_config.check_and_expand ~bundle_dir user_config
+    in
+    ()
+  in
+  let config_path = OpamFilename.to_string installer_config in
+  Oui_cli.Errors.handle ~config_path res
+
+let term =
+  let open Cmdliner.Term in
+  const run
+  $ Oui_cli.Args.installer_config
+  $ Oui_cli.Args.bundle_dir
 
 let cmd =
-  Cmdliner.Cmd.group
-    ~default:help
-    info
-    [ Build.cmd; Lint.cmd ]
-
-let () =
-  let status = Cmdliner.Cmd.eval' cmd in
-  exit status
+  let info =
+    let doc =
+      "Check the consistency of the oui configuration and install bundle"
+    in
+    Cmdliner.Cmd.info ~doc "lint"
+  in
+  Cmdliner.Cmd.v info term

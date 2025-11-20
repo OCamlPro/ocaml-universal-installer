@@ -8,18 +8,14 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let info =
-  let doc = "Create binary installers for your application and plugins" in
-  Cmdliner.Cmd.info ~doc "oui"
-
-let help = Cmdliner.Term.(ret (const (`Help (`Auto, None))))
-
-let cmd =
-  Cmdliner.Cmd.group
-    ~default:help
-    info
-    [ Build.cmd; Lint.cmd ]
-
-let () =
-  let status = Cmdliner.Cmd.eval' cmd in
-  exit status
+let handle ~config_path res =
+  match res with
+  | Ok () -> 0
+  | Error `Invalid_config msg ->
+    Printf.eprintf "%s\n" msg;
+    1
+  | Error `Inconsistent_config msgs ->
+    Printf.eprintf "oui configuration %s contain inconsistencies:\n"
+      config_path;
+    ListLabels.iter msgs ~f:(Printf.eprintf "- %s\n");
+    1

@@ -51,7 +51,7 @@ let data_file ~tmp_dir ~default:(name, content) data_path =
       OpamFilename.to_string dst
 
 let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
-    (desc : Installer_config.t) dst =
+    (desc : Installer_config.internal) dst =
   check_wix_installed ();
   OpamConsole.header_msg "Preparing MSI installer using WiX";
   let exec_file =

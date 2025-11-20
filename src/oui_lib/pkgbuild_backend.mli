@@ -12,7 +12,7 @@
     a standalone .pkg installer [installer] based on the given
     bundle and installer configuration. *)
 val create_installer :
-  installer_config: Installer_config.t ->
+  installer_config: Installer_config.internal ->
   bundle_dir: OpamFilename.Dir.t ->
   OpamFilename.t ->
   unit

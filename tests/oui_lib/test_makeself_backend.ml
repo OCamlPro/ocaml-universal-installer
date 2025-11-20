@@ -9,8 +9,9 @@
 (**************************************************************************)
 
 open Oui
+open Installer_config
 
-let make_manpages
+let make_expanded_manpages
     ?(man1=[])
     ?(man2=[])
     ?(man3=[])
@@ -19,16 +20,25 @@ let make_manpages
     ?(man6=[])
     ?(man7=[])
     ?(man8=[])
-    () : Installer_config.manpages
+    ()
   =
-  {man1; man2; man3; man4; man5; man6; man7; man8}
+  [ ("man1", man1)
+  ; ("man2", man2)
+  ; ("man3", man3)
+  ; ("man4", man4)
+  ; ("man5", man5)
+  ; ("man6", man6)
+  ; ("man7", man7)
+  ; ("man8", man8)
+  ]
+  |> List.filter_map (function _, [] -> None | x -> Some x)
 
 let make_config
     ?(name="name")
     ?(version="version")
     ?(exec_files=[])
     ?manpages
-    () : Installer_config.t
+    () : Installer_config.internal
   =
   { name
   ; version
@@ -49,7 +59,7 @@ let make_config
 
 let%expect_test "install_script: simple" =
   let manpages =
-    make_manpages
+    make_expanded_manpages
       ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
       ~man5:["man/man5/aaa-file.1"]
       ()
@@ -94,7 +104,7 @@ let%expect_test "install_script: simple" =
 
 let%expect_test "uninstall_script: simple" =
   let manpages =
-    make_manpages
+    make_expanded_manpages
       ~man1:["man/man1/aaa-command.1"; "man/man1/aaa-utility.1"]
       ~man5:["man/man5/aaa-file.1"]
       ()
