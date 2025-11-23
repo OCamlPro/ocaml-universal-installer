@@ -367,6 +367,8 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
      manpages = manpages_paths;
      environment = package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
      unique_id = sanitize_id (String.concat "." [wix_manufacturer; name]);
+     plugins = [];
+     plugin_dirs = None;
      wix_manufacturer;
      wix_description = Some (package_description ~opam package);
      wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
