@@ -15,19 +15,9 @@ In particular, it should properly report fields that are not filled correctly:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": ["ver"],
-  >   "exec_files": ["bin/app"],
-  >   "manpages": {
-  >     "man1": "man/man1",
-  >     "man5": ["doc/file-format.1"]
-  >   },
+  >   "exec_files": [],
   >   "unique_id": "home.org.App",
-  >   "wix_manufacturer": "me@home.org",
-  >   "wix_description": "A fake test app",
-  >   "wix_icon_file": "icon.jpg",
-  >   "wix_dlg_bmp_file": "dlg.bmp",
-  >   "wix_banner_bmp_file": "banner.bmp",
-  >   "wix_license_file": "license.rtf",
-  >   "macos_symlink_dirs": ["lib"]
+  >   "wix_manufacturer": "me@home.org"
   > }
   > EOF
   $ oui lint oui.json bundle
@@ -40,19 +30,9 @@ or missing mandatory fields:
   > {
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": ["bin/app"],
-  >   "manpages": {
-  >     "man1": "man/man1",
-  >     "man5": ["doc/file-format.1"]
-  >   },
+  >   "exec_files": [],
   >   "unique_id": "home.org.App",
-  >   "wix_manufacturer": "me@home.org",
-  >   "wix_description": "A fake test app",
-  >   "wix_icon_file": "icon.jpg",
-  >   "wix_dlg_bmp_file": "dlg.bmp",
-  >   "wix_banner_bmp_file": "banner.bmp",
-  >   "wix_license_file": "license.rtf",
-  >   "macos_symlink_dirs": ["lib"]
+  >   "wix_manufacturer": "me@home.org"
   > }
   > EOF
   $ oui lint oui.json bundle
@@ -66,19 +46,13 @@ Extra fields are not allowed to avoid typos in optional fields going unnoticed:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": ["bin/app"],
+  >   "exec_files": [],
   >   "manpages_with_big_typo": {
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"]
   >   },
   >   "unique_id": "home.org.App",
-  >   "wix_manufacturer": "me@home.org",
-  >   "wix_description": "A fake test app",
-  >   "wix_icon_file": "icon.jpg",
-  >   "wix_dlg_bmp_file": "dlg.bmp",
-  >   "wix_banner_bmp_file": "banner.bmp",
-  >   "wix_license_file": "license.rtf",
-  >   "macos_symlink_dirs": ["lib"]
+  >   "wix_manufacturer": "me@home.org"
   > }
   > EOF
   $ oui lint oui.json bundle
@@ -92,24 +66,58 @@ Such errors should be properly reported in sub objects:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": ["bin/app"],
+  >   "exec_files": [],
   >   "manpages": {
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"],
   >     "man9": "some/doc/folder"
   >   },
   >   "unique_id": "home.org.App",
-  >   "wix_manufacturer": "me@home.org",
-  >   "wix_description": "A fake test app",
-  >   "wix_icon_file": "icon.jpg",
-  >   "wix_dlg_bmp_file": "dlg.bmp",
-  >   "wix_banner_bmp_file": "banner.bmp",
-  >   "wix_license_file": "license.rtf",
-  >   "macos_symlink_dirs": ["lib"]
+  >   "wix_manufacturer": "me@home.org"
   > }
   > EOF
   $ oui lint oui.json bundle
   Could not parse installer config $TESTCASE_ROOT/oui.json: invalid key "manpages.man9"
+  [1]
+
+  $ cat > oui.json << EOF
+  > {
+  >   "name": "app",
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": [],
+  >   "plugin_dirs": { "plugins_dir_typo": "a", "lib_dir": "b" },
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org"
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  Could not parse installer config $TESTCASE_ROOT/oui.json: invalid key "plugin_dirs.plugins_dir_typo"
+  [1]
+
+  $ cat > oui.json << EOF
+  > {
+  >   "name": "app",
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": [],
+  >   "plugins":
+  >     [
+  >       {"name": "a", "app_name": "b", "plugin_dir": "c", "lib_dir": "d"},
+  >       {
+  >         "name": "e",
+  >         "app_name": "f",
+  >         "plugin_dir": "g",
+  >         "lib_dir": "h",
+  >         "dyn_deps_typo": ["i"]
+  >       }
+  >     ],
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org"
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  Could not parse installer config $TESTCASE_ROOT/oui.json: invalid key plugins.[1].dyn_deps_typo
   [1]
 
 Now, lets consider the following, valid oui.json:

@@ -23,6 +23,19 @@ type manpages =
   ; man8 : man_section
   }
 
+type plugin =
+  { name : string
+  ; app_name : string
+  ; plugin_dir : string
+  ; lib_dir : string
+  ; dyn_deps : string list [@default []]
+  }
+
+type plugin_dirs =
+  { plugins_dir : string
+  ; lib_dir : string
+  }
+
 (** Manpages as association list from man section name to list of manpages *)
 type expanded_manpages = (string * string list) list
 
@@ -44,6 +57,11 @@ type 'manpages t = {
     unique_id : string;
     (** Unique ID in reverse DNS format. Used by macOS and Wix backends.
         Deduced from fields {i maintainer} and {i name} in opam. *)
+    plugins: plugin list;
+    (** List of plugins for external applications within the bundle. *)
+    plugin_dirs: plugin_dirs option;
+    (** Paths to directories in the bundle where external plugin should be
+        installed. *)
     wix_manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     wix_description : string option;
