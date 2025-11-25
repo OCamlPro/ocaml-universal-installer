@@ -44,10 +44,11 @@ let make_config
   ; version
   ; exec_files
   ; fullname = ""
-  ; description = ""
-  ; manufacturer = ""
   ; manpages
   ; environment = []
+  ; wix_unique_id = ""
+  ; wix_manufacturer = ""
+  ; wix_description = None
   ; wix_tags = []
   ; wix_icon_file = None
   ; wix_dlg_bmp_file = None

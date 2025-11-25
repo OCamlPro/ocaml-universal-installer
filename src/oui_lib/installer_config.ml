@@ -47,11 +47,12 @@ type 'manpages t = {
     name : string;
     fullname : string ;
     version : string;
-    description : string;
-    manufacturer : string;
     exec_files : string list;
     manpages : 'manpages option; [@default None]
     environment : (string * string) list; [@default []]
+    wix_unique_id : string;
+    wix_manufacturer : string;
+    wix_description : string option; [@default None]
     wix_tags : string list; [@default []]
     wix_icon_file : string option; [@default None]
     wix_dlg_bmp_file : string option; [@default None]
@@ -209,6 +210,10 @@ let check_and_expand ~bundle_dir user =
     collect_error_opt ~f:(check_file ~field:"wix_banner_bmp_file")
       (Option.map OpamFilename.of_string user.wix_banner_bmp_file)
   in
+  let wix_license_error =
+    collect_error_opt ~f:(check_file ~field:"wix_license_file")
+      (Option.map OpamFilename.of_string user.wix_license_file)
+  in
   let macos_symlink_dirs_errors =
     collect_errors ~f:(check_dir ~field:"macos_symlink_dirs")
       (List.map
@@ -216,7 +221,7 @@ let check_and_expand ~bundle_dir user =
   in
   let all_errors =
     exec_errors @ manpages_errors @ wix_icon_error @ wix_dlg_bmp_error
-    @ wix_banner_bmp_error @ macos_symlink_dirs_errors
+    @ wix_banner_bmp_error @ wix_license_error @ macos_symlink_dirs_errors
   in
   match all_errors with
   | [] ->

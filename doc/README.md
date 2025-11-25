@@ -37,8 +37,6 @@ are:
 - `fullname`, **string**, **required**: *TODO* (remove or make wix specific?)
 - `version`, **string**, **required**: the version of the app. *Example:*
   `"1.0.0"`.
-- `description`, **string**, **required**: *TODO* (remove or make wix specific?)
-- `manufacturer`, **string**, **required**: *TODO* (remove or make wix specific?)
 - `exec_files`, **string array**, **required**: The list of executables to
   install from the bundle. Should be a list of paths, relative to the bundle
   root, pointing to executable files that should be installed and made available
@@ -51,6 +49,12 @@ are:
   variables and associated values to set/unset in Windows terminal on
   install/uninstall respectively. *Example:*
   `[["VAR1", "value1"], ["VAR2", "value2"]]`.
+- `wix_unique_id`, **string**, **required**: A unique ID for the app, must
+  remain the same for all subsequent versions for updates to work correctly.
+  *Example*: `"com.MyCompany.MyApp"`.
+- `wix_manufacturer`, **string**, **required**: The application developer/editor
+- `wix_description`, **string**, **optional**: A short description of the application,
+  shown in the installer properties
 - `wix_tags`, **string array**, **optional**: List of package tags, used by Wix
   backend only. *Example*: `["tag1", "tag2"]`.
 - `wix_icon_file`, **string**, **optional**: Path to the app icon file relative to
@@ -62,9 +66,9 @@ are:
 - `wix_banner_bmp_file`, **string**, **optional**: Path to the app banner file
   relative to the `oui.json` file, used by Wix backend only. *Example*:
   `"data/images/banner.bmp"`.
-- `wix_license_file`, **string**, **optional**: Path to the license in *TODO*
+- `wix_license_file`, **string**, **optional**: Path to the license in RTF
   format relative to the `oui.json` file, used by Wix backend only. *Example:*
-  `"license.TODO"`
+  `"data/licenses/gpl-3.0.rtf"`
 - `macos_bundle_id`, **string**, **optional**: macOS bundle identifier in
   reverse DNS format, used by macOS backend only. *Example:* `TODO`.
 - `macos_symlink_dirs`: **string array**, **optional**: List of directories

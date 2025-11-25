@@ -270,6 +270,16 @@ let manpages_paths manpages =
   | [] -> None
   | _ -> Some pages
 
+let sanitize_id id =
+  String.map (fun c ->
+      if c >= 'A' && c <= 'Z'
+      || c >= 'a' && c <= 'z'
+      || c >= '0' && c <= '9'
+      || c = '_' || c = '.'
+      then c
+      else '_'
+    ) id
+
 let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
     package_name =
   let package =
@@ -346,16 +356,19 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
   in
   OpamConsole.formatted_msg "Bundle created.\n";
   let open Installer_config in
+  let name = OpamPackage.Name.to_string (OpamPackage.name package) in
+  let wix_manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam) in
   (bundle_dir,
    {
-     name = OpamPackage.Name.to_string (OpamPackage.name package);
+     name;
      fullname = OpamPackage.to_string package;
      version = wix_version ~opam_oui_conf package;
-     description = package_description ~opam package;
-     manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam);
      exec_files = List.map OpamFilename.Base.to_string exe_bases;
      manpages = manpages_paths;
      environment = package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
+     wix_unique_id = sanitize_id (String.concat "." [wix_manufacturer; name]);
+     wix_manufacturer;
+     wix_description = Some (package_description ~opam package);
      wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
      wix_icon_file = opam_oui_conf.c_images.ico;
      wix_dlg_bmp_file = opam_oui_conf.c_images.dlg;
