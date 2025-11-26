@@ -44,16 +44,16 @@ let make_config
   ; version
   ; exec_files
   ; fullname = ""
-  ; description = ""
-  ; manufacturer = ""
   ; manpages
   ; environment = []
+  ; unique_id = ""
+  ; wix_manufacturer = ""
+  ; wix_description = None
   ; wix_tags = []
   ; wix_icon_file = None
   ; wix_dlg_bmp_file = None
   ; wix_banner_bmp_file = None
   ; wix_license_file = None
-  ; macos_bundle_id = None
   ; macos_symlink_dirs = []
   }
 

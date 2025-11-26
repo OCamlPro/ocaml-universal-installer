@@ -20,16 +20,6 @@ let check_wix_installed () =
     raise @@ System.System_error
       (Format.sprintf "Wix binaries couldn't be found.")
 
-let sanitize_id id =
-  String.map (fun c ->
-      if c >= 'A' && c <= 'Z'
-      || c >= 'a' && c <= 'z'
-      || c >= '0' && c <= '9'
-      || c = '_' || c = '.'
-      then c
-      else '_'
-    ) id
-
 let add_dlls_to_bundle ~bundle_dir binary =
   let dlls = Win_ldd.get_dlls OpamFilename.Op.(bundle_dir // binary) in
   match dlls with
@@ -67,12 +57,12 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
   let background = data_file ~tmp_dir ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file in
   let license = data_file ~tmp_dir ~default:Data.LICENSES.gpl3 desc.wix_license_file in
   let info = Wix.{
-      unique_id = sanitize_id (String.concat "." [desc.manufacturer; desc.name]);
-      organization = desc.manufacturer;
+      unique_id = desc.unique_id;
+      organization = desc.wix_manufacturer;
       short_name = desc.name;
       long_name = desc.name;
       version = desc.version;
-      description = desc.description;
+      description = (match desc.wix_description with Some d -> d | None -> "");
       keywords = String.concat " " desc.wix_tags;
       directory = OpamFilename.Dir.to_string bundle_dir;
       shortcuts = [];

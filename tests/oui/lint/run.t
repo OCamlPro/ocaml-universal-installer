@@ -15,16 +15,18 @@ Lets consider the following, valid oui.json:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "description": "A fake test app",
-  >   "manufacturer": "me@home.org",
   >   "exec_files": ["bin/app"],
   >   "manpages": {
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"]
   >   },
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org",
+  >   "wix_description": "A fake test app",
   >   "wix_icon_file": "icon.jpg",
   >   "wix_dlg_bmp_file": "dlg.bmp",
   >   "wix_banner_bmp_file": "banner.bmp",
+  >   "wix_license_file": "license.rtf",
   >   "macos_symlink_dirs": ["lib"]
   > }
   > EOF
@@ -40,6 +42,7 @@ report all errors:
   - wix_icon_file: file $TESTCASE_ROOT/icon.jpg does not exist
   - wix_dlg_bmp_file: file $TESTCASE_ROOT/dlg.bmp does not exist
   - wix_banner_bmp_file: file $TESTCASE_ROOT/banner.bmp does not exist
+  - wix_license_file: file $TESTCASE_ROOT/license.rtf does not exist
   - macos_symlink_dirs: directory $TESTCASE_ROOT/bundle/lib does not exist
   [1]
 
@@ -51,6 +54,7 @@ We had the right files and directories:
   $ touch icon.jpg
   $ touch dlg.bmp
   $ touch banner.bmp
+  $ touch license.rtf
 
 If we run `oui lint` it should still complain about the executabe's permissions:
 
