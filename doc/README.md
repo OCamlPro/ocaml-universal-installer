@@ -49,8 +49,9 @@ are:
   variables and associated values to set/unset in Windows terminal on
   install/uninstall respectively. *Example:*
   `[["VAR1", "value1"], ["VAR2", "value2"]]`.
-- `wix_unique_id`, **string**, **required**: A unique ID for the app, must
-  remain the same for all subsequent versions for updates to work correctly.
+- `unique_id`, **string**, **required**: A unique identifier for the app in
+  reverse DNS format. Must remain the same for all subsequent versions for updates
+  to work correctly on Windows.
   *Example*: `"com.MyCompany.MyApp"`.
 - `wix_manufacturer`, **string**, **required**: The application developer/editor
 - `wix_description`, **string**, **optional**: A short description of the application,
@@ -69,8 +70,6 @@ are:
 - `wix_license_file`, **string**, **optional**: Path to the license in RTF
   format relative to the `oui.json` file, used by Wix backend only. *Example:*
   `"data/licenses/gpl-3.0.rtf"`
-- `macos_bundle_id`, **string**, **optional**: macOS bundle identifier in
-  reverse DNS format, used by macOS backend only. *Example:* `TODO`.
 - `macos_symlink_dirs`: **string array**, **optional**: List of directories
   within the bundle that are installed in `Resources/` but must be symlinked
   in `Contents/`. Used by macOS backend only. See

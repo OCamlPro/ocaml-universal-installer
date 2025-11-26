@@ -20,7 +20,7 @@ Lets consider the following, valid oui.json:
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"]
   >   },
-  >   "wix_unique_id": "home.org.App",
+  >   "unique_id": "home.org.App",
   >   "wix_manufacturer": "me@home.org",
   >   "wix_description": "A fake test app",
   >   "wix_icon_file": "icon.jpg",

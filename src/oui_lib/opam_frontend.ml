@@ -366,7 +366,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
      exec_files = List.map OpamFilename.Base.to_string exe_bases;
      manpages = manpages_paths;
      environment = package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
-     wix_unique_id = sanitize_id (String.concat "." [wix_manufacturer; name]);
+     unique_id = sanitize_id (String.concat "." [wix_manufacturer; name]);
      wix_manufacturer;
      wix_description = Some (package_description ~opam package);
      wix_tags = (match OpamFile.OPAM.tags opam with [] -> ["ocaml"] | ts -> ts );
@@ -374,7 +374,6 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
      wix_dlg_bmp_file = opam_oui_conf.c_images.dlg;
      wix_banner_bmp_file = opam_oui_conf.c_images.ban;
      wix_license_file = None; (* TODO *)
-     macos_bundle_id = None; (* TODO *)
      macos_symlink_dirs = []; (* TODO *)
    })
 

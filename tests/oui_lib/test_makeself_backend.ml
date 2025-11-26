@@ -46,7 +46,7 @@ let make_config
   ; fullname = ""
   ; manpages
   ; environment = []
-  ; wix_unique_id = ""
+  ; unique_id = ""
   ; wix_manufacturer = ""
   ; wix_description = None
   ; wix_tags = []
@@ -54,7 +54,6 @@ let make_config
   ; wix_dlg_bmp_file = None
   ; wix_banner_bmp_file = None
   ; wix_license_file = None
-  ; macos_bundle_id = None
   ; macos_symlink_dirs = []
   }
 

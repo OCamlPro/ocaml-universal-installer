@@ -41,8 +41,9 @@ type 'manpages t = {
     manpages : 'manpages option; (** Paths to manpages, split by sections. *)
     environment : (string * string) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
-    wix_unique_id : string;
-    (** Unique ID. Deduced from fields {i maintainer} and {i name} in opam file *)
+    unique_id : string;
+    (** Unique ID in reverse DNS format. Used by macOS and Wix backends.
+        Deduced from fields {i maintainer} and {i name} in opam. *)
     wix_manufacturer : string;
     (** Product manufacturer. Deduced from field {i maintainer} in opam file *)
     wix_description : string option;
@@ -55,8 +56,6 @@ type 'manpages t = {
     wix_banner_bmp_file : string option;
     (** Banner bmp filename, used by WiX. Defaults to our data/images/bannrbmp.bmp *)
     wix_license_file : string option;
-    macos_bundle_id : string option;
-    (** macOS bundle identifier (reverse DNS format). *)
     macos_symlink_dirs : string list;
     (** Directories to symlink from Contents/ to Resources/ for dune-site relocatable support.
         Example: ["lib"; "share"] creates Contents/lib -> Resources/lib and Contents/share -> Resources/share *)

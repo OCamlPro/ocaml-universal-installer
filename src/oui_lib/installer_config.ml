@@ -50,7 +50,7 @@ type 'manpages t = {
     exec_files : string list;
     manpages : 'manpages option; [@default None]
     environment : (string * string) list; [@default []]
-    wix_unique_id : string;
+    unique_id : string;
     wix_manufacturer : string;
     wix_description : string option; [@default None]
     wix_tags : string list; [@default []]
@@ -58,7 +58,6 @@ type 'manpages t = {
     wix_dlg_bmp_file : string option; [@default None]
     wix_banner_bmp_file : string option; [@default None]
     wix_license_file : string option; [@default None]
-    macos_bundle_id : string option; [@default None]
     macos_symlink_dirs : string list; [@default []]
   }
 [@@deriving yojson]
