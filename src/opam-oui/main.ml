@@ -8,7 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Cmdliner
+open OpamCmdliner
 open Oui
 
 let package =
@@ -18,6 +18,40 @@ let package =
   & info [] ~docv:"PACKAGE" ~docs:Oui_cli.Man.Section.package_arg
       ~doc:"The package to create an installer for"
 
+let opam_filename =
+  let conv, pp = OpamArg.filename in
+  ((fun filename_arg -> System.normalize_path filename_arg |> conv), pp)
+
+let output =
+  let open Arg in
+  let doc =
+    "$(docv) installer or bundle name. Defaults to \
+     $(b,package-name.version.ext), in the current directory, where $(b,ext) \
+     is $(b,.msi) for Windows installers and $(b,.run) for Linux installers."
+  in
+  value
+  & opt (some string) None
+  & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]
+
+let opam_conf_file =
+  let open Arg in
+  value
+  & opt (some opam_filename) None
+  & info [ "conf"; "c" ] ~docv:"PATH" ~docs:Oui_cli.Man.Section.bin_args
+      ~doc:
+        "Configuration file for opam-oui, defaults to opam-oui.conf. \
+         See $(i,Configuration) section"
+
+let wix_keep_wxs =
+  let open Arg in
+  value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
+
+let no_backend =
+  let open Arg in
+  value & flag & info [ "no-backend" ]
+    ~doc:"Do not create an actual installer, just the install bundle and \
+          oui.json file"
+
 let save_bundle_and_conf ~(installer_config : Installer_config.user) ~bundle_dir
     dst =
   OpamFilename.move_dir ~src:bundle_dir ~dst;
@@ -26,10 +60,16 @@ let save_bundle_and_conf ~(installer_config : Installer_config.user) ~bundle_dir
 
 let create_bundle cli =
   let doc = "Extract package installer bundle" in
-  let create_bundle global_options conf_file keep_wxs backend output
+  let create_bundle global_options conf_file keep_wxs no_backend output
       package () =
     Opam_frontend.with_install_bundle ?conf_file cli global_options package
       (fun installer_config ~bundle_dir ~tmp_dir ->
+         let backend =
+           if no_backend then
+             None
+           else
+             Some (Oui_cli.Args.autodetect_backend ())
+         in
          let output =
            Oui_cli.Args.output_name ~output ~backend installer_config
          in
@@ -57,10 +97,10 @@ let create_bundle cli =
     ~doc ~man:[]
     Term.(const create_bundle
           $ OpamArg.global_options cli
-          $ Oui_cli.Args.opam_conf_file
-          $ Oui_cli.Args.wix_keep_wxs
-          $ Oui_cli.Args.backend_opt
-          $ Oui_cli.Args.output
+          $ opam_conf_file
+          $ wix_keep_wxs
+          $ no_backend
+          $ output
           $ package)
 
 let () =

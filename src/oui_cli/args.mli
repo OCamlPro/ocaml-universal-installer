@@ -11,13 +11,14 @@
 val opam_filename : OpamFilename.t Cmdliner.Arg.conv
 val opam_dirname : OpamFilename.Dir.t Cmdliner.Arg.conv
 
-val opam_conf_file : OpamFilename.t option Cmdliner.Term.t
-(** --conf option to specify the path to opam-oui configuration. *)
-
 val wix_keep_wxs : bool Cmdliner.Term.t
 (** --keep-wxs flag to disable WiX files clean up. *)
 
 type backend = Wix | Makeself | Pkgbuild
+
+val pp_backend : Format.formatter -> backend -> unit
+
+val autodetect_backend : unit -> backend
 
 val backend : backend Cmdliner.Term.t
 (** --backend option to overwrite the default backend detection mechanism,
