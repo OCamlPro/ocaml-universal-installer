@@ -20,9 +20,9 @@ let to_executable_path_frameworks dylib_path =
 let validate_subdir subdir =
   if subdir = "" then
     invalid_arg "subdir cannot be empty";
-  if OpamStd.String.starts_with ~prefix:"/" subdir then
+  if OpamCompat.String.starts_with ~prefix:"/" subdir then
     invalid_arg "subdir cannot start with '/'";
-  if OpamStd.String.ends_with ~suffix:"/" subdir then
+  if OpamCompat.String.ends_with ~suffix:"/" subdir then
     invalid_arg "subdir cannot end with '/'"
 
 let to_executable_path dylib_path ~subdir =

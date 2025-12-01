@@ -3,4 +3,4 @@
  (public_name opam-oui)
  (modes
   (native exe))
- (libraries cmdliner opam-format opam-client oui.lib oui_cli))
+ (libraries opam-core opam-format opam-client oui.lib oui_cli))

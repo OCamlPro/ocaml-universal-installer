@@ -8,6 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+module Cmdliner = OpamCmdliner
 open Cmdliner
 open Oui
 

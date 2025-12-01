@@ -8,6 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+module Cmdliner = OpamCmdliner
 module Section : sig
   (** Section name for package argument. Should be passed as [~docs]
       where relevant. *)

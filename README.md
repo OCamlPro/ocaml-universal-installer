@@ -18,7 +18,7 @@ can install it via opam:
 opam pin oui.0.0.0 https://github.com/OCamlPro/ocaml-universal-installer.git#master
 ```
 
-`oui` does require some opam libraries so you will need `opam.2.4.0` or higher.
+`oui` does require some opam libraries so you will need `opam.2.5.0` or higher.
 
 ### Platform specific dependencies
 

@@ -8,6 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+module Cmdliner = OpamCmdliner
 open Oui
 
 let run keep_wxs backend installer_config bundle_dir output =

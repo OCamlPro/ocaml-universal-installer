@@ -8,6 +8,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+module Cmdliner = OpamCmdliner
 module Section = struct
   let package_arg = "PACKAGE ARGUMENT"
   let bin_args = "BINARY ARGUMENT"

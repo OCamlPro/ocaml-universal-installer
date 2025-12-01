@@ -182,7 +182,7 @@ let conf_embedded ~global_state ~switch_state ~env opam_oui_conf =
       in
       match alias with
       | Some alias -> Some (Copy_alias (path, alias))
-      | _ when OpamStd.String.starts_with ~prefix path ->
+      | _ when OpamCompat.String.starts_with ~prefix path ->
         if not @@ Sys.file_exists path then
           OpamConsole.error_and_exit
             `Not_found

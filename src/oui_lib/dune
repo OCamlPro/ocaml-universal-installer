@@ -11,7 +11,7 @@
 (library
  (name oui)
  (public_name oui.lib)
- (libraries fmt opam-format opam-client unix yojson)
+ (libraries fmt opam-core opam-format opam-client unix yojson)
  (preprocess
   (pps ppx_deriving_yojson))
  (foreign_stubs

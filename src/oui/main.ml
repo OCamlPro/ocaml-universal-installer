@@ -7,7 +7,7 @@
 (*  exception on linking described in the file LICENSE.                   *)
 (*                                                                        *)
 (**************************************************************************)
-
+module Cmdliner = OpamCmdliner
 let info =
   let doc = "Create binary installers for your application and plugins" in
   Cmdliner.Cmd.info ~doc "oui"

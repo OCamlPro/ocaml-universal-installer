@@ -7,7 +7,7 @@
 (*  exception on linking described in the file LICENSE.                   *)
 (*                                                                        *)
 (**************************************************************************)
-
+module Cmdliner = OpamCmdliner
 open Oui
 
 let run installer_config bundle_dir =
