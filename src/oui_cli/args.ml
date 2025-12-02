@@ -14,19 +14,21 @@ open Oui
 
 let opam_filename =
   let conv, pp = OpamArg.filename in
-  ((fun filename_arg -> System.normalize_path filename_arg |> conv), pp)
+  let parse filename_arg =
+    match conv (System.normalize_path filename_arg) with
+    | `Ok x -> Ok x
+    | `Error e -> Error e
+  in
+  Arg.conv' (parse, pp)
 
 let opam_dirname =
   let conv, pp = OpamArg.dirname in
-  ((fun dirname_arg -> System.normalize_path dirname_arg |> conv), pp)
-
-let opam_conf_file =
-  value
-  & opt (some opam_filename) None
-  & info [ "conf"; "c" ] ~docv:"PATH" ~docs:Man.Section.bin_args
-      ~doc:
-        "Configuration file for opam-oui, defaults to opam-oui.conf. \
-         See $(i,Configuration) section"
+  let parse dirname_arg =
+    match conv (System.normalize_path dirname_arg) with
+    | `Ok x -> Ok x
+    | `Error e -> Error e
+  in
+  Arg.conv' (parse, pp)
 
 let wix_keep_wxs = value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
 
