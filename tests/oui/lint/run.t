@@ -15,7 +15,6 @@ In particular, it should properly report fields that are not filled correctly:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": ["ver"],
-  >   "exec_files": [],
   >   "unique_id": "home.org.App",
   >   "wix_manufacturer": "me@home.org"
   > }
@@ -30,7 +29,6 @@ or missing mandatory fields:
   > {
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": [],
   >   "unique_id": "home.org.App",
   >   "wix_manufacturer": "me@home.org"
   > }
@@ -46,7 +44,6 @@ Extra fields are not allowed to avoid typos in optional fields going unnoticed:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": [],
   >   "manpages_with_big_typo": {
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"]
@@ -66,7 +63,6 @@ Such errors should be properly reported in sub objects:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": [],
   >   "manpages": {
   >     "man1": "man/man1",
   >     "man5": ["doc/file-format.1"],
@@ -85,7 +81,6 @@ Such errors should be properly reported in sub objects:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": [],
   >   "plugin_dirs": { "plugins_dir_typo": "a", "lib_dir": "b" },
   >   "unique_id": "home.org.App",
   >   "wix_manufacturer": "me@home.org"
@@ -100,7 +95,6 @@ Such errors should be properly reported in sub objects:
   >   "name": "app",
   >   "fullname": "App",
   >   "version": "ver",
-  >   "exec_files": [],
   >   "plugins":
   >     [
   >       {"name": "a", "app_name": "b", "plugin_dir": "c", "lib_dir": "d"},
