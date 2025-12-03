@@ -1,3 +1,10 @@
 (library
  (name oui_cli)
- (libraries oui.lib cmdliner fmt opam-format))
+ (libraries
+  oui.lib
+  cmdliner
+  fmt
+  opam-client
+  opam-core
+  opam-core.cmdliner
+  opam-format))
