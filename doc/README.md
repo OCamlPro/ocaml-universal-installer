@@ -37,7 +37,7 @@ are:
 - `fullname`, **string**, **required**: *TODO* (remove or make wix specific?)
 - `version`, **string**, **required**: the version of the app. *Example:*
   `"1.0.0"`.
-- `exec_files`, **string array**, **required**: The list of executables to
+- `exec_files`, **string array**, **optional**: The list of executables to
   install from the bundle. Should be a list of paths, relative to the bundle
   root, pointing to executable files that should be installed and made available
   to the user. *Example:* `["bin/oui", "bin/opam-oui"]`.

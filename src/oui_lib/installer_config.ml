@@ -62,7 +62,7 @@ type 'manpages t = {
     name : string;
     fullname : string ;
     version : string;
-    exec_files : string list;
+    exec_files : string list; [@default []]
     manpages : 'manpages option; [@default None]
     environment : (string * string) list; [@default []]
     unique_id : string;
