@@ -1,14 +1,14 @@
 `oui lint` should properly report oui.json parsing errors:
 
   $ cat > oui.json << EOF
-  > {"non_exising_field": 0}
+  > []
   > EOF
   $ mkdir bundle
   $ oui lint oui.json bundle
-  Could not parse installer config $TESTCASE_ROOT/oui.json: missing or invalid field wix_manufacturer
+  Could not parse installer config $TESTCASE_ROOT/oui.json: should be a JSON object
   [1]
 
-It should also properly report fields that are not filled correctly
+In particular, it should properly report fields that are not filled correctly:
 
   $ cat > oui.json << EOF
   > {
@@ -31,10 +31,88 @@ It should also properly report fields that are not filled correctly
   > }
   > EOF
   $ oui lint oui.json bundle
-  Could not parse installer config $TESTCASE_ROOT/oui.json: missing or invalid field version
+  Could not parse installer config $TESTCASE_ROOT/oui.json: missing or invalid field "version"
   [1]
 
-Lets consider the following, valid oui.json:
+or missing mandatory fields:
+
+  $ cat > oui.json << EOF
+  > {
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": ["bin/app"],
+  >   "manpages": {
+  >     "man1": "man/man1",
+  >     "man5": ["doc/file-format.1"]
+  >   },
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org",
+  >   "wix_description": "A fake test app",
+  >   "wix_icon_file": "icon.jpg",
+  >   "wix_dlg_bmp_file": "dlg.bmp",
+  >   "wix_banner_bmp_file": "banner.bmp",
+  >   "wix_license_file": "license.rtf",
+  >   "macos_symlink_dirs": ["lib"]
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  Could not parse installer config $TESTCASE_ROOT/oui.json: missing or invalid field "name"
+  [1]
+
+Extra fields are not allowed to avoid typos in optional fields going unnoticed:
+
+  $ cat > oui.json << EOF
+  > {
+  >   "name": "app",
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": ["bin/app"],
+  >   "manpages_with_big_typo": {
+  >     "man1": "man/man1",
+  >     "man5": ["doc/file-format.1"]
+  >   },
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org",
+  >   "wix_description": "A fake test app",
+  >   "wix_icon_file": "icon.jpg",
+  >   "wix_dlg_bmp_file": "dlg.bmp",
+  >   "wix_banner_bmp_file": "banner.bmp",
+  >   "wix_license_file": "license.rtf",
+  >   "macos_symlink_dirs": ["lib"]
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  Could not parse installer config $TESTCASE_ROOT/oui.json: invalid key "manpages_with_big_typo"
+  [1]
+
+Such errors should be properly reported in sub objects:
+
+  $ cat > oui.json << EOF
+  > {
+  >   "name": "app",
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": ["bin/app"],
+  >   "manpages": {
+  >     "man1": "man/man1",
+  >     "man5": ["doc/file-format.1"],
+  >     "man9": "some/doc/folder"
+  >   },
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org",
+  >   "wix_description": "A fake test app",
+  >   "wix_icon_file": "icon.jpg",
+  >   "wix_dlg_bmp_file": "dlg.bmp",
+  >   "wix_banner_bmp_file": "banner.bmp",
+  >   "wix_license_file": "license.rtf",
+  >   "macos_symlink_dirs": ["lib"]
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  Could not parse installer config $TESTCASE_ROOT/oui.json: invalid key "manpages.man9"
+  [1]
+
+Now, lets consider the following, valid oui.json:
 
   $ cat > oui.json << EOF
   > {
@@ -93,29 +171,3 @@ Fixing this, it should now run smoothly:
 
   $ chmod +x bundle/bin/app
   $ oui lint oui.json bundle
-
-For compatibility, extra fields or allowed in the configuration:
-
-  $ cat > oui.json << EOF
-  > {
-  >   "non_existng_field": null,
-  >   "name": "app",
-  >   "fullname": "App",
-  >   "version": "ver",
-  >   "exec_files": ["bin/app"],
-  >   "manpages": {
-  >     "man1": "man/man1",
-  >     "man5": ["doc/file-format.1"]
-  >   },
-  >   "unique_id": "home.org.App",
-  >   "wix_manufacturer": "me@home.org",
-  >   "wix_description": "A fake test app",
-  >   "wix_icon_file": "icon.jpg",
-  >   "wix_dlg_bmp_file": "dlg.bmp",
-  >   "wix_banner_bmp_file": "banner.bmp",
-  >   "wix_license_file": "license.rtf",
-  >   "macos_symlink_dirs": ["lib"]
-  > }
-  > EOF
-  $ oui lint oui.json bundle
-

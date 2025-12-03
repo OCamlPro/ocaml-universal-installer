@@ -39,7 +39,7 @@ type manpages =
   ; man7 : man_section [@default Man_files []]
   ; man8 : man_section [@default Man_files []]
   }
-[@@deriving yojson]
+[@@deriving yojson {meta = true}]
 
 type expanded_manpages = (string * string list) list
 
@@ -60,7 +60,7 @@ type 'manpages t = {
     wix_license_file : string option; [@default None]
     macos_symlink_dirs : string list; [@default []]
   }
-[@@deriving yojson {strict = false}]
+[@@deriving yojson {meta = true}]
 
 type user = manpages t
 [@@deriving yojson]
@@ -239,39 +239,62 @@ let check_and_expand ~bundle_dir user =
   | _ ->
     Error (`Inconsistent_config all_errors)
 
-let invalid_config fmt =
-  Printf.ksprintf (fun s -> `Invalid_config s) fmt
+let invalid_config ~file fmt =
+  Printf.ksprintf (fun s -> `Invalid_config s)
+    ("Could not parse installer config %s: " ^^ fmt)
+    file
 
-let pretty_error ~file json =
+module String_set = Set.Make(String)
+
+let keys = String_set.of_list Yojson_meta.keys
+let manpages_keys = String_set.of_list Yojson_meta_manpages.keys
+
+let first_invalid_key ~keys assoc_list =
+  List.find_map
+    (fun (key, _val) ->
+       if String_set.mem key keys then None else Some key)
+    assoc_list
+
+let pretty_object_error ~file ~keys ?field json =
   match json with
-  | `Assoc _ ->
-    invalid_config
-      "Could not parse installer config %s, please report upstream."
-      file
+  | `Assoc l ->
+    (match first_invalid_key ~keys l with
+     | None -> invalid_config ~file "please report upstream"
+     | Some key ->
+       let key = match field with None -> key | Some f -> f ^ "." ^ key in
+       invalid_config ~file "invalid key %S" key)
   | _ ->
-    invalid_config
-      "Could not parse installer config %s: \
-       Toplevel JSON value should be an object"
-      file
+    let prefix =
+      match field with
+      | None -> ""
+      | Some f -> f ^ " "
+    in
+    invalid_config ~file "%sshould be a JSON object" prefix
 
-let load filename =
-  let file = (OpamFilename.to_string filename) in
-  let json = Yojson.Safe.from_file file in
-  match user_of_yojson json with
-  | Ok user_config -> Ok user_config
-  | Error "Installer_config.t" ->
-    Error (pretty_error ~file json)
-  | Error msg ->
+(* Turn a derived of_yojson error message into a user friendly one when
+   possible. *)
+let pretty_error ~file ~msg json =
+  match msg, json with
+  | "Installer_config.t", _ -> pretty_object_error ~file ~keys json
+  | "Installer_config.manpages", `Assoc l ->
+    pretty_object_error ~file ~keys:manpages_keys ~field:"manpages"
+      (List.assoc "manpages" l)
+  | msg, _ ->
     let field_name =
       match String.split_on_char '.' msg with
       | ["Installer_config"; "t"; field_name] -> field_name
       | ["Installer_config"; subtype; field_name] -> subtype ^ "." ^ field_name
       | _ -> msg
     in
-    Error
-      (invalid_config
-         "Could not parse installer config %s: missing or invalid field %s"
-         file field_name)
+    invalid_config ~file "missing or invalid field %S" field_name
+
+let load filename =
+  let file = (OpamFilename.to_string filename) in
+  let json = Yojson.Safe.from_file file in
+  match user_of_yojson json with
+  | Ok user_config -> Ok user_config
+  | Error msg ->
+    Error (pretty_error ~file ~msg json)
 
 let save t filename =
   Yojson.Safe.to_file (OpamFilename.to_string filename) (user_to_yojson t)
