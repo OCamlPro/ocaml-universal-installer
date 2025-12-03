@@ -60,7 +60,7 @@ type 'manpages t = {
     wix_license_file : string option; [@default None]
     macos_symlink_dirs : string list; [@default []]
   }
-[@@deriving yojson]
+[@@deriving yojson {strict = false}]
 
 type user = manpages t
 [@@deriving yojson]
@@ -242,13 +242,36 @@ let check_and_expand ~bundle_dir user =
 let invalid_config fmt =
   Printf.ksprintf (fun s -> `Invalid_config s) fmt
 
+let pretty_error ~file json =
+  match json with
+  | `Assoc _ ->
+    invalid_config
+      "Could not parse installer config %s, please report upstream."
+      file
+  | _ ->
+    invalid_config
+      "Could not parse installer config %s: \
+       Toplevel JSON value should be an object"
+      file
+
 let load filename =
   let file = (OpamFilename.to_string filename) in
   let json = Yojson.Safe.from_file file in
-  Result.map_error
-    (fun msg ->
-       invalid_config "Could not parse installer config %s: %s" file msg)
-    (user_of_yojson json)
+  match user_of_yojson json with
+  | Ok user_config -> Ok user_config
+  | Error "Installer_config.t" ->
+    Error (pretty_error ~file json)
+  | Error msg ->
+    let field_name =
+      match String.split_on_char '.' msg with
+      | ["Installer_config"; "t"; field_name] -> field_name
+      | ["Installer_config"; subtype; field_name] -> subtype ^ "." ^ field_name
+      | _ -> msg
+    in
+    Error
+      (invalid_config
+         "Could not parse installer config %s: missing or invalid field %s"
+         file field_name)
 
 let save t filename =
   Yojson.Safe.to_file (OpamFilename.to_string filename) (user_to_yojson t)
