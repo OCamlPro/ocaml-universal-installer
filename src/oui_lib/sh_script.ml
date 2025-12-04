@@ -107,7 +107,7 @@ let rec pp_sh_command ~indent fmtr command =
   | Exit i -> fpf "exit %d" i
   | Echo s -> fpf "echo %S" s
   | Print_err s -> fpf "printf '%%s\\n' %S >&2" s
-  | Eval s -> fpf "eval %S" s
+  | Eval s -> fpf "eval \"%s\"" s
   | Assign {var; value} -> fpf "%s=%S" var value
   | Mkdir {permissions = None; dirs} -> fpf "mkdir -p %a" pp_files dirs
   | Mkdir {permissions = Some perm; dirs} ->
