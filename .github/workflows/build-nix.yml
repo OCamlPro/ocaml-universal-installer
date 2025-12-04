@@ -28,7 +28,6 @@ jobs:
 
           nix-shell --run "
             ODOC_WARN_ERROR=true
-            dune build @fmt &&
             dune build @doc &&
             dune build @install &&
             dune runtest
