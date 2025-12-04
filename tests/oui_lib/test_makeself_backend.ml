@@ -220,13 +220,13 @@ let%expect_test "install_script: install plugins" =
     echo "The following plugins will be installed:"
     echo "- app-a-name for app-a"
     echo "- app-b-name for app-b"
-    if [ -d "/opt/app-a" && -f "/opt/app-a/install.conf" ]; then
+    if [ -d "/opt/app-a" ] && [ -f "/opt/app-a/install.conf" ]; then
       load_conf app_a_ /opt/app-a/install.conf
     else
       printf '%s\n' "Could not locate app-a install path" >&2
       exit 1
     fi
-    if [ -d "/opt/app-b" && -f "/opt/app-b/install.conf" ]; then
+    if [ -d "/opt/app-b" ] && [ -f "/opt/app-b/install.conf" ]; then
       load_conf app_b_ /opt/app-b/install.conf
     else
       printf '%s\n' "Could not locate app-b install path" >&2
