@@ -203,7 +203,7 @@ let%expect_test "install_script: install plugins" =
             return 1
           ;;
           *)
-            eval "$var_prefix$key=\\$val"
+            eval "$var_prefix$key=\$val"
           ;;
         esac
       done < $conf
@@ -320,7 +320,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
             return 1
           ;;
           *)
-            eval "$var_prefix$key=\\$val"
+            eval "$var_prefix$key=\$val"
           ;;
         esac
       done < $conf
