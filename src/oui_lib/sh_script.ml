@@ -87,11 +87,11 @@ let pp_sh_find_type fmtr ft =
 
 let rec pp_sh_condition fmtr condition =
   match condition with
-  | Exists s -> Format.fprintf fmtr "-e %S" s
-  | Dir_exists s -> Format.fprintf fmtr "-d %S" s
-  | Link_exists s -> Format.fprintf fmtr "-L %S" s
-  | File_exists s -> Format.fprintf fmtr "-f %S" s
-  | Is_not_root -> Format.fprintf fmtr {|"$(id -u)" -ne 0|}
+  | Exists s -> Format.fprintf fmtr "[ -e %S ]" s
+  | Dir_exists s -> Format.fprintf fmtr "[ -d %S ]" s
+  | Link_exists s -> Format.fprintf fmtr "[ -L %S ]" s
+  | File_exists s -> Format.fprintf fmtr "[ -f %S ]" s
+  | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
   | And (c1, c2) ->
     Format.fprintf fmtr "%a && %a"
       pp_sh_condition c1
@@ -127,7 +127,7 @@ let rec pp_sh_command ~indent fmtr command =
       "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %s \\;"
       src except dst
   | If {condition; then_; else_} ->
-    fpf "if [ %a ]; then" pp_sh_condition condition;
+    fpf "if %a; then" pp_sh_condition condition;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) then_;
     (match else_ with
      | [] -> ()
