@@ -260,14 +260,14 @@ let install_script (ic : Installer_config.internal) =
   let dump_install_conf =
     let lines =
       List.filter_map (fun x -> x)
-        [ Some (Printf.sprintf "%s=%S" conf_version ic.version)
+        [ Some (Printf.sprintf "%s=%s" conf_version ic.version)
         ; Option.map
             (fun (plgdr : Installer_config.plugin_dirs) ->
-               Printf.sprintf "%s=%S" conf_plugins (prefix / plgdr.plugins_dir))
+               Printf.sprintf "%s=%s" conf_plugins (prefix / plgdr.plugins_dir))
             ic.plugin_dirs
         ; Option.map
             (fun (plgdr : Installer_config.plugin_dirs) ->
-               Printf.sprintf "%s=%S" conf_lib (prefix / plgdr.lib_dir))
+               Printf.sprintf "%s=%s" conf_lib (prefix / plgdr.lib_dir))
             ic.plugin_dirs
         ]
     in
@@ -277,8 +277,8 @@ let install_script (ic : Installer_config.internal) =
             let var_prefix = app_var_prefix app_name in
             let lib_var = lib_var ~var_prefix in
             let plugins_var = plugins_var ~var_prefix in
-            [ Printf.sprintf "%s=\"$%s\"" lib_var lib_var
-            ; Printf.sprintf "%s=\"$%s\"" plugins_var plugins_var
+            [ Printf.sprintf "%s=$%s" lib_var lib_var
+            ; Printf.sprintf "%s=$%s" plugins_var plugins_var
             ])
     in
     let install_conf = prefix / install_conf in
