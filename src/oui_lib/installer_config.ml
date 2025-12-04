@@ -8,6 +8,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open Compat
+
 type man_section =
   | Man_dir of string
   | Man_files of string list
