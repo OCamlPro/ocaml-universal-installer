@@ -180,8 +180,8 @@ let%expect_test "install_script: install plugins" =
     #!/bin/sh
     set -e
     load_conf() {
-      var_prefix="$1"
-      conf="$2"
+      var_prefix="$2"
+      conf="$1"
       while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in
           ""|\#*)
@@ -198,7 +198,7 @@ let%expect_test "install_script: install plugins" =
         key="${line%%=*}"
         val="${line#*=}"
         case "$key" in
-          *[!a-zA-Z0-9]*)
+          *[!a-zA-Z0-9_]*)
             printf '%s\n' "Invalid configuration key in $conf: $key" >&2
             return 1
           ;;
@@ -221,13 +221,13 @@ let%expect_test "install_script: install plugins" =
     echo "- app-a-name for app-a"
     echo "- app-b-name for app-b"
     if [ -d "/opt/app-a" ] && [ -f "/opt/app-a/install.conf" ]; then
-      load_conf app_a_ /opt/app-a/install.conf
+      load_conf /opt/app-a/install.conf app_a_
     else
       printf '%s\n' "Could not locate app-a install path" >&2
       exit 1
     fi
     if [ -d "/opt/app-b" ] && [ -f "/opt/app-b/install.conf" ]; then
-      load_conf app_b_ /opt/app-b/install.conf
+      load_conf /opt/app-b/install.conf app_b_
     else
       printf '%s\n' "Could not locate app-b install path" >&2
       exit 1
@@ -297,8 +297,8 @@ let%expect_test "uninstall_script: uninstall plugins" =
       MAN_DEST="usr/local/man"
     fi
     load_conf() {
-      var_prefix="$1"
-      conf="$2"
+      var_prefix="$2"
+      conf="$1"
       while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in
           ""|\#*)
@@ -315,7 +315,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
         key="${line%%=*}"
         val="${line#*=}"
         case "$key" in
-          *[!a-zA-Z0-9]*)
+          *[!a-zA-Z0-9_]*)
             printf '%s\n' "Invalid configuration key in $conf: $key" >&2
             return 1
           ;;
@@ -326,7 +326,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
       done < $conf
       return 0
     }
-    load_conf  /opt/name/install.conf
+    load_conf /opt/name/install.conf
     echo "About to uninstall name."
     echo "The following files and folders will be removed from the system:"
     echo "- /opt/name"
