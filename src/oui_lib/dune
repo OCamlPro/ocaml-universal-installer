@@ -11,7 +11,7 @@
 (library
  (name oui)
  (public_name oui.lib)
- (libraries fmt opam-format opam-client unix yojson)
+ (libraries fmt opam-core opam-format opam-client opam-state unix yojson)
  (preprocess
   (pps ppx_deriving_yojson))
  (foreign_stubs
@@ -20,7 +20,9 @@
 
 (rule
  (target dataDir.ml)
- (deps (source_tree ../../data))
+ (deps
+  (source_tree ../../data))
  (action
-  (with-stdout-to %{target}
-    (run ocaml-crunch ../../data -m plain -o dataDir.ml))))
+  (with-stdout-to
+   %{target}
+   (run ocaml-crunch ../../data -m plain -o dataDir.ml))))
