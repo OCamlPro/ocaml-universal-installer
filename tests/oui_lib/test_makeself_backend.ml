@@ -182,7 +182,7 @@ let%expect_test "install_script: install plugins" =
     load_conf() {
       var_prefix="$1"
       conf="$2"
-      while IFS= read -r line || [-n "$line"]; do
+      while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in
           ""|\#*)
             continue
@@ -299,7 +299,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
     load_conf() {
       var_prefix="$1"
       conf="$2"
-      while IFS= read -r line || [-n "$line"]; do
+      while IFS= read -r line || [ -n "$line" ]; do
         case "$line" in
           ""|\#*)
             continue

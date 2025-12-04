@@ -147,7 +147,7 @@ let rec pp_sh_command ~indent fmtr command =
     List.iter (fpf "  printf '%%s\\n' %S") lines;
     fpf "} > %s" file
   | Read_file {file; line_var; process_line} ->
-    fpf "while IFS= read -r %s || [-n \"$%s\"]; do" line_var line_var;
+    fpf "while IFS= read -r %s || [ -n \"$%s\" ]; do" line_var line_var;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) process_line;
     fpf "done < %s" file
   | Def_fun {name; body} ->
