@@ -110,7 +110,7 @@ let%expect_test "install_script: simple" =
     mkdir -p -m 755 $MAN_DEST/man5
     ln -s /opt/aaa/man/man5/aaa-file.1 $MAN_DEST/man5/aaa-file.1
     {
-      printf '%s\n' "version=\"x.y.z\""
+      printf '%s\n' "version=x.y.z"
     } > /opt/aaa/install.conf
     chmod 644 /opt/aaa/install.conf
     echo "Installation complete!"
@@ -143,9 +143,9 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     mkdir -p -m 755 /opt/name
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
     {
-      printf '%s\n' "version=\"version\""
-      printf '%s\n' "plugins=\"/opt/name/path/to/plugins\""
-      printf '%s\n' "lib=\"/opt/name/path/to/lib\""
+      printf '%s\n' "version=version"
+      printf '%s\n' "plugins=/opt/name/path/to/plugins"
+      printf '%s\n' "lib=/opt/name/path/to/lib"
     } > /opt/name/install.conf
     chmod 644 /opt/name/install.conf
     echo "Installation complete!"
@@ -248,11 +248,11 @@ let%expect_test "install_script: install plugins" =
     ln -s /opt/name/lib/dep-a $app_b_lib/dep-a
     ln -s /opt/name/lib/dep-b $app_b_lib/dep-b
     {
-      printf '%s\n' "version=\"version\""
-      printf '%s\n' "app_a_lib=\"$app_a_lib\""
-      printf '%s\n' "app_a_plugins=\"$app_a_plugins\""
-      printf '%s\n' "app_b_lib=\"$app_b_lib\""
-      printf '%s\n' "app_b_plugins=\"$app_b_plugins\""
+      printf '%s\n' "version=version"
+      printf '%s\n' "app_a_lib=$app_a_lib"
+      printf '%s\n' "app_a_plugins=$app_a_plugins"
+      printf '%s\n' "app_b_lib=$app_b_lib"
+      printf '%s\n' "app_b_plugins=$app_b_plugins"
     } > /opt/name/install.conf
     chmod 644 /opt/name/install.conf
     echo "Installation complete!"
@@ -476,7 +476,7 @@ let%expect_test "install_script: binary in sub folder" =
     echo "Adding bin/do to /usr/local/bin"
     ln -s /opt/name/bin/do /usr/local/bin/do
     {
-      printf '%s\n' "version=\"version\""
+      printf '%s\n' "version=version"
     } > /opt/name/install.conf
     chmod 644 /opt/name/install.conf
     echo "Installation complete!"
