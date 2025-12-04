@@ -51,8 +51,8 @@ let conf_lib = "lib"
 let def_load_conf =
   let open Sh_script in
   def_fun load_conf
-    [ assign ~var:"var_prefix" ~value:"$1"
-    ; assign ~var:"conf" ~value:"$2"
+    [ assign ~var:"var_prefix" ~value:"$2"
+    ; assign ~var:"conf" ~value:"$1"
     ; read_file ~line_var:"line" "$conf"
         [ case "line" (* Skip blank lines and comments *)
             [{pattern = {|""|\#*|}; commands = [continue]}]
@@ -68,7 +68,7 @@ let def_load_conf =
         ; assign ~var:"key" ~value:"${line%%=*}"
         ; assign ~var:"val" ~value:"${line#*=}"
         ; case "key" (* Validate key *)
-            [ { pattern = Printf.sprintf "*[!a-zA-Z0-9]*"
+            [ { pattern = Printf.sprintf "*[!a-zA-Z0-9_]*"
               ; commands =
                   [ print_errf "Invalid configuration key in $conf: $key"
                   ; return 1
@@ -91,8 +91,9 @@ let app_var_prefix app_name =
        | _ -> '_')
     app_name) ^ "_"
 
-let load_conf ~var_prefix file =
-  Sh_script.call_fun load_conf [var_prefix; file]
+let load_conf ?var_prefix file =
+  let var_prefix_arg = Option.to_list var_prefix in
+  Sh_script.call_fun load_conf (file::var_prefix_arg)
 
 let app_install_path ~app_name = "/opt" / app_name
 
@@ -326,7 +327,7 @@ let uninstall_script (ic : Installer_config.internal) =
     | [] -> []
     | _ ->
       [ def_load_conf
-      ; load_conf ~var_prefix:"" (prefix / install_conf)
+      ; load_conf (prefix / install_conf)
       ]
   in
   let display_symlinks =
