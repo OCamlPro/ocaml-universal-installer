@@ -30,6 +30,8 @@ let conf_version = "version"
 let conf_plugins = "plugins"
 let conf_lib = "lib"
 
+let check_available = "check_available"
+
 (* TODO:
    - define the check_no_exist function
    - define load_conf if there are plugins to install
@@ -190,6 +192,30 @@ let install_plugin ~prefix (plugin : Installer_config.plugin) =
        (fun dyn_dep -> add_symlink ~prefix dyn_dep ~in_:lib_dir)
        plugin.dyn_deps)
 
+let def_check_available =
+  let open Sh_script in
+  def_fun check_available
+    [ if_ (Exists "$1")
+        [ print_errf "$1 already exists on the system! Aborting"
+        ; exit 1
+        ]
+        ()
+    ]
+
+let check_available path = Sh_script.call_fun check_available [path]
+
+let check_plugin_available (plugin : Installer_config.plugin) =
+  let var_prefix = app_var_prefix plugin.app_name in
+  let lib_dir = "$" ^ lib_var ~var_prefix in
+  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  let paths =
+    [ lib_dir / (Filename.basename plugin.lib_dir)
+    ; plugins_dir / (Filename.basename plugin.plugin_dir)
+    ]
+    @ List.map (fun x -> lib_dir / (Filename.basename x)) plugin.dyn_deps
+  in
+  List.map check_available paths
+
 let install_script (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
@@ -221,18 +247,24 @@ let install_script (ic : Installer_config.internal) =
             echof "- %s for %s" p.name p.app_name)
          plugins)
   in
+  let load_plugin_app_vars = List.map find_and_load_conf plugin_apps in
+  let check_all_available =
+    List.map check_available all_files
+    @ List.concat_map check_plugin_available ic.plugins
+  in
   let check_permissions =
     [ check_run_as_root
     ; mkdir ~permissions:755 [prefix]
     ]
   in
-  let load_plugin_app_vars = List.map find_and_load_conf plugin_apps in
   let setup =
+    def_check_available ::
     def_load_conf
     @ [set_man_dest]
     @ display_install_info
     @ display_plugin_install_info
     @ load_plugin_app_vars
+    @ check_all_available
     @ check_permissions
   in
   let install_bundle =
