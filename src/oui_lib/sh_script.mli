@@ -13,13 +13,23 @@ type find_type =
   | Dirs
 
 type condition =
+  | Exists of string
   | Dir_exists of string
   | Link_exists of string
+  | File_exists of string
   | Is_not_root
+  | Number_args of int
+  | And of condition * condition
+
+val (&&) : condition -> condition -> condition
 
 type command =
+  | Continue
+  | Return of int
   | Exit of int
   | Echo of string
+  | Print_err of string
+  | Eval of string
   | Assign of {var: string; value: string}
   | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
@@ -32,6 +42,10 @@ type command =
   | If of {condition : condition; then_ : command list; else_: command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
+  | Write_file of {file: string; lines : string list}
+  | Read_file of {file: string; line_var: string; process_line: command list}
+  | Def_fun of {name: string; body : command list}
+  | Call_fun of {name: string; args: string list}
 and case =
   { pattern : string
   ; commands : command list
@@ -42,15 +56,35 @@ type t = command list
 (** Prints the given script using shell syntax to the given formatter. *)
 val pp_sh : Format.formatter -> t -> unit
 
+val continue : command
+
+(** [return i] is ["return i"] *)
+val return : int -> command
+
 (** [exit i] is ["exit i"] *)
 val exit : int -> command
+
+(** [eval s] is ["eval \"s\""] *)
+val eval : string -> command
 
 (** [assign ~var:"VAR" ~value:"value"] is ["VAR=\"value\""] *)
 val assign : var: string -> value: string -> command
 
+(** [assign ~cond:"CONDITION" ~var:"VAR" ~value:"value"] is
+    [if CONDITION; then
+       VAR="value"
+     else
+       VAR=""]
+*)
+val assign_cond : cond:condition -> var: string -> value: string -> command
+
 (** [echo fmt args] is ["echo \"s\""] where [s] is the expanded format
     string. *)
 val echof : ('a, Format.formatter, unit, command) format4 -> 'a
+
+(** [print_errf fmt args] is ["printf '%%s\\n' \"s\" >&2"] where
+    [s] is the expanded format string. *)
+val print_errf : ('a, Format.formatter, unit, command) format4 -> 'a
 
 (** [mkdir f1::f2::_] is ["mkdir -p f1 f2 ..."] *)
 val mkdir : ?permissions: int -> string list -> command
@@ -92,5 +126,22 @@ val copy_all_in : src: string -> dst: string -> except: string -> command
 val prompt : question: string -> varname: string -> command
 
 val case : string -> case list -> command
+
+(** [write_file file lines] is
+    ["{ printf \"line1\n\"; printf \"line2\n\"; ... } > file"] *)
+val write_file : string -> string list -> command
+
+(** [read_file ~line_var file process_line] is
+    ["while IFS= read -r line_var || [ -n $line_var]; do \
+      process_line \
+      done < file"]
+*)
+val read_file : line_var: string -> string -> command list -> command
+
+(** [def_fun name body] is ["name() { body }"] *)
+val def_fun : string -> command list -> command
+
+(** [call_fun name [arg1; arg2] is ["name arg1 arg2"] *)
+val call_fun : string -> string list -> command
 
 val save : t -> OpamFilename.t -> unit

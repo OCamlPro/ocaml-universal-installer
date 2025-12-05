@@ -13,13 +13,23 @@ type find_type =
   | Dirs
 
 type condition =
+  | Exists of string
   | Dir_exists of string
   | Link_exists of string
+  | File_exists of string
   | Is_not_root
+  | Number_args of int
+  | And of condition * condition
+
+let (&&) c1 c2 = And (c1, c2)
 
 type command =
+  | Continue
+  | Return of int
   | Exit of int
   | Echo of string
+  | Print_err of string
+  | Eval of string
   | Assign of {var: string; value: string}
   | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
@@ -32,6 +42,10 @@ type command =
   | If of {condition : condition; then_ : command list; else_: command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
+  | Write_file of {file: string; lines : string list}
+  | Read_file of {file: string; line_var: string; process_line: command list}
+  | Def_fun of {name: string; body : command list}
+  | Call_fun of {name: string; args: string list}
 and case =
   { pattern : string
   ; commands : command list
@@ -39,9 +53,19 @@ and case =
 
 type t = command list
 
+let continue = Continue
+let return i = Return i
 let exit i = Exit i
 let echof fmt = Format.kasprintf (fun s -> Echo s) fmt
+let print_errf fmt = Format.kasprintf (fun s -> Print_err s) fmt
+let eval s = Eval s
 let assign ~var ~value = Assign {var; value}
+let assign_cond ~cond ~var ~value =
+    If {
+      condition = cond;
+      then_ = [Assign {var; value}];
+      else_ = [Assign {var; value = ""}];
+    }
 let mkdir ?permissions dirs = Mkdir {permissions; dirs}
 let chmod permissions files = Chmod {permissions; files}
 let cp ~src ~dst = Cp {src; dst}
@@ -51,6 +75,12 @@ let symlink ~target ~link = Symlink {target; link}
 let if_ condition then_ ?(else_=[]) () = If {condition; then_; else_}
 let prompt ~question ~varname = Prompt {question; varname}
 let case varname cases = Case {varname; cases}
+let write_file file lines = Write_file {file; lines}
+let def_fun name body = Def_fun {name; body}
+let call_fun name args = Call_fun {name; args}
+
+let read_file ~line_var file process_line =
+  Read_file {file; line_var; process_line}
 
 let set_permissions_in ~on ~permissions starting_point =
   Set_permissions_in {on; permissions; starting_point}
@@ -62,19 +92,30 @@ let pp_sh_find_type fmtr ft =
   | Files -> Format.fprintf fmtr "f"
   | Dirs -> Format.fprintf fmtr "d"
 
-let pp_sh_condition fmtr condition =
+let rec pp_sh_condition fmtr condition =
   match condition with
-  | Dir_exists s -> Format.fprintf fmtr "-d %S" s
-  | Link_exists s -> Format.fprintf fmtr "-L %S" s
-  | Is_not_root -> Format.fprintf fmtr {|"$(id -u)" -ne 0|}
+  | Exists s -> Format.fprintf fmtr "[ -e %S ]" s
+  | Dir_exists s -> Format.fprintf fmtr "[ -d %S ]" s
+  | Link_exists s -> Format.fprintf fmtr "[ -L %S ]" s
+  | File_exists s -> Format.fprintf fmtr "[ -f %S ]" s
+  | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
+  | Number_args n -> Format.fprintf fmtr "[ $# -ge %d ]" n
+  | And (c1, c2) ->
+    Format.fprintf fmtr "%a && %a"
+      pp_sh_condition c1
+      pp_sh_condition c2
 
 let rec pp_sh_command ~indent fmtr command =
   let indent_str = String.make indent ' ' in
   let fpf fmt = Format.fprintf fmtr ("%s" ^^ fmt ^^ "\n") indent_str in
-  let pp_files = Fmt.(list ~sep:(const string " ") string) in
+  let pp_files = Fmt.(list ~sep:(const string " ") (using (fun x -> "\""^x^"\"") string)) in
   match command with
+  | Continue -> fpf "continue"
+  | Return i -> fpf "return %d" i
   | Exit i -> fpf "exit %d" i
   | Echo s -> fpf "echo %S" s
+  | Print_err s -> fpf "printf '%%s\\n' %S >&2" s
+  | Eval s -> fpf "eval \"%s\"" s
   | Assign {var; value} -> fpf "%s=%S" var value
   | Mkdir {permissions = None; dirs} -> fpf "mkdir -p %a" pp_files dirs
   | Mkdir {permissions = Some perm; dirs} ->
@@ -94,7 +135,7 @@ let rec pp_sh_command ~indent fmtr command =
       "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %s \\;"
       src except dst
   | If {condition; then_; else_} ->
-    fpf "if [ %a ]; then" pp_sh_condition condition;
+    fpf "if %a; then" pp_sh_condition condition;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) then_;
     (match else_ with
      | [] -> ()
@@ -109,6 +150,23 @@ let rec pp_sh_command ~indent fmtr command =
     fpf {|case "$%s" in|} varname;
     List.iter (pp_sh_case ~indent:(indent + 2) fmtr) cases;
     fpf "esac"
+  | Write_file {file; lines} ->
+    fpf "cat > \"%s\" < EOF" file;
+    List.iter (fpf "%s") lines;
+    fpf "EOF"
+  | Read_file {file; line_var; process_line} ->
+    fpf "while IFS= read -r %s || [ -n \"$%s\" ]; do" line_var line_var;
+    List.iter (pp_sh_command ~indent:(indent + 2) fmtr) process_line;
+    fpf "done < \"%s\"" file
+  | Def_fun {name; body} ->
+    fpf "%s() {" name;
+    List.iter (pp_sh_command ~indent:(indent + 2) fmtr) body;
+    fpf "}"
+  | Call_fun {name; args = []} ->
+    fpf "%s" name
+  | Call_fun {name; args} ->
+    fpf "%s %s" name (String.concat " " args)
+
 and pp_sh_case ~indent fmtr {pattern; commands} =
   let indent_str = String.make indent ' ' in
   let fpf fmt = Format.fprintf fmtr ("%s" ^^ fmt ^^ "\n") indent_str in
@@ -121,8 +179,8 @@ and pp_sh_case ~indent fmtr {pattern; commands} =
 
 
 let pp_sh fmtr t =
-  Format.fprintf fmtr "#!/bin/sh\n";
-  Format.fprintf fmtr "set -e\n";
+  Format.fprintf fmtr "#!/usr/bin/env sh\n";
+  Format.fprintf fmtr "set -eu\n";
   List.iter (pp_sh_command ~indent:0 fmtr) t
 
 let save t file =

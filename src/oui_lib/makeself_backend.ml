@@ -13,13 +13,115 @@
 open Stdlib
 
 let (/) = Filename.concat
+
 let install_script_name = "install.sh"
 let uninstall_script_name = "uninstall.sh"
+
 let man_dst = "MAN_DEST"
 let man_dst_var = "$" ^ man_dst
+
 let usrbin = "/usr/local/bin"
 let usrshareman = "/usr/local/share/man"
 let usrman = "usr/local/man"
+
+let install_conf = "install.conf"
+let load_conf = "load_conf"
+let conf_version = "version"
+let conf_plugins = "plugins"
+let conf_lib = "lib"
+
+(* TODO:
+   - define the check_no_exist function
+   - define load_conf if there are plugins to install
+   - display all files to be installed except plugins
+   - dispay plugin and app names for each plugin to be installed
+   - load install.conf files and warn about issues if they can't be found
+   - Display plugin files to be installed??
+   - validate that none of the files + plugin files to be written exist
+   - prompt for install
+   - proceed with the install
+   - remove the plugin grouping
+*)
+
+(* Do a basic validation of an install.conf file and load the variables
+   defined in it in an APPNAME_varname variable so it can be used in the rest
+   of the install script.
+   Note that it loads only the variables that we are actually going to use.
+*)
+let def_load_conf =
+  let open Sh_script in
+  def_fun load_conf
+    [ assign_cond ~cond:(Number_args 2) ~var:"var_prefix" ~value:"$2"
+    ; assign ~var:"conf" ~value:"$1"
+    ; read_file ~line_var:"line" "$conf"
+        [ case "line" (* Skip blank lines and comments *)
+            [{pattern = {|""|\#*|}; commands = [continue]}]
+        ; case "line" (* Validate lines *)
+            [ {pattern = "*=*"; commands = []}
+            ; { pattern = "*";
+                commands =
+                  [ print_errf "Invalid line in $conf: $line"
+                  ; return 1
+                  ]
+              }
+            ]
+        ; assign ~var:"key" ~value:"${line%%=*}"
+        ; assign ~var:"val" ~value:"${line#*=}"
+        ; case "key" (* Validate key *)
+            [ { pattern = Printf.sprintf "*[!a-zA-Z0-9_]*"
+              ; commands =
+                  [ print_errf "Invalid configuration key in $conf: $key"
+                  ; return 1
+                  ]
+              }
+            ; { pattern = "*"
+              ; commands = [eval "$var_prefix$key=\\$val"] }
+            ]
+        ]
+    ; return 0
+    ]
+
+(* Returns a valid prefix for app specific variables. E.g. for ["frama-c"],
+   returns ["frama_c_"]. This should be passed to load_conf. *)
+let app_var_prefix app_name =
+  (String.map
+    (fun c ->
+       match c with
+       | 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' -> c
+       | _ -> '_')
+    app_name) ^ "_"
+
+let load_conf ?var_prefix file =
+  let var_prefix_arg = Option.to_list var_prefix in
+  Sh_script.call_fun load_conf (file::var_prefix_arg)
+
+let app_install_path ~app_name = "/opt" / app_name
+
+let app_var ~var_prefix var = var_prefix ^ var
+let plugins_var ~var_prefix = app_var ~var_prefix conf_plugins
+let lib_var ~var_prefix = app_var ~var_prefix conf_lib
+
+let find_and_load_conf app_name =
+  let open Sh_script in
+  let app_dir = app_install_path ~app_name in
+  let var_prefix = app_var_prefix app_name in
+  let conf = app_dir / install_conf in
+  if_ ((Dir_exists app_dir) && (File_exists conf))
+    [load_conf ~var_prefix conf]
+    ~else_:
+      [ print_errf "Could not locate %s install path" app_name
+      ; exit 1
+      ]
+    ()
+
+let list_all_files ~prefix (ic : Installer_config.internal) =
+  prefix ::
+  List.map (fun x -> usrbin / (Filename.basename x)) ic.exec_files
+  @ List.concat_map
+    (fun (section, files) ->
+       let dir = man_dst_var / section in
+       List.map (fun x -> dir / (Filename.basename x)) files)
+    (Option.value ic.manpages ~default:[])
 
 let check_makeself_installed () =
   match Sys.command "command -v makeself >/dev/null 2>&1" with
@@ -73,20 +175,65 @@ let install_manpages ~prefix manpages =
            :: (List.map (install_page ~section) pages))
         manpages
     in
-    set_man_dest
-    :: echof "Installing manpages to %s..." man_dst_var
+    echof "Installing manpages to %s..." man_dst_var
     :: install_manpages
+
+let install_plugin ~prefix (plugin : Installer_config.plugin) =
+  let var_prefix = app_var_prefix plugin.app_name in
+  let lib_dir = "$" ^ lib_var ~var_prefix in
+  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  [ Sh_script.echof "Installing plugin %s to %s..." plugin.name plugin.app_name
+  ; add_symlink ~prefix plugin.plugin_dir ~in_:plugins_dir
+  ; add_symlink ~prefix plugin.lib_dir ~in_:lib_dir
+  ]
+  @ (List.map
+       (fun dyn_dep -> add_symlink ~prefix dyn_dep ~in_:lib_dir)
+       plugin.dyn_deps)
 
 let install_script (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
   let version = ic.version in
   let prefix = "/opt" / package in
-  let setup =
+  let plugin_apps =
+    List.map (fun (p : Installer_config.plugin) -> p.app_name) ic.plugins
+    |> List.sort_uniq String.compare
+  in
+  let all_files = list_all_files ~prefix ic in
+  let def_load_conf =
+    match ic.plugins with
+    | [] -> []
+    | _ -> [def_load_conf]
+  in
+  let display_install_info =
     [ echof "Installing %s.%s to %s" package version prefix
-    ; check_run_as_root
+    ; echof "The following files and directories will be written to the system:"
+    ]
+    @ (List.map (echof "- %s") all_files)
+  in
+  let display_plugin_install_info =
+    match (ic.plugins : Installer_config.plugin list) with
+    | [] -> []
+    | plugins ->
+      echof "The following plugins will be installed:" ::
+      (List.map
+         (fun (p : Installer_config.plugin) ->
+            echof "- %s for %s" p.name p.app_name)
+         plugins)
+  in
+  let check_permissions =
+    [ check_run_as_root
     ; mkdir ~permissions:755 [prefix]
     ]
+  in
+  let load_plugin_app_vars = List.map find_and_load_conf plugin_apps in
+  let setup =
+    def_load_conf
+    @ [set_man_dest]
+    @ display_install_info
+    @ display_plugin_install_info
+    @ load_plugin_app_vars
+    @ check_permissions
   in
   let install_bundle =
     Sh_script.copy_all_in ~src:"." ~dst:prefix ~except:install_script_name
@@ -110,11 +257,63 @@ let install_script (ic : Installer_config.internal) =
         package prefix uninstall_script_name
     ]
   in
+  let install_plugins = List.concat_map (install_plugin ~prefix) ic.plugins in
+  let dump_install_conf =
+    let lines =
+      List.filter_map (fun x -> x)
+        [ Some (Printf.sprintf "%s=%s" conf_version ic.version)
+        ; Option.map
+            (fun (plgdr : Installer_config.plugin_dirs) ->
+               Printf.sprintf "%s=%s" conf_plugins (prefix / plgdr.plugins_dir))
+            ic.plugin_dirs
+        ; Option.map
+            (fun (plgdr : Installer_config.plugin_dirs) ->
+               Printf.sprintf "%s=%s" conf_lib (prefix / plgdr.lib_dir))
+            ic.plugin_dirs
+        ]
+    in
+    let plugin_app_lines =
+      ListLabels.concat_map plugin_apps
+        ~f:(fun app_name ->
+            let var_prefix = app_var_prefix app_name in
+            let lib_var = lib_var ~var_prefix in
+            let plugins_var = plugins_var ~var_prefix in
+            [ Printf.sprintf "%s=$%s" lib_var lib_var
+            ; Printf.sprintf "%s=$%s" plugins_var plugins_var
+            ])
+    in
+    let install_conf = prefix / install_conf in
+    [ Sh_script.write_file install_conf (lines @ plugin_app_lines)
+    ; Sh_script.chmod 644 [install_conf]
+    ]
+  in
   setup
   @ [install_bundle]
   @ add_symlinks_to_usrbin
   @ install_manpages
+  @ install_plugins
+  @ dump_install_conf
   @ notify_install_complete
+
+let display_plugin (plugin : Installer_config.plugin) =
+  let open Sh_script in
+  let b = Filename.basename in
+  let var_prefix = app_var_prefix plugin.app_name in
+  let lib_dir = "$" ^ lib_var ~var_prefix in
+  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  [ echof "- %s/%s" plugins_dir (b plugin.plugin_dir)
+  ; echof "- %s/%s" lib_dir (b plugin.lib_dir)
+  ]
+  @ List.map (fun x -> echof "- %s/%s" lib_dir (b x)) plugin.dyn_deps
+
+let uninstall_plugin (plugin : Installer_config.plugin) =
+  let var_prefix = app_var_prefix plugin.app_name in
+  let lib_dir = "$" ^ lib_var ~var_prefix in
+  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  [ remove_symlink ~in_:lib_dir plugin.lib_dir
+  ; remove_symlink ~in_:plugins_dir plugin.plugin_dir
+  ]
+  @ List.map (remove_symlink ~in_:lib_dir) plugin.dyn_deps
 
 let uninstall_script (ic : Installer_config.internal) =
   let open Sh_script in
@@ -123,6 +322,14 @@ let uninstall_script (ic : Installer_config.internal) =
   let prefix = "/opt" / package in
   let usrbin = "/usr/local/bin" in
   let binaries = ic.exec_files in
+  let load_install_conf =
+    match ic.plugins with
+    | [] -> []
+    | _ ->
+      [ def_load_conf
+      ; load_conf (prefix / install_conf)
+      ]
+  in
   let display_symlinks =
     List.map
       (fun binary -> echof "- %s/%s" usrbin binary)
@@ -138,15 +345,19 @@ let uninstall_script (ic : Installer_config.internal) =
            pages)
       manpages
   in
+  let display_plugins = List.concat_map display_plugin ic.plugins in
   let setup =
     [ check_run_as_root
     ; set_man_dest
-    ; echof "About to uninstall %s." package
+    ]
+    @ load_install_conf @
+    [ echof "About to uninstall %s." package
     ; echof "The following files and folders will be removed from the system:"
     ; echof "- %s" prefix
     ]
     @ display_symlinks
     @ display_manpages
+    @ display_plugins
   in
   let confirm_uninstall =
     [ prompt ~question:"Proceed? [y/N]" ~varname:"ans"
@@ -173,12 +384,14 @@ let uninstall_script (ic : Installer_config.internal) =
            pages)
       manpages
   in
+  let remove_plugins = List.concat_map uninstall_plugin ic.plugins in
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
   setup
   @ confirm_uninstall
   @ remove_install_folder
   @ remove_symlinks
   @ remove_manpages
+  @ remove_plugins
   @ notify_uninstall_complete
 
 let add_sos_to_bundle ~bundle_dir binary =
