@@ -45,7 +45,7 @@ opam exec -- oui build alt-ergo-oui.json alt-ergo-bundle
 log "Installing ${INSTALLER_NAME}"
 case "$SYSTEM" in
   linux)
-    sudo ./${INSTALLER_NAME}
+    printf 'y\n' | sudo ./${INSTALLER_NAME}
     ;;
   macos)
     sudo installer -pkg ${INSTALLER_NAME} -target /
