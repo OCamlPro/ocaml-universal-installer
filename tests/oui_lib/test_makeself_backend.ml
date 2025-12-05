@@ -104,6 +104,15 @@ let%expect_test "install_script: simple" =
     check_available $MAN_DEST/man1/aaa-command.1
     check_available $MAN_DEST/man1/aaa-utility.1
     check_available $MAN_DEST/man5/aaa-file.1
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -154,6 +163,15 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     echo "The following files and directories will be written to the system:"
     echo "- /opt/t-name"
     check_available /opt/t-name
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -264,6 +282,15 @@ let%expect_test "install_script: install plugins" =
     check_available $app_b_plugins/name
     check_available $app_b_lib/dep-a
     check_available $app_b_lib/dep-b
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -506,6 +533,15 @@ let%expect_test "install_script: binary in sub folder" =
     echo "- /usr/local/bin/do"
     check_available /opt/test-name
     check_available /usr/local/bin/do
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
