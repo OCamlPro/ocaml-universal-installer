@@ -34,7 +34,7 @@ are:
 - `name`, **string**, **required**: the name of the app. This will define the
   install folder name on the target system and where plugins will look for your
   app when installing themselves. *Example:* `"oui"`.
-- `fullname`, **string**, **required**: *TODO* (remove or make wix specific?)
+- `fullname`, **string**, **required**: *TODO* (remove or make WiX specific?)
 - `version`, **string**, **required**: the version of the app. *Example:*
   `"1.0.0"`. WiX backend requires that in `major.minor.patch`, `major`, `minor` and `patch` are strictly numerical.
 - `exec_files`, **string array**, **optional**: The list of executables to
@@ -62,19 +62,19 @@ are:
 - `wix_manufacturer`, **string**, **required**: The application developer/editor
 - `wix_description`, **string**, **optional**: A short description of the application,
   shown in the installer properties
-- `wix_tags`, **string array**, **optional**: List of package tags, used by Wix
+- `wix_tags`, **string array**, **optional**: List of package tags, used by WiX
   backend only. *Example*: `["tag1", "tag2"]`.
 - `wix_icon_file`, **string**, **optional**: Path to the app icon file relative to
-  the `oui.json` file, used by Wix backend only. *Example*:
+  the `oui.json` file, used by WiX backend only. *Example*:
   `"data/images/logo.ico"`.
 - `wix_dlg_bmp_file`, **string**, **optional**: Path to the installer dialog
-  image file, relative to the `oui.json` file, used by Wix backend only.
+  image file, relative to the `oui.json` file, used by WiX backend only.
   *Example*: `"data/images/dlg.bmp"`.
 - `wix_banner_bmp_file`, **string**, **optional**: Path to the app banner file
-  relative to the `oui.json` file, used by Wix backend only. *Example*:
+  relative to the `oui.json` file, used by WiX backend only. *Example*:
   `"data/images/banner.bmp"`.
 - `wix_license_file`, **string**, **optional**: Path to the license in RTF
-  format relative to the `oui.json` file, used by Wix backend only. *Example:*
+  format relative to the `oui.json` file, used by WiX backend only. *Example:*
   `"data/licenses/gpl-3.0.rtf"`
 - `macos_symlink_dirs`: **string array**, **optional**: List of directories
   within the bundle that are installed in `Resources/` but must be symlinked
@@ -172,7 +172,7 @@ It's a JSON object with the following fields:
 
 ## Generating a binary installer for your dune project
 
-If you're developping an application in OCaml you are most likely to use
+If you're developing an application in OCaml you are most likely to use
 `dune` as your main build system so here's how you can produce a binary
 installer with `oui` from your `dune` project.
 
@@ -339,6 +339,8 @@ repo and updating it as needed through your project's development.
 For convenience, it should be written to the root of the repo alongside your
 `dune-project`.
 
+
+
 ### Generating the installer
 
 Now you can generate the installer by running:
@@ -387,7 +389,7 @@ application binary they likey won't be compatible.
 ## Installation layout
 
 oui aims at producing the most consistent installs across platforms but each
-as its own specifities.
+as its own specificities.
 
 The following sections describes how an application is installed on the three
 main platform it supports.
@@ -444,10 +446,10 @@ In order to create an MSI installer, a few metadata must be provided, some requi
 
 ###### Required metadata
 
-- Package unique ID (eg: 'OCamlPro.Oui'), necessary for upgrades to work properly
-- Package name (eg: 'Oui 1.4'), shown in installer UI and Windows Application manager
-- Package manufacturer (eg: 'OCamlPro'), only shown in MSI properties
-- Package version (eg: '1.4.2.0'), note the last number is usually not significant and ignored during upgrades
+- Package unique ID (e.g.: 'OCamlPro.Oui'), necessary for upgrades to work properly
+- Package name (e.g.: 'Oui 1.4'), shown in installer UI and Windows Application manager
+- Package manufacturer (e.g.: 'OCamlPro'), only shown in MSI properties
+- Package version (e.g.: '1.4.2.0'), note the last number is usually not significant and ignored during upgrades
 
 ###### Optional metadata
 
@@ -522,7 +524,7 @@ The application bundle follows the standard macOS structure:
 
 #### Post-installation setup
 
-The installer runs a postinstall script that performs the following:
+The installer runs a post-install script that performs the following:
 
 1. **Binary wrapper**: Creates a wrapper script in `/usr/local/bin/<binary-name>`
    that executes the actual binary from the .app bundle.
