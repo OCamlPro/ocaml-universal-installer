@@ -171,7 +171,7 @@ and pp_sh_case ~indent fmtr {pattern; commands} =
 
 
 let pp_sh fmtr t =
-  Format.fprintf fmtr "#!/bin/sh\n";
+  Format.fprintf fmtr "#!/usr/bin/env sh\n";
   Format.fprintf fmtr "set -e\n";
   List.iter (pp_sh_command ~indent:0 fmtr) t
 

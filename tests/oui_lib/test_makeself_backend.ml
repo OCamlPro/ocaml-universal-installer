@@ -77,7 +77,7 @@ let%expect_test "install_script: simple" =
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
@@ -125,7 +125,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
@@ -177,7 +177,7 @@ let%expect_test "install_script: install plugins" =
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     load_conf() {
       var_prefix="$2"
@@ -284,7 +284,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
@@ -392,7 +392,7 @@ let%expect_test "uninstall_script: simple" =
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
@@ -455,7 +455,7 @@ let%expect_test "install_script: binary in sub folder" =
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
@@ -490,7 +490,7 @@ let%expect_test "uninstall_script: binary in sub folder" =
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
   [%expect {|
-    #!/bin/sh
+    #!/usr/bin/env sh
     set -e
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
