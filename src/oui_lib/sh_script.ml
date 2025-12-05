@@ -151,9 +151,9 @@ let rec pp_sh_command ~indent fmtr command =
     List.iter (pp_sh_case ~indent:(indent + 2) fmtr) cases;
     fpf "esac"
   | Write_file {file; lines} ->
-    fpf "{";
-    List.iter (fpf "  printf '%%s\\n' %S") lines;
-    fpf "} > \"%s\"" file
+    fpf "cat > \"%s\" < EOF" file;
+    List.iter (fpf "%s") lines;
+    fpf "EOF"
   | Read_file {file; line_var; process_line} ->
     fpf "while IFS= read -r %s || [ -n \"$%s\" ]; do" line_var line_var;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) process_line;
