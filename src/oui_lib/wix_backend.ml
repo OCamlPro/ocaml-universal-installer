@@ -27,8 +27,7 @@ let add_dlls_to_bundle ~bundle_dir binary =
   | _ ->
       OpamConsole.formatted_msg "Getting dlls:\n%s"
         (OpamStd.Format.itemize OpamFilename.to_string dlls);
-      let bin_dir = bundle_dir in
-      (* TODO *) (* let bin_dir = OpamFilename.Op.(bundle_dir / "bin") in *)
+      let bin_dir = OpamFilename.Op.(bundle_dir / "bin") in
       OpamFilename.mkdir bin_dir;
       List.iter (fun dll -> OpamFilename.copy_in dll bin_dir) dlls
 
