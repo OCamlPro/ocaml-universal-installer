@@ -97,22 +97,22 @@ let%expect_test "install_script: simple" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/aaa
+    mkdir -p -m 755 "/opt/aaa"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/aaa \;
     echo "Adding aaa-command to /usr/local/bin"
     ln -s /opt/aaa/aaa-command /usr/local/bin/aaa-command
     echo "Adding aaa-utility to /usr/local/bin"
     ln -s /opt/aaa/aaa-utility /usr/local/bin/aaa-utility
     echo "Installing manpages to $MAN_DEST..."
-    mkdir -p -m 755 $MAN_DEST/man1
+    mkdir -p -m 755 "$MAN_DEST/man1"
     ln -s /opt/aaa/man/man1/aaa-command.1 $MAN_DEST/man1/aaa-command.1
     ln -s /opt/aaa/man/man1/aaa-utility.1 $MAN_DEST/man1/aaa-utility.1
-    mkdir -p -m 755 $MAN_DEST/man5
+    mkdir -p -m 755 "$MAN_DEST/man5"
     ln -s /opt/aaa/man/man5/aaa-file.1 $MAN_DEST/man5/aaa-file.1
     {
       printf '%s\n' "version=x.y.z"
-    } > /opt/aaa/install.conf
-    chmod 644 /opt/aaa/install.conf
+    } > "/opt/aaa/install.conf"
+    chmod 644 "/opt/aaa/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run /opt/aaa/uninstall.sh."
     |}]
@@ -140,14 +140,14 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/name
+    mkdir -p -m 755 "/opt/name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
     {
       printf '%s\n' "version=version"
       printf '%s\n' "plugins=/opt/name/path/to/plugins"
       printf '%s\n' "lib=/opt/name/path/to/lib"
-    } > /opt/name/install.conf
-    chmod 644 /opt/name/install.conf
+    } > "/opt/name/install.conf"
+    chmod 644 "/opt/name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
     |}]
@@ -206,7 +206,7 @@ let%expect_test "install_script: install plugins" =
             eval "$var_prefix$key=\$val"
           ;;
         esac
-      done < $conf
+      done < "$conf"
       return 0
     }
     if [ -d "/usr/local/share/man" ]; then
@@ -237,7 +237,7 @@ let%expect_test "install_script: install plugins" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/name
+    mkdir -p -m 755 "/opt/name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
     echo "Installing plugin app-a-name to app-a..."
     ln -s /opt/name/lib/app-a/plugins/name $app_a_plugins/name
@@ -253,8 +253,8 @@ let%expect_test "install_script: install plugins" =
       printf '%s\n' "app_a_plugins=$app_a_plugins"
       printf '%s\n' "app_b_lib=$app_b_lib"
       printf '%s\n' "app_b_plugins=$app_b_plugins"
-    } > /opt/name/install.conf
-    chmod 644 /opt/name/install.conf
+    } > "/opt/name/install.conf"
+    chmod 644 "/opt/name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
     |}]
@@ -323,7 +323,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
             eval "$var_prefix$key=\$val"
           ;;
         esac
-      done < $conf
+      done < "$conf"
       return 0
     }
     load_conf /opt/name/install.conf
@@ -347,31 +347,31 @@ let%expect_test "uninstall_script: uninstall plugins" =
     esac
     if [ -d "/opt/name" ]; then
       echo "Removing /opt/name..."
-      rm -rf /opt/name
+      rm -rf "/opt/name"
     fi
     if [ -L "$app_a_lib/app-a-name" ]; then
       echo "Removing symlink $app_a_lib/app-a-name..."
-      rm -f $app_a_lib/app-a-name
+      rm -f "$app_a_lib/app-a-name"
     fi
     if [ -L "$app_a_plugins/name" ]; then
       echo "Removing symlink $app_a_plugins/name..."
-      rm -f $app_a_plugins/name
+      rm -f "$app_a_plugins/name"
     fi
     if [ -L "$app_b_lib/app-b-name" ]; then
       echo "Removing symlink $app_b_lib/app-b-name..."
-      rm -f $app_b_lib/app-b-name
+      rm -f "$app_b_lib/app-b-name"
     fi
     if [ -L "$app_b_plugins/name" ]; then
       echo "Removing symlink $app_b_plugins/name..."
-      rm -f $app_b_plugins/name
+      rm -f "$app_b_plugins/name"
     fi
     if [ -L "$app_b_lib/dep-a" ]; then
       echo "Removing symlink $app_b_lib/dep-a..."
-      rm -f $app_b_lib/dep-a
+      rm -f "$app_b_lib/dep-a"
     fi
     if [ -L "$app_b_lib/dep-b" ]; then
       echo "Removing symlink $app_b_lib/dep-b..."
-      rm -f $app_b_lib/dep-b
+      rm -f "$app_b_lib/dep-b"
     fi
     echo "Uninstallation complete!"
     |}]
@@ -423,27 +423,27 @@ let%expect_test "uninstall_script: simple" =
     esac
     if [ -d "/opt/aaa" ]; then
       echo "Removing /opt/aaa..."
-      rm -rf /opt/aaa
+      rm -rf "/opt/aaa"
     fi
     if [ -L "/usr/local/bin/aaa-command" ]; then
       echo "Removing symlink /usr/local/bin/aaa-command..."
-      rm -f /usr/local/bin/aaa-command
+      rm -f "/usr/local/bin/aaa-command"
     fi
     if [ -L "/usr/local/bin/aaa-utility" ]; then
       echo "Removing symlink /usr/local/bin/aaa-utility..."
-      rm -f /usr/local/bin/aaa-utility
+      rm -f "/usr/local/bin/aaa-utility"
     fi
     if [ -L "$MAN_DEST/man1/aaa-command.1" ]; then
       echo "Removing manpage $MAN_DEST/man1/aaa-command.1..."
-      rm -f $MAN_DEST/man1/aaa-command.1
+      rm -f "$MAN_DEST/man1/aaa-command.1"
     fi
     if [ -L "$MAN_DEST/man1/aaa-utility.1" ]; then
       echo "Removing manpage $MAN_DEST/man1/aaa-utility.1..."
-      rm -f $MAN_DEST/man1/aaa-utility.1
+      rm -f "$MAN_DEST/man1/aaa-utility.1"
     fi
     if [ -L "$MAN_DEST/man5/aaa-file.1" ]; then
       echo "Removing manpage $MAN_DEST/man5/aaa-file.1..."
-      rm -f $MAN_DEST/man5/aaa-file.1
+      rm -f "$MAN_DEST/man5/aaa-file.1"
     fi
     echo "Uninstallation complete!"
     |}]
@@ -471,14 +471,14 @@ let%expect_test "install_script: binary in sub folder" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/name
+    mkdir -p -m 755 "/opt/name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
     echo "Adding bin/do to /usr/local/bin"
     ln -s /opt/name/bin/do /usr/local/bin/do
     {
       printf '%s\n' "version=version"
-    } > /opt/name/install.conf
-    chmod 644 /opt/name/install.conf
+    } > "/opt/name/install.conf"
+    chmod 644 "/opt/name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
     |}]
@@ -517,11 +517,11 @@ let%expect_test "uninstall_script: binary in sub folder" =
     esac
     if [ -d "/opt/name" ]; then
       echo "Removing /opt/name..."
-      rm -rf /opt/name
+      rm -rf "/opt/name"
     fi
     if [ -L "/usr/local/bin/do" ]; then
       echo "Removing symlink /usr/local/bin/do..."
-      rm -f /usr/local/bin/do
+      rm -f "/usr/local/bin/do"
     fi
     echo "Uninstallation complete!"
     |}]
