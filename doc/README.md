@@ -230,8 +230,8 @@ else
   FIND_DELETE=(-print -delete)
 fi
 
-if [ -z "$1" ]; then
-  echo "Usage: $0 [INSTALL_DIR]" >&2
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 [--quiet] <install-dir>" >&2
   exit 1
 fi
 
