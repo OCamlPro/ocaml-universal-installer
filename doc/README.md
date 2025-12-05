@@ -36,7 +36,7 @@ are:
   app when installing themselves. *Example:* `"oui"`.
 - `fullname`, **string**, **required**: *TODO* (remove or make wix specific?)
 - `version`, **string**, **required**: the version of the app. *Example:*
-  `"1.0.0"`.
+  `"1.0.0"`. WiX backend requires that in `major.minor.patch`, `major`, `minor` and `patch` are strictly numerical.
 - `exec_files`, **string array**, **optional**: The list of executables to
   install from the bundle. Should be a list of paths, relative to the bundle
   root, pointing to executable files that should be installed and made available
