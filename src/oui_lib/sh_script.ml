@@ -100,7 +100,7 @@ let rec pp_sh_condition fmtr condition =
 let rec pp_sh_command ~indent fmtr command =
   let indent_str = String.make indent ' ' in
   let fpf fmt = Format.fprintf fmtr ("%s" ^^ fmt ^^ "\n") indent_str in
-  let pp_files = Fmt.(list ~sep:(const string " ") string) in
+  let pp_files = Fmt.(list ~sep:(const string " ") (using (fun x -> "\""^x^"\"") string)) in
   match command with
   | Continue -> fpf "continue"
   | Return i -> fpf "return %d" i
@@ -145,11 +145,11 @@ let rec pp_sh_command ~indent fmtr command =
   | Write_file {file; lines} ->
     fpf "{";
     List.iter (fpf "  printf '%%s\\n' %S") lines;
-    fpf "} > %s" file
+    fpf "} > \"%s\"" file
   | Read_file {file; line_var; process_line} ->
     fpf "while IFS= read -r %s || [ -n \"$%s\" ]; do" line_var line_var;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) process_line;
-    fpf "done < %s" file
+    fpf "done < \"%s\"" file
   | Def_fun {name; body} ->
     fpf "%s() {" name;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) body;
