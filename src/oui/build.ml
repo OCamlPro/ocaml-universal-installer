@@ -21,15 +21,18 @@ let run keep_wxs backend installer_config bundle_dir output =
       Oui_cli.Args.output_name ~output ~backend:(Some backend) installer_config
     in
     let dst = OpamFilename.of_string output in
-    match backend with
-    | Wix ->
-      OpamFilename.with_tmp_dir (fun tmp_dir ->
-          Wix_backend.create_bundle
-            ~keep_wxs ~tmp_dir ~bundle_dir installer_config dst)
-    | Makeself ->
-      Makeself_backend.create_installer ~installer_config ~bundle_dir dst
-    | Pkgbuild ->
-      Pkgbuild_backend.create_installer ~installer_config ~bundle_dir dst
+    OpamFilename.with_tmp_dir
+      (fun tmp_dir ->
+         let src = bundle_dir in
+         let bundle_dir = OpamFilename.Op.(tmp_dir / "bundle") in
+         OpamFilename.copy_dir ~src ~dst:bundle_dir;
+         match backend with
+         | Wix ->
+           Wix_backend.create_bundle ~keep_wxs ~tmp_dir ~bundle_dir installer_config dst
+         | Makeself ->
+           Makeself_backend.create_installer ~installer_config ~bundle_dir dst
+         | Pkgbuild ->
+           Pkgbuild_backend.create_installer ~installer_config ~bundle_dir dst)
   in
   let config_path = OpamFilename.to_string installer_config in
   Oui_cli.Errors.handle ~config_path res
