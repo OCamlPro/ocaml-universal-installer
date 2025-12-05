@@ -58,7 +58,7 @@ are:
   [plugin object section](#plugin-object) for the object format.
 - `plugin_dirs`, **object**, **optional**: A JSON object describind where
   plugins for the described application should install themselves. See the
-  [plugin_dirs object section](#plugin_dirs-objecy) for the object format.
+  [plugin_dirs object section](#plugin_dirs-object) for the object format.
 - `wix_manufacturer`, **string**, **required**: The application developer/editor
 - `wix_description`, **string**, **optional**: A short description of the application,
   shown in the installer properties
