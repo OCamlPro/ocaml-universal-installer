@@ -2,7 +2,11 @@ name: windows
 
 on:
   pull_request:
+    branches:
+      - master
   push:
+    branches:
+      - master
 
 env:
   WIX6_URL: https://github.com/wixtoolset/wix/releases/download/v6.0.2/wix-cli-x64.msi
