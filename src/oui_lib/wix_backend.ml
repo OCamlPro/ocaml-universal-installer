@@ -79,12 +79,14 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
       license;
     }
   in
+  (* TODO clean this code regarding file manipulation *)
   let (extra, content) = Data.WIX.custom_app in
   let extra_path = tmp_dir // extra in
   OpamFilename.write extra_path content;
   let name = Filename.chop_extension exec_file in
   let main_path = tmp_dir // (name ^ ".wxs") in
   OpamConsole.formatted_msg "Preparing main WiX file...\n";
+  OpamFilename.mkdir (tmp_dir / Filename.dirname name);
   let oc = open_out (OpamFilename.to_string main_path) in
   let fmt = Format.formatter_of_out_channel oc in
   Wix.print_wix fmt info;
