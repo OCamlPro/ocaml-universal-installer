@@ -216,6 +216,15 @@ let check_plugin_available (plugin : Installer_config.plugin) =
   in
   List.map check_available paths
 
+let prompt_for_confirmation =
+  let open Sh_script in
+  [ prompt ~question:"Proceed? [y/N]" ~varname:"ans"
+  ; case "ans"
+      [ {pattern  = "[Yy]*"; commands = []}
+      ; {pattern = "*"; commands = [echof "Aborted."; exit 1]}
+      ]
+  ]
+
 let install_script (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
@@ -265,6 +274,7 @@ let install_script (ic : Installer_config.internal) =
     @ display_plugin_install_info
     @ load_plugin_app_vars
     @ check_all_available
+    @ prompt_for_confirmation
     @ check_permissions
   in
   let install_bundle =
@@ -391,14 +401,6 @@ let uninstall_script (ic : Installer_config.internal) =
     @ display_manpages
     @ display_plugins
   in
-  let confirm_uninstall =
-    [ prompt ~question:"Proceed? [y/N]" ~varname:"ans"
-    ; case "ans"
-        [ {pattern  = "[Yy]*"; commands = []}
-        ; {pattern = "*"; commands = [echof "Aborted."; exit 1]}
-        ]
-    ]
-  in
   let remove_install_folder =
     [ if_ (Dir_exists prefix)
         [ echof "Removing %s..." prefix
@@ -419,7 +421,7 @@ let uninstall_script (ic : Installer_config.internal) =
   let remove_plugins = List.concat_map uninstall_plugin ic.plugins in
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
   setup
-  @ confirm_uninstall
+  @ prompt_for_confirmation
   @ remove_install_folder
   @ remove_symlinks
   @ remove_manpages
