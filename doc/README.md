@@ -34,9 +34,9 @@ are:
 - `name`, **string**, **required**: the name of the app. This will define the
   install folder name on the target system and where plugins will look for your
   app when installing themselves. *Example:* `"oui"`.
-- `fullname`, **string**, **required**: *TODO* (remove or make wix specific?)
+- `fullname`, **string**, **required**: *TODO* (remove or make WiX specific?)
 - `version`, **string**, **required**: the version of the app. *Example:*
-  `"1.0.0"`.
+  `"1.0.0"`. Must numbers for WiX backend.
 - `exec_files`, **string array**, **required**: The list of executables to
   install from the bundle. Should be a list of paths, relative to the bundle
   root, pointing to executable files that should be installed and made available
@@ -56,19 +56,19 @@ are:
 - `wix_manufacturer`, **string**, **required**: The application developer/editor
 - `wix_description`, **string**, **optional**: A short description of the application,
   shown in the installer properties
-- `wix_tags`, **string array**, **optional**: List of package tags, used by Wix
+- `wix_tags`, **string array**, **optional**: List of package tags, used by WiX
   backend only. *Example*: `["tag1", "tag2"]`.
 - `wix_icon_file`, **string**, **optional**: Path to the app icon file relative to
-  the `oui.json` file, used by Wix backend only. *Example*:
+  the `oui.json` file, used by WiX backend only. *Example*:
   `"data/images/logo.ico"`.
 - `wix_dlg_bmp_file`, **string**, **optional**: Path to the installer dialog
-  image file, relative to the `oui.json` file, used by Wix backend only.
+  image file, relative to the `oui.json` file, used by WiX backend only.
   *Example*: `"data/images/dlg.bmp"`.
 - `wix_banner_bmp_file`, **string**, **optional**: Path to the app banner file
-  relative to the `oui.json` file, used by Wix backend only. *Example*:
+  relative to the `oui.json` file, used by WiX backend only. *Example*:
   `"data/images/banner.bmp"`.
 - `wix_license_file`, **string**, **optional**: Path to the license in RTF
-  format relative to the `oui.json` file, used by Wix backend only. *Example:*
+  format relative to the `oui.json` file, used by WiX backend only. *Example:*
   `"data/licenses/gpl-3.0.rtf"`
 - `macos_symlink_dirs`: **string array**, **optional**: List of directories
   within the bundle that are installed in `Resources/` but must be symlinked
@@ -114,7 +114,7 @@ man section `man1` and that `bundle/config/spec/oui.json.1` and
 
 ## Generating a binary installer for your dune project
 
-If you're developping an application in OCaml you are most likely to use
+If you're developing an application in OCaml you are most likely to use
 `dune` as your main build system so here's how you can produce a binary
 installer with `oui` from your `dune` project.
 
@@ -172,8 +172,8 @@ else
   FIND_DELETE=(-print -delete)
 fi
 
-if [ -z "$1" ]; then
-  echo "Usage: $0 [INSTALL_DIR]" >&2
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 [--quiet] <install-dir>" >&2
   exit 1
 fi
 
@@ -264,8 +264,8 @@ Here is the `oui.json` file we'd use to generate `alt-ergo`'s installer:
   "name": "alt-ergo",
   "fullname": "alt-ergo.dev",
   "version": "dev",
-  "description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
-  "manufacturer": "alt-ergo@ocamlpro.com",
+  "wix_description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
+  "wix_manufacturer": "alt-ergo@ocamlpro.com",
   "exec_files": ["bin/alt-ergo"],
   "manpages": {
     "man1": [
@@ -281,6 +281,8 @@ repo and updating it as needed through your project's development.
 For convenience, it should be written to the root of the repo alongside your
 `dune-project`.
 
+
+
 ### Generating the installer
 
 Now you can generate the installer by running:
@@ -291,7 +293,7 @@ oui oui.json <installation-bundle-dir>
 ## Installation layout
 
 oui aims at producing the most consistent installs across platforms but each
-as its own specifities.
+as its own specificities.
 
 The following sections describes how an application is installed on the three
 main platform it supports.
@@ -344,10 +346,10 @@ In order to create an MSI installer, a few metadata must be provided, some requi
 
 ###### Required metadata
 
-- Package unique ID (eg: 'OCamlPro.Oui'), necessary for upgrades to work properly
-- Package name (eg: 'Oui 1.4'), shown in installer UI and Windows Application manager
-- Package manufacturer (eg: 'OCamlPro'), only shown in MSI properties
-- Package version (eg: '1.4.2.0'), note the last number is usually not significant and ignored during upgrades
+- Package unique ID (e.g.: 'OCamlPro.Oui'), necessary for upgrades to work properly
+- Package name (e.g.: 'Oui 1.4'), shown in installer UI and Windows Application manager
+- Package manufacturer (e.g.: 'OCamlPro'), only shown in MSI properties
+- Package version (e.g.: '1.4.2.0'), note the last number is usually not significant and ignored during upgrades
 
 ###### Optional metadata
 
@@ -422,7 +424,7 @@ The application bundle follows the standard macOS structure:
 
 #### Post-installation setup
 
-The installer runs a postinstall script that performs the following:
+The installer runs a post-install script that performs the following:
 
 1. **Binary wrapper**: Creates a wrapper script in `/usr/local/bin/<binary-name>`
    that executes the actual binary from the .app bundle.
