@@ -18,6 +18,7 @@ type condition =
   | Link_exists of string
   | File_exists of string
   | Is_not_root
+  | Number_args of int
   | And of condition * condition
 
 val (&&) : condition -> condition -> condition
@@ -68,6 +69,14 @@ val eval : string -> command
 
 (** [assign ~var:"VAR" ~value:"value"] is ["VAR=\"value\""] *)
 val assign : var: string -> value: string -> command
+
+(** [assign ~cond:"CONDITION" ~var:"VAR" ~value:"value"] is
+    [if CONDITION; then
+       VAR="value"
+     else
+       VAR=""]
+*)
+val assign_cond : cond:condition -> var: string -> value: string -> command
 
 (** [echo fmt args] is ["echo \"s\""] where [s] is the expanded format
     string. *)

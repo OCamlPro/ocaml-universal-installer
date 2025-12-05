@@ -18,6 +18,7 @@ type condition =
   | Link_exists of string
   | File_exists of string
   | Is_not_root
+  | Number_args of int
   | And of condition * condition
 
 let (&&) c1 c2 = And (c1, c2)
@@ -59,6 +60,12 @@ let echof fmt = Format.kasprintf (fun s -> Echo s) fmt
 let print_errf fmt = Format.kasprintf (fun s -> Print_err s) fmt
 let eval s = Eval s
 let assign ~var ~value = Assign {var; value}
+let assign_cond ~cond ~var ~value =
+    If {
+      condition = cond;
+      then_ = [Assign {var; value}];
+      else_ = [Assign {var; value = ""}];
+    }
 let mkdir ?permissions dirs = Mkdir {permissions; dirs}
 let chmod permissions files = Chmod {permissions; files}
 let cp ~src ~dst = Cp {src; dst}
@@ -92,6 +99,7 @@ let rec pp_sh_condition fmtr condition =
   | Link_exists s -> Format.fprintf fmtr "[ -L %S ]" s
   | File_exists s -> Format.fprintf fmtr "[ -f %S ]" s
   | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
+  | Number_args n -> Format.fprintf fmtr "[ $# -ge %d ]" n
   | And (c1, c2) ->
     Format.fprintf fmtr "%a && %a"
       pp_sh_condition c1

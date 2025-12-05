@@ -51,7 +51,7 @@ let conf_lib = "lib"
 let def_load_conf =
   let open Sh_script in
   def_fun load_conf
-    [ assign ~var:"var_prefix" ~value:"$2"
+    [ assign_cond ~cond:(Number_args 2) ~var:"var_prefix" ~value:"$2"
     ; assign ~var:"conf" ~value:"$1"
     ; read_file ~line_var:"line" "$conf"
         [ case "line" (* Skip blank lines and comments *)
