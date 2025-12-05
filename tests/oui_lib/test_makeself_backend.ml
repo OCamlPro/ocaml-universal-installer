@@ -34,8 +34,8 @@ let make_expanded_manpages
   |> List.filter_map (function _, [] -> None | x -> Some x)
 
 let make_config
-    ?(name="name")
-    ?(version="version")
+    ?(name="test-name")
+    ?(version="test.version")
     ?(exec_files=[])
     ?(plugins=[])
     ?plugin_dirs
@@ -121,7 +121,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
   let plugin_dirs : Installer_config.plugin_dirs =
     {plugins_dir = "path/to/plugins"; lib_dir = "path/to/lib"}
   in
-  let config = make_config ~name:"name" ~version:"version" ~plugin_dirs () in
+  let config = make_config ~name:"t-name" ~version:"t.version" ~plugin_dirs () in
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
   [%expect {|
@@ -132,24 +132,24 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     else
       MAN_DEST="usr/local/man"
     fi
-    echo "Installing name.version to /opt/name"
+    echo "Installing t-name.t.version to /opt/t-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/name"
+    echo "- /opt/t-name"
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/name
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
+    mkdir -p -m 755 /opt/t-name
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/t-name \;
     {
-      printf '%s\n' "version=\"version\""
-      printf '%s\n' "plugins=\"/opt/name/path/to/plugins\""
-      printf '%s\n' "lib=\"/opt/name/path/to/lib\""
-    } > /opt/name/install.conf
-    chmod 644 /opt/name/install.conf
+      printf '%s\n' "version=\"t.version\""
+      printf '%s\n' "plugins=\"/opt/t-name/path/to/plugins\""
+      printf '%s\n' "lib=\"/opt/t-name/path/to/lib\""
+    } > /opt/t-name/install.conf
+    chmod 644 /opt/t-name/install.conf
     echo "Installation complete!"
-    echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
+    echo "If you want to safely uninstall t-name, please run /opt/t-name/uninstall.sh."
     |}]
 
 let%expect_test "install_script: install plugins" =
@@ -171,7 +171,7 @@ let%expect_test "install_script: install plugins" =
     }
   in
   let config =
-    make_config ~name:"name" ~version:"version"
+    make_config ~name:"t-name" ~version:"t.version"
       ~plugins:[app_a_plugin; app_b_plugin] ()
   in
   let install_script = Makeself_backend.install_script config in
@@ -214,9 +214,9 @@ let%expect_test "install_script: install plugins" =
     else
       MAN_DEST="usr/local/man"
     fi
-    echo "Installing name.version to /opt/name"
+    echo "Installing t-name.t.version to /opt/t-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/name"
+    echo "- /opt/t-name"
     echo "The following plugins will be installed:"
     echo "- app-a-name for app-a"
     echo "- app-b-name for app-b"
@@ -237,26 +237,26 @@ let%expect_test "install_script: install plugins" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/name
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
+    mkdir -p -m 755 /opt/t-name
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/t-name \;
     echo "Installing plugin app-a-name to app-a..."
-    ln -s /opt/name/lib/app-a/plugins/name $app_a_plugins/name
-    ln -s /opt/name/lib/app-a-name $app_a_lib/app-a-name
+    ln -s /opt/t-name/lib/app-a/plugins/name $app_a_plugins/name
+    ln -s /opt/t-name/lib/app-a-name $app_a_lib/app-a-name
     echo "Installing plugin app-b-name to app-b..."
-    ln -s /opt/name/lib/app-b/plugins/name $app_b_plugins/name
-    ln -s /opt/name/lib/app-b-name $app_b_lib/app-b-name
-    ln -s /opt/name/lib/dep-a $app_b_lib/dep-a
-    ln -s /opt/name/lib/dep-b $app_b_lib/dep-b
+    ln -s /opt/t-name/lib/app-b/plugins/name $app_b_plugins/name
+    ln -s /opt/t-name/lib/app-b-name $app_b_lib/app-b-name
+    ln -s /opt/t-name/lib/dep-a $app_b_lib/dep-a
+    ln -s /opt/t-name/lib/dep-b $app_b_lib/dep-b
     {
-      printf '%s\n' "version=\"version\""
+      printf '%s\n' "version=\"t.version\""
       printf '%s\n' "app_a_lib=\"$app_a_lib\""
       printf '%s\n' "app_a_plugins=\"$app_a_plugins\""
       printf '%s\n' "app_b_lib=\"$app_b_lib\""
       printf '%s\n' "app_b_plugins=\"$app_b_plugins\""
-    } > /opt/name/install.conf
-    chmod 644 /opt/name/install.conf
+    } > /opt/t-name/install.conf
+    chmod 644 /opt/t-name/install.conf
     echo "Installation complete!"
-    echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
+    echo "If you want to safely uninstall t-name, please run /opt/t-name/uninstall.sh."
     |}]
 
 let%expect_test "uninstall_script: uninstall plugins" =
@@ -278,7 +278,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
     }
   in
   let config =
-    make_config ~name:"name" ~version:"version"
+    make_config ~name:"t-name" ~version:"t.version"
       ~plugins:[app_a_plugin; app_b_plugin] ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
@@ -326,10 +326,10 @@ let%expect_test "uninstall_script: uninstall plugins" =
       done < $conf
       return 0
     }
-    load_conf  /opt/name/install.conf
-    echo "About to uninstall name."
+    load_conf  /opt/t-name/install.conf
+    echo "About to uninstall t-name."
     echo "The following files and folders will be removed from the system:"
-    echo "- /opt/name"
+    echo "- /opt/t-name"
     echo "- $app_a_plugins/name"
     echo "- $app_a_lib/app-a-name"
     echo "- $app_b_plugins/name"
@@ -345,9 +345,9 @@ let%expect_test "uninstall_script: uninstall plugins" =
         exit 1
       ;;
     esac
-    if [ -d "/opt/name" ]; then
-      echo "Removing /opt/name..."
-      rm -rf /opt/name
+    if [ -d "/opt/t-name" ]; then
+      echo "Removing /opt/t-name..."
+      rm -rf /opt/t-name
     fi
     if [ -L "$app_a_lib/app-a-name" ]; then
       echo "Removing symlink $app_a_lib/app-a-name..."
@@ -462,25 +462,25 @@ let%expect_test "install_script: binary in sub folder" =
     else
       MAN_DEST="usr/local/man"
     fi
-    echo "Installing name.version to /opt/name"
+    echo "Installing test-name.test.version to /opt/test-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/name"
+    echo "- /opt/test-name"
     echo "- /usr/local/bin/do"
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 /opt/name
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/name \;
+    mkdir -p -m 755 /opt/test-name
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/test-name \;
     echo "Adding bin/do to /usr/local/bin"
-    ln -s /opt/name/bin/do /usr/local/bin/do
+    ln -s /opt/test-name/bin/do /usr/local/bin/do
     {
-      printf '%s\n' "version=\"version\""
-    } > /opt/name/install.conf
-    chmod 644 /opt/name/install.conf
+      printf '%s\n' "version=\"test.version\""
+    } > /opt/test-name/install.conf
+    chmod 644 /opt/test-name/install.conf
     echo "Installation complete!"
-    echo "If you want to safely uninstall name, please run /opt/name/uninstall.sh."
+    echo "If you want to safely uninstall test-name, please run /opt/test-name/uninstall.sh."
     |}]
 
 (* Regression test that ensures that if the binaries are not at the bundle's
@@ -502,9 +502,9 @@ let%expect_test "uninstall_script: binary in sub folder" =
     else
       MAN_DEST="usr/local/man"
     fi
-    echo "About to uninstall name."
+    echo "About to uninstall test-name."
     echo "The following files and folders will be removed from the system:"
-    echo "- /opt/name"
+    echo "- /opt/test-name"
     echo "- /usr/local/bin/bin/do"
     printf "Proceed? [y/N] "
     read ans
@@ -515,9 +515,9 @@ let%expect_test "uninstall_script: binary in sub folder" =
         exit 1
       ;;
     esac
-    if [ -d "/opt/name" ]; then
-      echo "Removing /opt/name..."
-      rm -rf /opt/name
+    if [ -d "/opt/test-name" ]; then
+      echo "Removing /opt/test-name..."
+      rm -rf /opt/test-name
     fi
     if [ -L "/usr/local/bin/do" ]; then
       echo "Removing symlink /usr/local/bin/do..."
