@@ -8,6 +8,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open OpamFilename.Op
+
 let check_wix_installed () =
   let wix_bin_exists () =
     match Sys.command "wix.exe --version" with
@@ -21,7 +23,7 @@ let check_wix_installed () =
       (Format.sprintf "Wix binaries couldn't be found.")
 
 let add_dlls_to_bundle ~bundle_dir binary =
-  let dlls = Win_ldd.get_dlls OpamFilename.Op.(bundle_dir // binary) in
+  let dlls = Win_ldd.get_dlls (bundle_dir // binary) in
   match dlls with
   | [] -> ()
   | _ ->
@@ -35,7 +37,7 @@ let data_file ~tmp_dir ~default:(name, content) data_path =
   match data_path with
   | Some path -> path
   | None ->
-      let dst = OpamFilename.Op.(tmp_dir // name) in
+      let dst = tmp_dir // name in
       OpamFilename.write dst content;
       OpamFilename.to_string dst
 
@@ -76,12 +78,14 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
       license;
     }
   in
+  (* TODO clean this code regarding file manipulation *)
   let (extra, content) = Data.WIX.custom_app in
-  let extra_path = OpamFilename.Op.(tmp_dir // extra) in
+  let extra_path = tmp_dir // extra in
   OpamFilename.write extra_path content;
   let name = Filename.chop_extension exec_file in
-  let main_path = OpamFilename.Op.(tmp_dir // (name ^ ".wxs")) in
+  let main_path = tmp_dir // (name ^ ".wxs") in
   OpamConsole.formatted_msg "Preparing main WiX file...\n";
+  OpamFilename.mkdir (tmp_dir / Filename.dirname name);
   let oc = open_out (OpamFilename.to_string main_path) in
   let fmt = Format.formatter_of_out_channel oc in
   Wix.print_wix fmt info;
