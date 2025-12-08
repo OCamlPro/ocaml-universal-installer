@@ -31,6 +31,7 @@ let conf_plugins = "plugins"
 let conf_lib = "lib"
 
 let check_available = "check_available"
+let check_lib = "check_lib"
 
 (* TODO:
    - define the check_no_exist function
@@ -181,15 +182,22 @@ let install_manpages ~prefix manpages =
     :: install_manpages
 
 let install_plugin ~prefix (plugin : Installer_config.plugin) =
+  let open Sh_script in
   let var_prefix = app_var_prefix plugin.app_name in
   let lib_dir = "$" ^ lib_var ~var_prefix in
   let plugins_dir = "$" ^ plugins_var ~var_prefix in
-  [ Sh_script.echof "Installing plugin %s to %s..." plugin.name plugin.app_name
+  let add_symlink_if_missing ~prefix ~in_ path =
+    let dst = in_ / (Filename.basename path) in
+    if_ ((Not (Link_exists dst)) && (Not (Dir_exists dst)))
+      [ add_symlink ~prefix ~in_ path ]
+      ()
+  in
+  [ echof "Installing plugin %s to %s..." plugin.name plugin.app_name
   ; add_symlink ~prefix plugin.plugin_dir ~in_:plugins_dir
-  ; add_symlink ~prefix plugin.lib_dir ~in_:lib_dir
+  ; add_symlink_if_missing ~prefix plugin.lib_dir ~in_:lib_dir
   ]
   @ (List.map
-       (fun dyn_dep -> add_symlink ~prefix dyn_dep ~in_:lib_dir)
+       (fun dyn_dep -> add_symlink_if_missing ~prefix dyn_dep ~in_:lib_dir)
        plugin.dyn_deps)
 
 let def_check_available =
@@ -202,7 +210,20 @@ let def_check_available =
         ()
     ]
 
+let def_check_lib =
+  let open Sh_script in
+  def_fun check_lib
+    [ if_ ((Exists "$1") && (Not (Dir_exists "$1")) && (Not (Link_exists "$1")))
+        [ print_errf
+            "$1 already exists and does not appear to be a library! Aborting"
+        ; exit 1
+        ]
+        ()
+    ]
+
 let check_available path = Sh_script.call_fun check_available [path]
+
+let check_lib path = Sh_script.call_fun check_lib [path]
 
 let check_plugin_available (plugin : Installer_config.plugin) =
   let var_prefix = app_var_prefix plugin.app_name in
@@ -212,9 +233,11 @@ let check_plugin_available (plugin : Installer_config.plugin) =
     [ lib_dir / (Filename.basename plugin.lib_dir)
     ; plugins_dir / (Filename.basename plugin.plugin_dir)
     ]
-    @ List.map (fun x -> lib_dir / (Filename.basename x)) plugin.dyn_deps
   in
   List.map check_available paths
+  @ List.map
+    (fun x -> check_lib (lib_dir / (Filename.basename x)))
+    plugin.dyn_deps
 
 let prompt_for_confirmation =
   let open Sh_script in
@@ -268,6 +291,7 @@ let install_script (ic : Installer_config.internal) =
   in
   let setup =
     def_check_available ::
+    def_check_lib ::
     def_load_conf
     @ [set_man_dest]
     @ display_install_info

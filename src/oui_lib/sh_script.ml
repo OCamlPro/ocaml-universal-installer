@@ -19,6 +19,7 @@ type condition =
   | File_exists of string
   | Is_not_root
   | And of condition * condition
+  | Not of condition
 
 let (&&) c1 c2 = And (c1, c2)
 
@@ -96,6 +97,8 @@ let rec pp_sh_condition fmtr condition =
     Format.fprintf fmtr "%a && %a"
       pp_sh_condition c1
       pp_sh_condition c2
+  | Not (And _ as c) -> Format.fprintf fmtr "! (%a)" pp_sh_condition c
+  | Not c -> Format.fprintf fmtr "! %a" pp_sh_condition c
 
 let rec pp_sh_command ~indent fmtr command =
   let indent_str = String.make indent ' ' in
