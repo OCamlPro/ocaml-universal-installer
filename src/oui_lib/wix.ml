@@ -78,7 +78,7 @@ let print_package fmt info =
 
     <SummaryInformation
       Manufacturer="%s" Description="%s"
-      Comments="%s" Keywords="%s" />
+      Comments="%s" %s />
 
     <MajorUpgrade Schedule="afterInstallInitialize" MigrateFeatures="yes"
       DowngradeErrorMessage="A newer version of this product is already installed"
@@ -86,7 +86,8 @@ let print_package fmt info =
 
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" MaximumUncompressedMediaSize="64" />
 |} info.unique_id info.organization info.long_name info.version
-   info.organization info.long_name info.description info.keywords
+   info.organization info.long_name info.description
+   (if info.keywords = "" then "" else Printf.sprintf {|Keywords="%s"|} info.keywords)
 
 let print_application fmt info =
   Format.fprintf fmt {|
