@@ -79,6 +79,12 @@ let%expect_test "install_script: simple" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    check_available() {
+      if [ -e "$1" ]; then
+        printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -92,6 +98,21 @@ let%expect_test "install_script: simple" =
     echo "- $MAN_DEST/man1/aaa-command.1"
     echo "- $MAN_DEST/man1/aaa-utility.1"
     echo "- $MAN_DEST/man5/aaa-file.1"
+    check_available /opt/aaa
+    check_available /usr/local/bin/aaa-command
+    check_available /usr/local/bin/aaa-utility
+    check_available $MAN_DEST/man1/aaa-command.1
+    check_available $MAN_DEST/man1/aaa-utility.1
+    check_available $MAN_DEST/man5/aaa-file.1
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -127,6 +148,12 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    check_available() {
+      if [ -e "$1" ]; then
+        printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -135,6 +162,16 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     echo "Installing t-name.t.version to /opt/t-name"
     echo "The following files and directories will be written to the system:"
     echo "- /opt/t-name"
+    check_available /opt/t-name
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -179,6 +216,12 @@ let%expect_test "install_script: install plugins" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    check_available() {
+      if [ -e "$1" ]; then
+        printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
     load_conf() {
       var_prefix="$2"
       conf="$1"
@@ -232,6 +275,22 @@ let%expect_test "install_script: install plugins" =
       printf '%s\n' "Could not locate app-b install path" >&2
       exit 1
     fi
+    check_available /opt/t-name
+    check_available $app_a_lib/app-a-name
+    check_available $app_a_plugins/name
+    check_available $app_b_lib/app-b-name
+    check_available $app_b_plugins/name
+    check_available $app_b_lib/dep-a
+    check_available $app_b_lib/dep-b
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -457,6 +516,12 @@ let%expect_test "install_script: binary in sub folder" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    check_available() {
+      if [ -e "$1" ]; then
+        printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -466,6 +531,17 @@ let%expect_test "install_script: binary in sub folder" =
     echo "The following files and directories will be written to the system:"
     echo "- /opt/test-name"
     echo "- /usr/local/bin/do"
+    check_available /opt/test-name
+    check_available /usr/local/bin/do
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
