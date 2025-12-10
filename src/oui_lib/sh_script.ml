@@ -147,7 +147,7 @@ let rec pp_sh_command ~indent fmtr command =
     fpf "esac"
   | Write_file {file; lines} ->
     fpf "{";
-    List.iter (fpf "  printf '%%s\\n' %S") lines;
+    List.iter (fpf "  printf '%%s\\n' \"%s\"") lines;
     fpf "} > \"%s\"" file
   | Read_file {file; line_var; process_line} ->
     fpf "while IFS= read -r %s || [ -n \"$%s\" ]; do" line_var line_var;

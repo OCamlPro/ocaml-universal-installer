@@ -8,21 +8,33 @@
 (*                                                                        *)
 (**************************************************************************)
 
-val vars : Installer_config.vars
+type t = string
+[@@deriving yojson]
 
-(** [create_installer ~installer_config ~bundle_dir installer] creates
-    a standalone makeself installer [installer] based on the given
-    bundle and installer configuration. *)
-val create_installer :
-  installer_config: Installer_config.internal ->
-  bundle_dir: OpamFilename.Dir.t ->
-  OpamFilename.t ->
-  unit
+type subst_result =
+  { subst_string : string
+  ; unknown_vars : string list
+  }
+[@@deriving show]
 
-(**/**)
+let of_string x = x
 
-(* Exposed for tests purposes only *)
+let to_string x = x
 
-val install_script : Installer_config.internal -> Sh_script.t
+module String_set = Set.Make(String)
 
-val uninstall_script : Installer_config.internal -> Sh_script.t
+let var_regexp = Re.compile (Re.Posix.re "<[A-Za-z_]+>")
+
+let subst ~install_path t =
+  let unknown_vars = ref String_set.empty in
+  let subst_string =
+    Re.replace ~all:true var_regexp
+      ~f:(fun group ->
+          match Re.Group.get group 0 with
+          | "<install_path>" -> install_path
+          | s ->
+            unknown_vars := String_set.add s !unknown_vars;
+            s)
+      t
+  in
+  { subst_string; unknown_vars = String_set.elements !unknown_vars }

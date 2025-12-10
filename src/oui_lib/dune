@@ -11,9 +11,9 @@
 (library
  (name oui)
  (public_name oui.lib)
- (libraries fmt opam-core opam-format opam-client opam-state unix yojson)
+ (libraries fmt opam-core opam-format opam-client opam-state unix yojson re)
  (preprocess
-  (pps ppx_deriving_yojson))
+  (pps ppx_deriving.std ppx_deriving_yojson))
  (foreign_stubs
   (language c)
   (names win_ldd_c)))

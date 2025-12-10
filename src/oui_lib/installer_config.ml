@@ -60,13 +60,15 @@ type plugin_dirs =
   }
 [@@deriving yojson {meta = true}]
 
-type 'manpages t = {
+type vars = { install_path : string }
+
+type ('manpages, 'env_val) t = {
     name : string;
     fullname : string ;
     version : string;
     exec_files : string list; [@default []]
     manpages : 'manpages option; [@default None]
-    environment : (string * string) list; [@default []]
+    environment : (string * 'env_val) list; [@default []]
     unique_id : string;
     plugins : plugin list; [@default []]
     plugin_dirs : plugin_dirs option; [@default None]
@@ -81,10 +83,10 @@ type 'manpages t = {
   }
 [@@deriving yojson {meta = true}]
 
-type user = manpages t
+type user = (manpages, String_with_vars.t) t
 [@@deriving yojson]
 
-type internal = expanded_manpages t
+type internal = (expanded_manpages, string) t
 
 let manpages_to_list mnpgs_opt =
   match mnpgs_opt with
@@ -230,7 +232,25 @@ let expand_man_section ~bundle_dir man_section =
           let base = OpamFilename.(Base.to_string (basename file)) in
           Filename.concat d base)
 
-let check_and_expand ~bundle_dir user =
+let expand_environment ~vars env =
+  let { install_path } = vars in
+  let expanded, warnings =
+    List.fold_left
+      (fun (expanded, warnings) (var, value) ->
+         let res = String_with_vars.subst ~install_path value in
+         let e = (var, res.subst_string) in
+         let w =
+           List.map
+             (Printf.sprintf "environment.%s: unknown var %s" var)
+             res.unknown_vars
+         in
+         e::expanded, List.rev_append w warnings)
+      ([], [])
+      env
+  in
+  List.rev expanded, List.rev warnings
+
+let check_and_expand ~bundle_dir ~vars user =
   let exec_errors =
     collect_errors ~f:(check_exec ~bundle_dir) user.exec_files
   in
@@ -267,22 +287,26 @@ let check_and_expand ~bundle_dir user =
     @ wix_banner_bmp_error @ wix_license_error @ macos_symlink_dirs_errors
     @ plugin_dirs_errors @ plugin_errors
   in
-  match all_errors with
-  | [] ->
-    let manpages =
-      ListLabels.filter_map manpages
-        ~f:(fun (section_name, man_section) ->
-            let expanded = expand_man_section ~bundle_dir man_section in
-            match expanded with
-            | [] -> None
-            | _ -> Some (section_name, expanded))
-      |> function
-      | [] -> None
-      | l -> Some l
-    in
-    Ok {user with manpages}
-  | _ ->
-    Error (`Inconsistent_config all_errors)
+  let environment, warnings = expand_environment ~vars user.environment in
+  let res =
+    match all_errors with
+    | [] ->
+      let manpages =
+        ListLabels.filter_map manpages
+          ~f:(fun (section_name, man_section) ->
+              let expanded = expand_man_section ~bundle_dir man_section in
+              match expanded with
+              | [] -> None
+              | _ -> Some (section_name, expanded))
+        |> function
+        | [] -> None
+        | l -> Some l
+      in
+      Ok {user with manpages; environment}
+    | _ ->
+      Error (`Inconsistent_config all_errors)
+  in
+  res, warnings
 
 let invalid_config ~file fmt =
   Printf.ksprintf (fun s -> `Invalid_config s)

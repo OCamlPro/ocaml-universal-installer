@@ -46,9 +46,11 @@ are:
   system. See the [manpages object section](#manpages-object) for the object
   format.
 - `environement`, **string array array**, **optional**: A list of environment
-  variables and associated values to set/unset in Windows terminal on
-  install/uninstall respectively. *Example:*
-  `[["VAR1", "value1"], ["VAR2", "value2"]]`.
+  variables and associated values to set when running the application on the
+  target system. You can refer to the application's install directory absolute
+  path using the `<install_path>` variable.
+  *Example:*
+  `[["VAR1", "value1"], ["VAR2", "<install_path>/lib"]]`.
 - `unique_id`, **string**, **required**: A unique identifier for the app in
   reverse DNS format. Must remain the same for all subsequent versions for updates
   to work correctly on Windows.

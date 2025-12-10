@@ -10,6 +10,8 @@
 
 open OpamFilename.Op
 
+let vars : Installer_config.vars = { install_path = "[APPLICATIONFOLDER]" }
+
 let check_wix_installed () =
   let wix_bin_exists () =
     match Sys.command "wix.exe --version" with

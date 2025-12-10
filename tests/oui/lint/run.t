@@ -173,3 +173,38 @@ Fixing this, it should now run smoothly:
 
   $ chmod +x bundle/bin/app
   $ oui lint oui.json bundle
+
+oui lint should also report warnings:
+
+  $ cat > oui.json << EOF
+  > {
+  >   "name": "app",
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": ["bin/app"],
+  >   "environment" : [["VAR", "<unknown>/lib"]],
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org"
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  warning: environment.VAR: unknown var <unknown>
+
+Regardless of errors:
+
+  $ cat > oui.json << EOF
+  > {
+  >   "name": "app",
+  >   "fullname": "App",
+  >   "version": "ver",
+  >   "exec_files": ["bin/app2"],
+  >   "environment" : [["VAR", "<unknown>/lib"]],
+  >   "unique_id": "home.org.App",
+  >   "wix_manufacturer": "me@home.org"
+  > }
+  > EOF
+  $ oui lint oui.json bundle
+  warning: environment.VAR: unknown var <unknown>
+  oui configuration $TESTCASE_ROOT/oui.json contain inconsistencies:
+  - exec_files: file $TESTCASE_ROOT/bundle/bin/app2 does not exist
+  [1]
