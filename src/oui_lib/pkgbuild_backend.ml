@@ -10,6 +10,8 @@
 
 open OpamFilename.Op
 
+let vars : Installer_config.vars = { install_path =  (*TODO*) Obj.magic () }
+
 let create_work_dir () =
   let tmp_dir = Filename.get_temp_dir_name () in
   let work_dir_name = Printf.sprintf "oui-macos-%d" (Random.int 1000000) in
