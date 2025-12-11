@@ -12,3 +12,6 @@
 
 (name oui)
 (cram enable)
+
+(formatting
+ (enabled_for dune))
