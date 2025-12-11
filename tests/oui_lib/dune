@@ -16,11 +16,7 @@
   (= %{system} "linux"))
  (preprocess
   (pps ppx_expect))
- (libraries
-  base
-  oui.lib
-  opam-format
-  ppx_expect.config_types))
+ (libraries base oui.lib opam-format ppx_expect.config_types))
 
 (library
  (name macos_tests)
@@ -30,8 +26,4 @@
   (= %{system} "macosx"))
  (preprocess
   (pps ppx_expect))
- (libraries
-  base
-  oui.lib
-  opam-format
-  ppx_expect.config_types))
+ (libraries base oui.lib opam-format ppx_expect.config_types))
