@@ -85,6 +85,12 @@ let%expect_test "install_script: simple" =
         exit 1
       fi
     }
+    check_lib() {
+      if [ -e "$1" ] && ! [ -d "$1" ] && ! [ -L "$1" ]; then
+        printf '%s\n' "$1 already exists and does not appear to be a library! Aborting" >&2
+        exit 1
+      fi
+    }
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -151,6 +157,12 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
+    check_lib() {
+      if [ -e "$1" ] && ! [ -d "$1" ] && ! [ -L "$1" ]; then
+        printf '%s\n' "$1 already exists and does not appear to be a library! Aborting" >&2
         exit 1
       fi
     }
@@ -222,6 +234,12 @@ let%expect_test "install_script: install plugins" =
         exit 1
       fi
     }
+    check_lib() {
+      if [ -e "$1" ] && ! [ -d "$1" ] && ! [ -L "$1" ]; then
+        printf '%s\n' "$1 already exists and does not appear to be a library! Aborting" >&2
+        exit 1
+      fi
+    }
     load_conf() {
       var_prefix="$2"
       conf="$1"
@@ -280,8 +298,8 @@ let%expect_test "install_script: install plugins" =
     check_available $app_a_plugins/name
     check_available $app_b_lib/app-b-name
     check_available $app_b_plugins/name
-    check_available $app_b_lib/dep-a
-    check_available $app_b_lib/dep-b
+    check_lib $app_b_lib/dep-a
+    check_lib $app_b_lib/dep-b
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -300,12 +318,20 @@ let%expect_test "install_script: install plugins" =
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/t-name \;
     echo "Installing plugin app-a-name to app-a..."
     ln -s /opt/t-name/lib/app-a/plugins/name $app_a_plugins/name
-    ln -s /opt/t-name/lib/app-a-name $app_a_lib/app-a-name
+    if ! [ -L "$app_a_lib/app-a-name" ] && ! [ -d "$app_a_lib/app-a-name" ]; then
+      ln -s /opt/t-name/lib/app-a-name $app_a_lib/app-a-name
+    fi
     echo "Installing plugin app-b-name to app-b..."
     ln -s /opt/t-name/lib/app-b/plugins/name $app_b_plugins/name
-    ln -s /opt/t-name/lib/app-b-name $app_b_lib/app-b-name
-    ln -s /opt/t-name/lib/dep-a $app_b_lib/dep-a
-    ln -s /opt/t-name/lib/dep-b $app_b_lib/dep-b
+    if ! [ -L "$app_b_lib/app-b-name" ] && ! [ -d "$app_b_lib/app-b-name" ]; then
+      ln -s /opt/t-name/lib/app-b-name $app_b_lib/app-b-name
+    fi
+    if ! [ -L "$app_b_lib/dep-a" ] && ! [ -d "$app_b_lib/dep-a" ]; then
+      ln -s /opt/t-name/lib/dep-a $app_b_lib/dep-a
+    fi
+    if ! [ -L "$app_b_lib/dep-b" ] && ! [ -d "$app_b_lib/dep-b" ]; then
+      ln -s /opt/t-name/lib/dep-b $app_b_lib/dep-b
+    fi
     {
       printf '%s\n' "version=t.version"
       printf '%s\n' "app_a_lib=$app_a_lib"
@@ -519,6 +545,12 @@ let%expect_test "install_script: binary in sub folder" =
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
+    check_lib() {
+      if [ -e "$1" ] && ! [ -d "$1" ] && ! [ -L "$1" ]; then
+        printf '%s\n' "$1 already exists and does not appear to be a library! Aborting" >&2
         exit 1
       fi
     }

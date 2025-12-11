@@ -19,6 +19,7 @@ type condition =
   | File_exists of string
   | Is_not_root
   | And of condition * condition
+  | Not of condition
 
 val (&&) : condition -> condition -> condition
 
