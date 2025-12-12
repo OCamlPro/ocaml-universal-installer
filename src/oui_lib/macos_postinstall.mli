@@ -15,6 +15,7 @@
     - Installs manpages from the .app bundle to /usr/local/share/man
 *)
 val generate_postinstall_script :
+  env: (string * string) list ->
   app_name:string ->
   binary_name:string ->
   string

@@ -17,7 +17,7 @@ let run keep_wxs backend installer_config bundle_dir output
     let open Letop.Result in
     let* user_config = Installer_config.load installer_config in
     let vars = Oui_cli.Args.vars_of_backend backend in
-    let res, warnings = 
+    let res, warnings =
       Installer_config.check_and_expand ~vars ~bundle_dir user_config
     in
     Oui_cli.Warnings.handle warnings;
