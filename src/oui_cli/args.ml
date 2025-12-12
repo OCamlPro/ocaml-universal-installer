@@ -180,3 +180,9 @@ let debug =
   let docv = "LEVEL" in
   let doc = "Debug output level ('OPAMDEBUG' level)" in
   value & opt int 0 & info [ "d"; "debug" ] ~doc ~docv
+
+let mtime =
+  let open Cmdliner.Arg in
+  let docv = "MTIME" in
+  let doc = "Set MTIME on to be installed files when creating the installer." in
+  value & opt (some string) None & info ["mtime"] ~docv ~doc
