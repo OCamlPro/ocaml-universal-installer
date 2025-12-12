@@ -18,7 +18,11 @@ type backend = Wix | Makeself | Pkgbuild
 
 val pp_backend : Format.formatter -> backend -> unit
 
-val autodetect_backend : unit -> backend
+val vars_of_backend : backend -> Oui.Installer_config.vars
+
+(** Select backend based on current system. If [log], inform the user
+    of which backend was selected, defaults to true. *)
+val autodetect_backend : ?log: bool -> unit -> backend
 
 val backend : backend Cmdliner.Term.t
 (** --backend option to overwrite the default backend detection mechanism,

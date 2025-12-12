@@ -8,20 +8,33 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Generate postinstall script content for macOS .pkg installers.
+type t = string
+[@@deriving yojson]
 
-    The postinstall script:
-    - Creates wrapper scripts from /usr/local/bin to the .app bundle binaries
-    - Installs manpages from the .app bundle to /usr/local/share/man
-*)
-val generate_postinstall_script :
-  env: (string * string) list ->
-  app_name:string ->
-  binary_name:string ->
-  string
+type subst_result =
+  { subst_string : string
+  ; unknown_vars : string list
+  }
+[@@deriving show]
 
-(** Save postinstall script to the scripts directory with executable permissions. *)
-val save_postinstall_script :
-  content:string ->
-  scripts_dir:OpamFilename.Dir.t ->
-  OpamFilename.t
+let of_string x = x
+
+let to_string x = x
+
+module String_set = Set.Make(String)
+
+let var_regexp = Re.compile (Re.Posix.re "<[A-Za-z_]+>")
+
+let subst ~install_path t =
+  let unknown_vars = ref String_set.empty in
+  let subst_string =
+    Re.replace ~all:true var_regexp
+      ~f:(fun group ->
+          match Re.Group.get group 0 with
+          | "<install_path>" -> install_path
+          | s ->
+            unknown_vars := String_set.add s !unknown_vars;
+            s)
+      t
+  in
+  { subst_string; unknown_vars = String_set.elements !unknown_vars }

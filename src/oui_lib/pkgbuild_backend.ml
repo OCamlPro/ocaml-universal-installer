@@ -10,6 +10,8 @@
 
 open OpamFilename.Op
 
+let vars : Installer_config.vars = { install_path = "$INSTALL_PATH" }
+
 let create_work_dir () =
   let tmp_dir = Filename.get_temp_dir_name () in
   let work_dir_name = Printf.sprintf "oui-macos-%d" (Random.int 1000000) in
@@ -113,6 +115,7 @@ let create_installer
   (* Create postinstall script *)
   let scripts_dir = work_dir / "scripts" in
   let postinstall_content = Macos_postinstall.generate_postinstall_script
+      ~env:installer_config.environment
       ~app_name:bundle.app_name
       ~binary_name:bundle.binary_name
   in

@@ -8,11 +8,28 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let generate_postinstall_script ~app_name ~binary_name =
+let generate_postinstall_script ~env ~app_name ~binary_name =
+  let def_install_path =
+    Printf.sprintf
+      "INSTALL_PATH=/Applications/%s.app/Contents/Resources"
+      app_name
+  in
   let wrapper_content =
-    Printf.sprintf {|#!/bin/bash
-exec "/Applications/%s.app/Contents/MacOS/%s" "$@"|}
-      app_name binary_name
+    let env_lines =
+      List.map
+        (fun (var, value) ->
+           (* VAR="VALUE" \ *)
+           Printf.sprintf "%s=\"%s\" \\\\" var value)
+        env
+    in
+    let lines =
+    "#!/bin/bash"
+    :: env_lines
+    @ [ Printf.sprintf
+          {|exec "/Applications/%s.app/Contents/MacOS/%s" "$@"|}
+          app_name binary_name ]
+    in
+    String.concat "\n" lines
   in
   let wrapper_creation =
     Printf.sprintf {|cat > "/usr/local/bin/%s" << 'WRAPPER_EOF'
@@ -45,11 +62,13 @@ fi|}
 mkdir -p /usr/local/bin
 
 %s
+
+%s
 %s
 
 %s
 exit 0|}
-    wrapper_creation wrapper_chmod man_pages_section
+    def_install_path wrapper_creation wrapper_chmod man_pages_section
 
 let save_postinstall_script ~content ~scripts_dir =
   OpamFilename.mkdir scripts_dir;
