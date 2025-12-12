@@ -519,11 +519,20 @@ let create_installer
   Sh_script.save uninstall_script uninstall_sh;
   System.call_unit Chmod (755, install_sh);
   System.call_unit Chmod (755, uninstall_sh);
+  let tar_extra =
+    [
+      "--numeric-owner";
+      "--owner=0";
+      "--group=0";
+      "--sort=name";
+    ]
+  in
   let args : System.makeself =
     { archive_dir = bundle_dir
     ; installer
     ; description = installer_config.name
     ; startup_script = Format.sprintf "./%s" install_script_name
+    ; tar_extra
     }
   in
   OpamConsole.formatted_msg

@@ -22,10 +22,11 @@ type wix = {
 
 (** makeself script arguments *)
 type makeself = {
+  tar_extra : string list;
   archive_dir : OpamFilename.Dir.t;
   installer : OpamFilename.t;
   description : string;
-  startup_script : string
+  startup_script : string;
 }
 
 (** Expected output path type *)

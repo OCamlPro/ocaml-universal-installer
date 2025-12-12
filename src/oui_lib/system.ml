@@ -15,10 +15,11 @@ type wix = {
 }
 
 type makeself = {
+  tar_extra : string list;
   archive_dir : OpamFilename.Dir.t;
   installer : OpamFilename.t;
   description : string;
-  startup_script : string
+  startup_script : string;
 }
 
 type cygpath_out = [ `Win | `WinAbs | `Cyg | `CygAbs ]
@@ -101,13 +102,17 @@ let call_inner : type a. a command -> a -> string * string list =
       @ wix_files @ ["-o"; wix_out; "-pdbtype"; "none"]
     in
     wix, args
-  | Makeself, { archive_dir; installer; description; startup_script } ->
+  | Makeself
+    , { tar_extra; archive_dir; installer; description; startup_script } ->
     let makeself = "makeself" in
     let args =
-      [ OpamFilename.Dir.to_string archive_dir
-      ; OpamFilename.to_string installer
-      ; Printf.sprintf "%S" description
-      ; startup_script
+      [
+        "--tar-extra";
+        String.concat " " tar_extra;
+        OpamFilename.Dir.to_string archive_dir;
+        OpamFilename.to_string installer;
+        Printf.sprintf "%S" description;
+        startup_script;
       ]
     in
     makeself, args
