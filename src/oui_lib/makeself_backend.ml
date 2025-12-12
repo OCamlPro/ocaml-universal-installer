@@ -501,6 +501,7 @@ let create_installer
     ; installer
     ; description = installer_config.name
     ; startup_script = Format.sprintf "./%s" install_script_name
+    ; tar_extra = "--numeric-owner --owner=0 --group=0 --sort=name"
     }
   in
   OpamConsole.formatted_msg
