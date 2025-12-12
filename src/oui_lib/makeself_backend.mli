@@ -12,6 +12,7 @@
     a standalone makeself installer [installer] based on the given
     bundle and installer configuration. *)
 val create_installer :
+  ?mtime: string ->
   installer_config: Installer_config.internal ->
   bundle_dir: OpamFilename.Dir.t ->
   OpamFilename.t ->

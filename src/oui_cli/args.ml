@@ -162,3 +162,9 @@ let bundle_dir =
   let docv = "BUNDLE_DIR" in
   let doc = "Path to the directory containing the dirs and files to install." in
   required & pos 1 (some opam_dirname) None & info [] ~docv ~doc
+
+let mtime =
+  let open Cmdliner.Arg in
+  let docv = "MTIME" in
+  let doc = "Set MTIME on to be installed files when creating the installer." in
+  value & opt (some string) None & info ["mtime"] ~docv ~doc

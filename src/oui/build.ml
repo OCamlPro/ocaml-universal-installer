@@ -10,7 +10,7 @@
 
 open Oui
 
-let run keep_wxs backend installer_config bundle_dir output =
+let run keep_wxs backend mtime installer_config bundle_dir output =
   let res =
     let open Letop.Result in
     let* user_config = Installer_config.load installer_config in
@@ -28,9 +28,11 @@ let run keep_wxs backend installer_config bundle_dir output =
          OpamFilename.copy_dir ~src ~dst:bundle_dir;
          match backend with
          | Wix ->
-           Wix_backend.create_bundle ~keep_wxs ~tmp_dir ~bundle_dir installer_config dst
+           Wix_backend.create_bundle
+             ~keep_wxs ~tmp_dir ~bundle_dir installer_config dst
          | Makeself ->
-           Makeself_backend.create_installer ~installer_config ~bundle_dir dst
+           Makeself_backend.create_installer
+             ~mtime ~installer_config ~bundle_dir dst
          | Pkgbuild ->
            Pkgbuild_backend.create_installer ~installer_config ~bundle_dir dst)
   in

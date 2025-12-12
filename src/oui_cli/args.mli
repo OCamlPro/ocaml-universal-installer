@@ -44,3 +44,6 @@ val installer_config : OpamFilename.t Cmdliner.Term.t
 
 (** Installation bundle positional argument, sits as second positional arg. *)
 val bundle_dir : OpamFilename.Dir.t Cmdliner.Term.t
+
+(** --mtime option to control to be installed files timestamps. *)
+val mtime : string Cmdliner.Term.t
