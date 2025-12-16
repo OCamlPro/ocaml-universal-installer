@@ -462,7 +462,7 @@ let add_sos_to_bundle ~bundle_dir binary =
     List.iter (fun so -> OpamFilename.copy_in so dst_dir) sos;
     System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
 
-let create_installer
+let create_installer ~mtime
     ~(installer_config : Installer_config.internal) ~bundle_dir installer =
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
@@ -475,11 +475,19 @@ let create_installer
   Sh_script.save uninstall_script uninstall_sh;
   System.call_unit Chmod (755, install_sh);
   System.call_unit Chmod (755, uninstall_sh);
+  let tar_extra =
+    let mtime =
+      Option.map (Printf.sprintf " --mtime=%s") mtime
+      |> Option.value ~default:""
+    in
+    "--numeric-owner --owner=0 --group=0 --sort=name" ^ mtime
+  in
   let args : System.makeself =
     { archive_dir = bundle_dir
     ; installer
     ; description = installer_config.name
     ; startup_script = Format.sprintf "./%s" install_script_name
+    ; tar_extra
     }
   in
   OpamConsole.formatted_msg
