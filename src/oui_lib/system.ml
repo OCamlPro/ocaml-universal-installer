@@ -151,13 +151,17 @@ let call_inner : type a. a command -> a -> string * string list =
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)
 
+let print_result_and_error cmd result =
+    Printf.eprintf "%s\n%!" (OpamProcess.string_of_result result);
+    raise (System_error (Printf.sprintf "Error during: %s" cmd))
+
 let call : type a. a command -> a -> string list =
   fun command arguments ->
     let cmd, args = call_inner command arguments in
     let name = gen_command_tmp_dir cmd in
     let result = OpamProcess.run @@ OpamSystem.make_command ~name cmd args in
     let out = if OpamProcess.is_failure result then
-        raise @@ System_error (Format.sprintf "%s" (OpamProcess.string_of_result result))
+        print_result_and_error cmd result
       else
         result.OpamProcess.r_stdout
     in
@@ -170,7 +174,7 @@ let call_unit : type a. a command -> a -> unit =
     let name = gen_command_tmp_dir cmd in
     let result = OpamProcess.run @@ OpamSystem.make_command ~name cmd args in
     (if OpamProcess.is_failure result then
-      raise @@ System_error (Format.sprintf "%s" (OpamProcess.string_of_result result)));
+      print_result_and_error cmd result);
     OpamProcess.cleanup result
 
 let call_list : type a. (a command * a) list -> unit =
@@ -181,8 +185,8 @@ let call_list : type a. (a command * a) list -> unit =
       OpamSystem.make_command ~name cmd args) commands
     in
     match OpamProcess.Job.(run @@ of_list cmds) with
-    | Some (_,result) -> raise @@ System_error
-      (Format.sprintf "%s" (OpamProcess.string_of_result result))
+    | Some (cmd,result) ->
+      print_result_and_error cmd.cmd result
     | _ -> ()
 
 let cyg_win_path out path =
