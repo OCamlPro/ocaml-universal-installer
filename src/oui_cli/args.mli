@@ -44,3 +44,9 @@ val installer_config : OpamFilename.t Cmdliner.Term.t
 
 (** Installation bundle positional argument, sits as second positional arg. *)
 val bundle_dir : OpamFilename.Dir.t Cmdliner.Term.t
+
+(** Verbose level for opam lib *)
+val verbose : int Cmdliner.Term.t
+
+(** Debug level for opam lib *)
+val debug : int Cmdliner.Term.t
