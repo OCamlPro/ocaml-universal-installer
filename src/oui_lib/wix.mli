@@ -18,11 +18,14 @@ end
 (** Information module used to generated main wxs document. *)
 type info = {
 
+  (* Indicates this is a plugin *)
+  is_plugin: bool;
+
   (* Package unique ID (replaces GUID) *)
   unique_id: string;
 
   (* Product manufacturer *)
-  organization: string;
+  manufacturer: string;
 
   (* Package name used as product name *)
   short_name: string;
@@ -34,10 +37,10 @@ type info = {
   version: string;
 
   (* Package description *)
-  description: string;
+  description: string option;
 
   (* Package keywords *)
-  keywords: string;
+  keywords: string list;
 
   (* Absolute path to the bundle containing all required files *)
   directory: string;

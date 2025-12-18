@@ -9,32 +9,31 @@
 (**************************************************************************)
 
 module Version = struct
-type t = string
-let to_string s = s
-let of_string s =
-  String.iter (function
-      | '0'..'9' | '.' -> ()
-      | c ->
-        failwith
-          (Printf.sprintf "Invalid character '%c' in WIX version %S" c s))
-    s;
-  s
+  type t = string
+  let to_string s = s
+  let of_string s =
+    String.iter (function
+        | '0'..'9' | '.' -> ()
+        | c ->
+            failwith
+              (Printf.sprintf "Invalid character '%c' in WIX version '%S'" c s))
+      s;
+    s
 end
 
 type info = {
+  is_plugin: bool;
   unique_id: string;
-  organization: string;
+  manufacturer: string;
   short_name: string;
   long_name: string;
   version: string;
-  description: string;
-  keywords: string;
-
+  description: string option;
+  keywords: string list;
   directory: string;
   shortcuts: shortcut list;
   environment: var list;
   registry: key list;
-
   icon: string;
   banner: string;
   background: string;
@@ -77,7 +76,7 @@ let print_package fmt info =
     InstallerVersion="500" Compressed="yes" UpgradeStrategy="majorUpgrade">
 
     <SummaryInformation
-      Manufacturer="%s" Description="%s"
+      Manufacturer="%s" %s
       Comments="%s" %s />
 
     <MajorUpgrade Schedule="afterInstallInitialize" MigrateFeatures="yes"
@@ -85,9 +84,28 @@ let print_package fmt info =
       AllowSameVersionUpgrades="no" AllowDowngrades="no" />
 
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" MaximumUncompressedMediaSize="64" />
-|} info.unique_id info.organization info.long_name info.version
-   info.organization info.long_name info.description
-   (if info.keywords = "" then "" else Printf.sprintf {|Keywords="%s"|} info.keywords)
+|} info.unique_id info.manufacturer info.long_name info.version
+   info.manufacturer
+   (match info.description with
+    | None -> ""
+    | Some d -> Printf.sprintf {|Description="%s"|} d)
+   info.long_name
+   (match info.keywords with
+    | [] -> ""
+    | kw -> Printf.sprintf {|Keywords="%s"|} (String.concat "; " kw))
+
+let print_plugin_specifics fmt info =
+  if info.is_plugin then
+    Format.fprintf fmt {|
+    <Property Id="WIXPERUSERAPPFOLDER">
+      <RegistrySearch Root="HKCU" Key="SOFTWARE\%s" Type="raw" />
+    </Property>
+    <Property Id="WIXPERMACHINEAPPFOLDER">
+      <RegistrySearch Root="HKLM" Key="SOFTWARE\%s" Type="raw" />
+    </Property>
+    <Launch Message="This plugin requires %s"
+            Condition="Installed OR NOT WIXPERUSERAPPFOLDER = &quot;&quot; OR NOT WIXPERMACHINEAPPFOLDER = &quot;&quot;" />
+|} info.short_name info.short_name info.short_name
 
 let print_application fmt info =
   Format.fprintf fmt {|
@@ -178,15 +196,14 @@ let print_key fmt info (key : key) =
 |} info.short_name key.key_name key.key_type key.key_value
 
 let print_registry fmt info =
-  match info.registry with
-  | [] ->
-      ()
-  | regkeys ->
-      Format.fprintf fmt {|
+  let regkeys =
+    { key_name = "(default)"; key_type = "string"; key_value = "[APPLICATIONFOLDER]" } :: info.registry
+  in
+  Format.fprintf fmt {|
     <ComponentGroup Id="REGISTRY">
 |};
-      List.iter (print_key fmt info) regkeys;
-      Format.fprintf fmt {|
+  List.iter (print_key fmt info) regkeys;
+  Format.fprintf fmt {|
     </ComponentGroup>
 |}
 
@@ -221,8 +238,9 @@ let print_ui fmt info =
     <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="%s has been installed" />
     <Property Id="ApplicationFolderName" Value="%s" />
-    <ui:WixUI Id="WixUI_CustomApp" />
+    <ui:WixUI Id="WixUI_Custom%s" />
 |} info.short_name info.short_name
+    (if info.is_plugin then "Plugin" else "App")
 
 let print_footer fmt =
   Format.fprintf fmt {|
@@ -234,6 +252,7 @@ let print_footer fmt =
 let print_wix fmt info =
   print_header fmt info;
   print_package fmt info;
+  print_plugin_specifics fmt info;
   print_application fmt info;
   print_shortcuts fmt info;
   print_environment fmt info;

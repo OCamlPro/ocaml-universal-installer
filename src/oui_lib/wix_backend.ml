@@ -56,15 +56,20 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
   let icon = data_file ~tmp_dir ~default:Data.IMAGES.logo desc.wix_icon_file in
   let banner = data_file ~tmp_dir ~default:Data.IMAGES.banbmp desc.wix_banner_bmp_file in
   let background = data_file ~tmp_dir ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file in
-  let license = data_file ~tmp_dir ~default:Data.LICENSES.gpl3 desc.wix_license_file in
+  let license =
+    match desc.wix_license_file with
+      | None -> ""
+      | lic -> data_file ~tmp_dir ~default:Data.LICENSES.gpl3 lic
+  in
   let info = Wix.{
+      is_plugin = false; (* TODO *)
       unique_id = desc.unique_id;
-      organization = desc.wix_manufacturer;
+      manufacturer = desc.wix_manufacturer;
       short_name = desc.name;
       long_name = desc.name;
       version = desc.version;
-      description = (match desc.wix_description with Some d -> d | None -> "");
-      keywords = String.concat " " desc.wix_tags;
+      description = desc.wix_description;
+      keywords = desc.wix_tags;
       directory = OpamFilename.Dir.to_string bundle_dir;
       shortcuts = [];
       environment =
@@ -79,7 +84,12 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
     }
   in
   (* TODO clean this code regarding file manipulation *)
-  let (extra, content) = Data.WIX.custom_app in
+  let (extra, content) =
+    if info.is_plugin then
+      Data.WIX.custom_plugin
+    else
+      Data.WIX.custom_app
+  in
   let extra_path = tmp_dir // extra in
   OpamFilename.write extra_path content;
   let name = Filename.chop_extension exec_file in
