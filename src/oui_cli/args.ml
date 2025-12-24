@@ -162,3 +162,13 @@ let bundle_dir =
   let docv = "BUNDLE_DIR" in
   let doc = "Path to the directory containing the dirs and files to install." in
   required & pos 1 (some opam_dirname) None & info [] ~docv ~doc
+
+let verbose =
+  let docv = "LEVEL" in
+  let doc = "Verbose output level ('OPAMVERBOSE' level)" in
+  value & opt int 0 & info [ "v"; "verbose" ] ~doc ~docv
+
+let debug =
+  let docv = "LEVEL" in
+  let doc = "Debug output level ('OPAMDEBUG' level)" in
+  value & opt int 0 & info [ "d"; "debug" ] ~doc ~docv

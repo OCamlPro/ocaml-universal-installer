@@ -10,7 +10,9 @@
 
 open Oui
 
-let run keep_wxs backend installer_config bundle_dir output =
+let run keep_wxs backend installer_config bundle_dir output
+  verbose_level debug_level =
+  OpamCoreConfig.init ~verbose_level ~debug_level ();
   let res =
     let open Letop.Result in
     let* user_config = Installer_config.load installer_config in
@@ -45,6 +47,8 @@ let term =
   $ Oui_cli.Args.installer_config
   $ Oui_cli.Args.bundle_dir
   $ Oui_cli.Args.output
+  $ Oui_cli.Args.verbose
+  $ Oui_cli.Args.debug
 
 let cmd =
   let info =
