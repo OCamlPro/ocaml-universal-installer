@@ -33,4 +33,5 @@ module LICENSES = struct
 end
 module WIX = struct
   let custom_app = get "WixUI_CustomApp.wxs" "wix"
+  let custom_plugin = get "WixUI_CustomPlugin.wxs" "wix"
 end
