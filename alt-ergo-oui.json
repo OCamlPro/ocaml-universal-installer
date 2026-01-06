@@ -2,7 +2,7 @@
   "name": "alt-ergo",
   "fullname": "alt-ergo.dev",
   "version": "dev",
-  "unique_id": "com.OCamlPro.Alt-Ergo",
+  "unique_id": "com.OCamlPro.Alt_Ergo",
   "wix_manufacturer": "alt-ergo@ocamlpro.com",
   "wix_description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
   "exec_files": ["bin/alt-ergo"],
