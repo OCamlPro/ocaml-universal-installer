@@ -8,10 +8,10 @@
 (*                                                                        *)
 (**************************************************************************)
 
-val create_bundle :
+val create_installer :
   ?keep_wxs: bool ->
   tmp_dir:OpamFilename.Dir.t ->
+  installer_config: Installer_config.internal ->
   bundle_dir:OpamFilename.Dir.t ->
-  Installer_config.internal ->
   OpamFilename.t ->
   unit

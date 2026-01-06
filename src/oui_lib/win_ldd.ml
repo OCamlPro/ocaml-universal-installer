@@ -10,7 +10,10 @@
 
 module StrSet = Set.Make (String)
 
+type reason = MZSize | MZSig | PESize | PESig | PEOptSize | PEOptSig
+
 exception Exit
+exception InvalidHeader of reason
 
 (* Size of various structures *)
 let mz_header_size = 0x40
@@ -71,21 +74,27 @@ let rva_to_address sect_hdr rva =
 let get_dlls ic =
 
   let mz_header = Bytes.create mz_header_size in
-  really_input ic mz_header 0 mz_header_size;
+  begin
+    try really_input ic mz_header 0 mz_header_size
+    with End_of_file -> raise (InvalidHeader MZSize)
+  end;
 
   let mz_sig = Bytes.get_uint16_be mz_header 0 in
   if mz_sig <> mz_magic then
-    failwith "Invalid MZ header signature";
+    raise (InvalidHeader MZSig);
 
   let pe_address = Bytes.get_int32_le mz_header mz_lfanew |> Int32.to_int in
 
   seek_in ic pe_address;
   let pe_header = Bytes.create pe_header_size in
-  really_input ic pe_header 0 pe_header_size;
+  begin
+    try really_input ic pe_header 0 pe_header_size
+    with End_of_file -> raise (InvalidHeader PESize)
+  end;
 
   let pe_sig = Bytes.get_int32_be pe_header 0 in
   if pe_sig <> pe_magic then
-    failwith "Invalid PE header signature";
+    raise (InvalidHeader PESig);
 
   let nb_sections = Bytes.get_uint16_le pe_header pe_number_of_sections in
   let size_opt_hdr = Bytes.get_uint16_le pe_header pe_size_of_optional_header in
@@ -95,7 +104,10 @@ let get_dlls ic =
 
   seek_in ic (pe_address + pe_header_size);
   let pe_opt_header = Bytes.create size_opt_hdr in
-  really_input ic pe_opt_header 0 size_opt_hdr;
+  begin
+    try really_input ic pe_opt_header 0 size_opt_hdr
+    with End_of_file -> raise (InvalidHeader PEOptSize)
+  end;
 
   let pe32_sig = Bytes.get_uint16_be pe_opt_header 0 in
   let nb_rva_sizes_offset, data_dir_offset =
@@ -104,7 +116,7 @@ let get_dlls ic =
     else if pe32_sig = pe32_plus_magic then
       pe32_plus_number_of_rva_and_sizes, pe32_plus_header_size
     else
-      failwith "Invalid optional header signature"
+      raise (InvalidHeader PEOptSig);
   in
 
   let nb_rva_sizes =
@@ -160,7 +172,7 @@ let get_dlls binary =
   let dlls =
     try get_dlls ic
     with
-    | Exit -> []
+    | Exit | InvalidHeader _ -> []
     | e -> close_in ic; raise e
   in
   close_in ic;
