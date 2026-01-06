@@ -98,7 +98,7 @@ let call_inner : type a. a command -> a -> string * string list =
     let wix = "wix.exe" in
     let args = "build" ::
       List.flatten (List.map (fun e -> ["-ext"; e]) wix_exts)
-      @ wix_files @ ["-o"; wix_out]
+      @ wix_files @ ["-o"; wix_out; "-pdbtype"; "none"]
     in
     wix, args
   | Makeself, { archive_dir; installer; description; startup_script } ->

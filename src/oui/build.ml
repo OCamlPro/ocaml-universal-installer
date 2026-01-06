@@ -33,7 +33,7 @@ let run keep_wxs backend installer_config bundle_dir output
          OpamFilename.copy_dir ~src ~dst:bundle_dir;
          match backend with
          | Wix ->
-           Wix_backend.create_bundle ~keep_wxs ~tmp_dir ~bundle_dir installer_config dst
+           Wix_backend.create_installer ~keep_wxs ~tmp_dir ~installer_config ~bundle_dir dst
          | Makeself ->
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst
          | Pkgbuild ->

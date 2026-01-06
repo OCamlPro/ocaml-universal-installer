@@ -29,7 +29,7 @@ let add_dlls_to_bundle ~bundle_dir binary =
   match dlls with
   | [] -> ()
   | _ ->
-      OpamConsole.formatted_msg "Getting dlls:\n%s"
+      OpamConsole.formatted_msg "Getting dlls for %s:\n%s" binary
         (OpamStd.Format.itemize OpamFilename.to_string dlls);
       let bin_dir = OpamFilename.Op.(bundle_dir / "bin") in
       OpamFilename.mkdir bin_dir;
@@ -43,41 +43,42 @@ let data_file ~tmp_dir ~default:(name, content) data_path =
       OpamFilename.write dst content;
       OpamFilename.to_string dst
 
-let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
-    (desc : Installer_config.internal) dst =
+let create_installer ?(keep_wxs=false) ~tmp_dir
+    ~(installer_config : Installer_config.internal) ~bundle_dir installer =
   check_wix_installed ();
   OpamConsole.header_msg "Preparing MSI installer using WiX";
-  let exec_file =
-    match desc.exec_files with
-    | [exec] -> exec
-    | _ ->
-      OpamConsole.error_and_exit `False
-        "WiX backend only supports installing a single binary"
+  List.iter (fun binary ->
+      add_dlls_to_bundle ~bundle_dir binary
+    ) installer_config.exec_files;
+  (* TODO: for now we consider this is an installer plugin
+     if the configuration contains at least one plugin... *)
+  let plugin_for =
+    match installer_config.plugins with
+    | [] -> None
+    | p :: _ -> Some (p.app_name)
   in
-  add_dlls_to_bundle ~bundle_dir exec_file;
-  let icon = data_file ~tmp_dir ~default:Data.IMAGES.logo desc.wix_icon_file in
-  let banner = data_file ~tmp_dir ~default:Data.IMAGES.banbmp desc.wix_banner_bmp_file in
-  let background = data_file ~tmp_dir ~default:Data.IMAGES.dlgbmp desc.wix_dlg_bmp_file in
+  let icon = data_file ~tmp_dir ~default:Data.IMAGES.logo installer_config.wix_icon_file in
+  let banner = data_file ~tmp_dir ~default:Data.IMAGES.banbmp installer_config.wix_banner_bmp_file in
+  let background = data_file ~tmp_dir ~default:Data.IMAGES.dlgbmp installer_config.wix_dlg_bmp_file in
   let license =
-    match desc.wix_license_file with
-      | None -> ""
-      | lic -> data_file ~tmp_dir ~default:Data.LICENSES.gpl3 lic
+    match installer_config.wix_license_file with
+      | None -> None
+      | lic -> Some (data_file ~tmp_dir ~default:Data.LICENSES.gpl3 lic)
   in
   let info = Wix.{
-      is_plugin = false; (* TODO *)
-      unique_id = desc.unique_id;
-      manufacturer = desc.wix_manufacturer;
-      short_name = desc.name;
-      long_name = desc.name;
-      version = desc.version;
-      description = desc.wix_description;
-      keywords = desc.wix_tags;
+      plugin_for;
+      unique_id = installer_config.unique_id;
+      manufacturer = installer_config.wix_manufacturer;
+      name = installer_config.name;
+      version = installer_config.version;
+      description = installer_config.wix_description;
+      keywords = installer_config.wix_tags;
       directory = OpamFilename.Dir.to_string bundle_dir;
       shortcuts = [];
       environment =
         List.map (fun (var_name, var_value) ->
             { var_name; var_value; var_part = All }
-          ) desc.environment;
+          ) installer_config.environment;
       registry = [];
       icon;
       banner;
@@ -85,26 +86,22 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
       license;
     }
   in
-  (* TODO clean this code regarding file manipulation *)
-  let (extra, content) =
-    if info.is_plugin then
-      Data.WIX.custom_plugin
-    else
-      Data.WIX.custom_app
+  let (ui_wxs_filename, ui_wxs_content) =
+    match info.plugin_for with
+    | None -> Data.WIX.custom_app
+    | Some (_) -> Data.WIX.custom_plugin
   in
-  let extra_path = tmp_dir // extra in
-  OpamFilename.write extra_path content;
-  let name = Filename.chop_extension exec_file in
-  let main_path = tmp_dir // (name ^ ".wxs") in
+  let ui_wxs_filepath = tmp_dir // ui_wxs_filename in
+  OpamFilename.write ui_wxs_filepath ui_wxs_content;
+  let main_wxs_filepath = tmp_dir // "main.wxs" in
   OpamConsole.formatted_msg "Preparing main WiX file...\n";
-  OpamFilename.mkdir (tmp_dir / Filename.dirname name);
-  let oc = open_out (OpamFilename.to_string main_path) in
+  let oc = open_out (OpamFilename.to_string main_wxs_filepath) in
   let fmt = Format.formatter_of_out_channel oc in
   Wix.print_wix fmt info;
   close_out oc;
   let wxs_files =
-    (OpamFilename.to_string main_path |> System.cyg_win_path `WinAbs) ::
-    (OpamFilename.to_string extra_path |> System.cyg_win_path `WinAbs) :: []
+    (OpamFilename.to_string main_wxs_filepath |> System.cyg_win_path `WinAbs) ::
+    (OpamFilename.to_string ui_wxs_filepath |> System.cyg_win_path `WinAbs) :: []
   in
   if keep_wxs then
     List.iter (fun file ->
@@ -114,13 +111,9 @@ let create_bundle ?(keep_wxs=false) ~tmp_dir ~bundle_dir
   let wix = System.{
       wix_files = wxs_files;
       wix_exts = ["WixToolset.UI.wixext"; "WixToolset.Util.wixext"];
-      wix_out = (name ^ ".msi")
+      wix_out = OpamFilename.to_string installer;
     }
   in
-  OpamConsole.formatted_msg "Producing final msi (%s.wxs)...\n" name;
+  OpamConsole.formatted_msg "Producing final msi...\n";
   System.call_unit System.Wix wix;
-  OpamFilename.remove (OpamFilename.of_string (name ^ ".wixpdb"));
-  OpamFilename.move
-    ~src:(OpamFilename.of_string (name ^ ".msi"))
-    ~dst;
   OpamConsole.formatted_msg "Done.\n"

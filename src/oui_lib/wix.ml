@@ -22,11 +22,10 @@ module Version = struct
 end
 
 type info = {
-  is_plugin: bool;
+  plugin_for: string option;
   unique_id: string;
   manufacturer: string;
-  short_name: string;
-  long_name: string;
+  name: string;
   version: string;
   description: string option;
   keywords: string list;
@@ -37,7 +36,7 @@ type info = {
   icon: string;
   banner: string;
   background: string;
-  license: string;
+  license: string option;
 }
 
 and shortcut =
@@ -51,7 +50,7 @@ and var = {
 }
 
 and key = {
-  key_name: string;
+  key_name: string option;
   key_type: string;
   key_value: string;
 }
@@ -84,19 +83,20 @@ let print_package fmt info =
       AllowSameVersionUpgrades="no" AllowDowngrades="no" />
 
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" MaximumUncompressedMediaSize="64" />
-|} info.unique_id info.manufacturer info.long_name info.version
+|} info.unique_id info.manufacturer info.name info.version
    info.manufacturer
    (match info.description with
     | None -> ""
     | Some d -> Printf.sprintf {|Description="%s"|} d)
-   info.long_name
+   info.name
    (match info.keywords with
     | [] -> ""
     | kw -> Printf.sprintf {|Keywords="%s"|} (String.concat "; " kw))
 
 let print_plugin_specifics fmt info =
-  if info.is_plugin then
-    Format.fprintf fmt {|
+  match info.plugin_for with
+  | Some (app_name) ->
+      Format.fprintf fmt {|
     <Property Id="WIXPERUSERAPPFOLDER">
       <RegistrySearch Root="HKCU" Key="SOFTWARE\%s" Type="raw" />
     </Property>
@@ -105,7 +105,9 @@ let print_plugin_specifics fmt info =
     </Property>
     <Launch Message="This plugin requires %s"
             Condition="Installed OR NOT WIXPERUSERAPPFOLDER = &quot;&quot; OR NOT WIXPERMACHINEAPPFOLDER = &quot;&quot;" />
-|} info.short_name info.short_name info.short_name
+|} app_name app_name app_name
+  | None ->
+      ()
 
 let print_application fmt info =
   Format.fprintf fmt {|
@@ -116,7 +118,7 @@ let print_application fmt info =
     <ComponentGroup Id="APPLICATION" Directory="APPLICATIONFOLDER">
       <Files Include="%s\**" />
     </ComponentGroup>
-|} info.short_name info.directory
+|} info.name info.directory
 
 let print_shortcut fmt _info shortcut =
   match shortcut with
@@ -145,7 +147,7 @@ let print_shortcuts fmt info =
     <ComponentGroup Id="SHORTCUTS" Directory="ShortcutsFolder">
       <Component>
         <RegistryValue Root="HKMU" Key="SOFTWARE\%s\Components" Name="SHORTCUTS" Type="integer" Value="1" KeyPath="yes" />
-|} info.long_name info.short_name;
+|} info.name info.name;
       List.iter (print_shortcut fmt info) shortcuts;
       Format.fprintf fmt {|
         <RemoveFile Name="*.*" On="uninstall" />
@@ -171,8 +173,8 @@ let print_var fmt info (var : var) =
         <RegistryValue Root="HKMU" Key="SOFTWARE\%s\Components" Name="%s_SYS" Type="integer" Value="1" KeyPath="yes" />
         <Environment System="yes" Action="set" Part="%s" Name="%s" Value="%s" />
       </Component>
-|} info.short_name var.var_name part var.var_name var.var_value
-   info.short_name var.var_name part var.var_name var.var_value
+|} info.name var.var_name part var.var_name var.var_value
+   info.name var.var_name part var.var_name var.var_value
 
 let print_environment fmt info =
   match info.environment with
@@ -191,13 +193,17 @@ let print_key fmt info (key : key) =
   Format.fprintf fmt
 {|
       <Component>
-        <RegistryValue Root="HKMU" Key="SOFTWARE\%s" Name="%s" Type="%s" Value="%s" KeyPath="yes" />
+        <RegistryValue Root="HKMU" Key="SOFTWARE\%s" %s Type="%s" Value="%s" KeyPath="yes" />
       </Component>
-|} info.short_name key.key_name key.key_type key.key_value
+|} info.name
+   (match key.key_name with
+    | None -> ""
+    | Some kn -> Printf.sprintf {|Name="%s"|} kn)
+   key.key_type key.key_value
 
 let print_registry fmt info =
   let regkeys =
-    { key_name = "(default)"; key_type = "string"; key_value = "[APPLICATIONFOLDER]" } :: info.registry
+    { key_name = None; key_type = "string"; key_value = "[APPLICATIONFOLDER]" } :: info.registry
   in
   Format.fprintf fmt {|
     <ComponentGroup Id="REGISTRY">
@@ -217,8 +223,7 @@ let print_features fmt info =
   if info.environment <> [] then
     Format.fprintf fmt {|
       <ComponentGroupRef Id="ENVIRONMENT" />|};
-  if info.registry <> [] then
-    Format.fprintf fmt {|
+  Format.fprintf fmt {|
       <ComponentGroupRef Id="REGISTRY" />|};
   Format.fprintf fmt {|
     </Feature>
@@ -228,10 +233,16 @@ let print_assets fmt info =
   Format.fprintf fmt {|
     <Property Id="ARPPRODUCTICON" Value="ICON" />
     <Icon Id="ICON" SourceFile="%s" />
-    <WixVariable Id="WixUILicenseRtf" Value="%s" />
     <WixVariable Id="WixUIBannerBmp" Value="%s" />
     <WixVariable Id="WixUIDialogBmp" Value="%s" />
-|} info.icon info.license info.banner info.background
+|} info.icon info.banner info.background;
+  match info.license with
+  | None ->
+      ()
+  | Some (license) ->
+    Format.fprintf fmt {|
+    <WixVariable Id="WixUILicenseRtf" Value="%s" />
+|} license
 
 let print_ui fmt info =
   Format.fprintf fmt {|
@@ -239,8 +250,8 @@ let print_ui fmt info =
     <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="%s has been installed" />
     <Property Id="ApplicationFolderName" Value="%s" />
     <ui:WixUI Id="WixUI_Custom%s" />
-|} info.short_name info.short_name
-    (if info.is_plugin then "Plugin" else "App")
+|} info.name info.name
+    (match info.plugin_for with Some _ -> "Plugin" | None -> "App")
 
 let print_footer fmt =
   Format.fprintf fmt {|

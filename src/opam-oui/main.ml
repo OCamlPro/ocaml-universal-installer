@@ -91,8 +91,8 @@ let create_bundle cli =
            save_bundle_and_conf ~installer_config ~bundle_dir dst
          | Some Wix ->
            let dst = OpamFilename.of_string output in
-           Wix_backend.create_bundle ~keep_wxs ~tmp_dir ~bundle_dir
-             installer_config dst
+           Wix_backend.create_installer ~keep_wxs ~tmp_dir ~installer_config
+             ~bundle_dir dst
          | Some Makeself ->
            let dst = OpamFilename.of_string output in
            Makeself_backend.create_installer ~installer_config ~bundle_dir dst
