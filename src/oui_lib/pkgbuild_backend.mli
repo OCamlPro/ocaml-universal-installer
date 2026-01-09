@@ -8,6 +8,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+val vars : Installer_config.vars
+
 (** [create_installer ~installer_config ~bundle_dir installer] creates
     a standalone .pkg installer [installer] based on the given
     bundle and installer configuration. *)
