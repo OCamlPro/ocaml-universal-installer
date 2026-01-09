@@ -36,3 +36,6 @@ jobs:
 
       - name: Test alt-ergo package
         run: bash .github/scripts/test-alt-ergo.sh macos
+
+      - name: Test frama-c and metacsl plugin installation
+        run: bash .github/scripts/test-frama-c-plugin.sh
