@@ -22,8 +22,9 @@
 
         <CustomAction Id="C_WixSetAppFolderPerUser" Property="WixAppFolder" Value="WixPerUserFolder" Execute="immediate" />
         <CustomAction Id="C_WixSetAppFolderPerMachine" Property="WixAppFolder" Value="WixPerMachineFolder" Execute="immediate" />
-        <CustomAction Id="C_WixSetDefaultPerUserFolder" Property="WixPerUserFolder" Value="[WIXPERUSERAPPFOLDER]\[ApplicationFolderName]" Execute="immediate" />
-        <CustomAction Id="C_WixSetDefaultPerMachineFolder" Property="WixPerMachineFolder" Value="[WIXPERMACHINEAPPFOLDER]\[ApplicationFolderName]" Execute="immediate" />
+        <!-- or [WIXPERUSERAPPFOLDER]\[ApplicationFolderName] / [WIXPERMACHINEAPPFOLDER]\[ApplicationFolderName] -->
+        <CustomAction Id="C_WixSetDefaultPerUserFolder" Property="WixPerUserFolder" Value="[WIXPERUSERAPPFOLDER]" Execute="immediate" />
+        <CustomAction Id="C_WixSetDefaultPerMachineFolder" Property="WixPerMachineFolder" Value="[WIXPERMACHINEAPPFOLDER]" Execute="immediate" />
         <CustomAction Id="C_WixSetPerUserFolder" Property="APPLICATIONFOLDER" Value="[WixPerUserFolder]" Execute="immediate" />
         <CustomAction Id="C_WixSetPerMachineFolder" Property="APPLICATIONFOLDER" Value="[WixPerMachineFolder]" Execute="immediate" />
         <CustomAction Id="C_WixUnsetALLUSERS" Property="ALLUSERS" Value="{}" Execute="immediate" />

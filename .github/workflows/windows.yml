@@ -91,7 +91,7 @@ jobs:
         run: opam install .
 
       - name: "Test: install target opam package"
-        run: opam install ocp-indent.1.8.1
+        run: opam install ocp-indent.1.9.0
 
       - name: "Test: create package"
         run: |
@@ -100,7 +100,7 @@ jobs:
 
       - name: "Test: install package"
         run: |
-          msiexec /i ocp-indent-1.8.1.msi /qn /L*v wixlog.txt ALLUSERS=2 MSIINSTALLPERUSER= 
+          msiexec /i ocp-indent-1.9.0.msi /qn /L*v wixlog.txt ALLUSERS=2 MSIINSTALLPERUSER= 
 
       - name: "Test: execute binary"
         run: |
@@ -125,4 +125,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: package.msi
-          path: ocp-indent-1.8.1.msi
+          path: ocp-indent-1.9.0.msi
