@@ -40,6 +40,7 @@ let make_config
     ?(plugins=[])
     ?plugin_dirs
     ?manpages
+    ?(environment=[])
     () : Installer_config.internal
   =
   { name
@@ -47,7 +48,7 @@ let make_config
   ; exec_files
   ; fullname = ""
   ; manpages
-  ; environment = []
+  ; environment
   ; unique_id = ""
   ; plugins
   ; plugin_dirs
@@ -91,6 +92,7 @@ let%expect_test "install_script: simple" =
         exit 1
       fi
     }
+    INSTALL_PATH="/opt/aaa"
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -166,6 +168,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
         exit 1
       fi
     }
+    INSTALL_PATH="/opt/t-name"
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -270,6 +273,7 @@ let%expect_test "install_script: install plugins" =
       done < "$conf"
       return 0
     }
+    INSTALL_PATH="/opt/t-name"
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -554,6 +558,7 @@ let%expect_test "install_script: binary in sub folder" =
         exit 1
       fi
     }
+    INSTALL_PATH="/opt/test-name"
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
@@ -581,7 +586,7 @@ let%expect_test "install_script: binary in sub folder" =
     fi
     mkdir -p -m 755 "/opt/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/test-name \;
-    echo "Adding bin/do to /usr/local/bin"
+    echo "Adding do to /usr/local/bin"
     ln -s /opt/test-name/bin/do /usr/local/bin/do
     {
       printf '%s\n' "version=test.version"
@@ -632,4 +637,72 @@ let%expect_test "uninstall_script: binary in sub folder" =
       rm -f "/usr/local/bin/do"
     fi
     echo "Uninstallation complete!"
+    |}]
+
+let%expect_test "install_script: set environment for binaries" =
+  let config =
+    make_config
+      ~exec_files:["bin/app"]
+      ~environment:[("VAR1", "value1"); ("VAR2", "$INSTALL_PATH/lib")]
+      ()
+  in
+  let install_script = Makeself_backend.install_script config in
+  Format.printf "%a" Sh_script.pp_sh install_script;
+  [%expect {|
+    #!/usr/bin/env sh
+    set -e
+    check_available() {
+      if [ -e "$1" ]; then
+        printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        exit 1
+      fi
+    }
+    check_lib() {
+      if [ -e "$1" ] && ! [ -d "$1" ] && ! [ -L "$1" ]; then
+        printf '%s\n' "$1 already exists and does not appear to be a library! Aborting" >&2
+        exit 1
+      fi
+    }
+    INSTALL_PATH="/opt/test-name"
+    if [ -d "/usr/local/share/man" ]; then
+      MAN_DEST="/usr/local/share/man"
+    else
+      MAN_DEST="usr/local/man"
+    fi
+    echo "Installing test-name.test.version to /opt/test-name"
+    echo "The following files and directories will be written to the system:"
+    echo "- /opt/test-name"
+    echo "- /usr/local/bin/app"
+    check_available /opt/test-name
+    check_available /usr/local/bin/app
+    printf "Proceed? [y/N] "
+    read ans
+    case "$ans" in
+      [Yy]*) ;;
+      *)
+        echo "Aborted."
+        exit 1
+      ;;
+    esac
+    if [ "$(id -u)" -ne 0 ]; then
+      echo "Not running as root. Aborting."
+      echo "Please run again as root."
+      exit 1
+    fi
+    mkdir -p -m 755 "/opt/test-name"
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/test-name \;
+    echo "Adding app to /usr/local/bin"
+    {
+      printf '%s\n' "#!/usr/bin/env sh"
+      printf '%s\n' "VAR1=\"value1\" \"
+      printf '%s\n' "VAR2=\"$INSTALL_PATH/lib\" \"
+      printf '%s\n' "exec /opt/test-name/bin/app \"\$@\""
+    } > "/usr/local/bin/app"
+    chmod 755 "/usr/local/bin/app"
+    {
+      printf '%s\n' "version=test.version"
+    } > "/opt/test-name/install.conf"
+    chmod 644 "/opt/test-name/install.conf"
+    echo "Installation complete!"
+    echo "If you want to safely uninstall test-name, please run /opt/test-name/uninstall.sh."
     |}]

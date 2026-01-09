@@ -8,21 +8,23 @@
 (*                                                                        *)
 (**************************************************************************)
 
-val vars : Installer_config.vars
+type t
+[@@deriving yojson]
 
-(** [create_installer ~installer_config ~bundle_dir installer] creates
-    a standalone makeself installer [installer] based on the given
-    bundle and installer configuration. *)
-val create_installer :
-  installer_config: Installer_config.internal ->
-  bundle_dir: OpamFilename.Dir.t ->
-  OpamFilename.t ->
-  unit
+(** Builds a string with variables from the raw string *)
+val of_string : string -> t
 
-(**/**)
+(** Returns the raw string with variables unexpanded *)
+val to_string : t -> string
 
-(* Exposed for tests purposes only *)
+type subst_result =
+  { subst_string : string
+  ; unknown_vars : string list
+  }
+[@@deriving show]
 
-val install_script : Installer_config.internal -> Sh_script.t
-
-val uninstall_script : Installer_config.internal -> Sh_script.t
+(** Return the input strings with known variables substituted by the provided
+    values and the list of unknown variables that were found in the input.
+    E.g. [subst ~install_path:"XX" "<install_path>/lib/<unknown>"] will return
+    [{subst_string = "XX/lib/<unknown>"; unknown_vars = ["<unknown>"]}]. *)
+val subst : install_path: string -> t -> subst_result
