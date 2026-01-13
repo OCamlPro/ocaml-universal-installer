@@ -8,43 +8,119 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let generate_postinstall_script ~env ~app_name ~binary_name =
-  let def_install_path =
-    Printf.sprintf
-      "INSTALL_PATH=/Applications/%s.app/Contents/Resources"
-      app_name
-  in
-  let wrapper_content =
-    let env_lines =
-      List.map
-        (fun (var, value) ->
-           (* VAR="VALUE" \ *)
-           Printf.sprintf "%s=\"%s\" \\\\" var value)
-        env
+(** Shell function to parse install.conf files. *)
+let load_conf_function = {|
+load_conf() {
+  local conf="$1" var_prefix="$2"
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in ""|\#*) continue ;; esac
+    case "$line" in
+      *=*) ;;
+      *) printf '%s\n' "Invalid line in $conf: $line" >&2; return 1 ;;
+    esac
+    local key="${line%%=*}"
+    local val="${line#*=}"
+    case "$key" in
+      *[!a-zA-Z0-9_]*)
+        printf '%s\n' "Invalid key in $conf: $key" >&2; return 1 ;;
+      *)
+        eval "${var_prefix}${key}=\$val" ;;
+    esac
+  done < "$conf"
+  return 0
+}
+|}
+
+let generate_wrapper_section ~app_path ~binary_name ~has_binary ~env =
+  if not has_binary then
+    "# Plugin-only package - no wrapper script"
+  else
+    let wrapper_content =
+      let env_lines =
+        List.map
+          (fun (var, value) ->
+             (* VAR="VALUE" \ *)
+             Printf.sprintf "%s=\"%s\" \\\\" var value)
+          env
+      in
+      String.concat "\n"
+        ( "#!/bin/bash"
+          :: env_lines
+          @ [ Printf.sprintf {|exec "%s/Contents/MacOS/%s" "$@"|}
+                app_path binary_name ] )
     in
-    let lines =
-    "#!/bin/bash"
-    :: env_lines
-    @ [ Printf.sprintf
-          {|exec "/Applications/%s.app/Contents/MacOS/%s" "$@"|}
-          app_name binary_name ]
-    in
-    String.concat "\n" lines
-  in
-  let wrapper_creation =
-    Printf.sprintf {|cat > "/usr/local/bin/%s" << 'WRAPPER_EOF'
+    let wrapper_creation =
+      Printf.sprintf {|cat > "/usr/local/bin/%s" << 'WRAPPER_EOF'
 %s
 WRAPPER_EOF|}
-      binary_name wrapper_content
+        binary_name wrapper_content
+    in
+    let wrapper_chmod =
+      Printf.sprintf "chmod +x \"/usr/local/bin/%s\"" binary_name
+    in
+    Printf.sprintf "mkdir -p /usr/local/bin\n\n%s\n%s"
+      wrapper_creation wrapper_chmod
+
+let generate_load_app_conf ~target_app =
+  let capitalized = String.capitalize_ascii target_app in
+  let var_prefix = Plugin_utils.app_var_prefix target_app in
+  Printf.sprintf
+    {|# Find and load %s's install.conf
+TARGET_CONF="/Applications/%s.app/Contents/Resources/install.conf"
+if [ -f "$TARGET_CONF" ]; then
+  load_conf "$TARGET_CONF" "%s"
+else
+  echo "Error: %s is not installed. Cannot install plugin." >&2
+  exit 1
+fi|}
+    target_app capitalized var_prefix target_app
+
+let generate_plugin_symlinks ~resources ~(plugin : Installer_config.plugin) =
+  let var_prefix = Plugin_utils.app_var_prefix plugin.app_name in
+  let plugin_basename = Filename.basename plugin.plugin_dir in
+  let lib_basename = Filename.basename plugin.lib_dir in
+  let dyn_deps_symlinks =
+    plugin.dyn_deps
+    |> List.map (fun dep ->
+        let dep_basename = Filename.basename dep in
+        Printf.sprintf {|ln -sf "%s/%s" "${%slib}/%s"|}
+          resources dep var_prefix dep_basename)
+    |> String.concat "\n"
   in
-  let wrapper_chmod =
-    Printf.sprintf "chmod +x \"/usr/local/bin/%s\"" binary_name
-  in
-  let app_man_dir =
-    Printf.sprintf "/Applications/%s.app/Contents/Resources/man" app_name
-  in
-  let man_pages_section =
-    Printf.sprintf {|if [ -d "%s" ]; then
+  Printf.sprintf
+    {|echo "Installing plugin %s for %s..."
+ln -sf "%s/%s" "${%splugins}/%s"
+ln -sf "%s/%s" "${%slib}/%s"
+%s|}
+    plugin.name plugin.app_name
+    resources plugin.plugin_dir var_prefix plugin_basename
+    resources plugin.lib_dir var_prefix lib_basename
+    dyn_deps_symlinks
+
+let generate_plugin_install_section ~resources ~plugins =
+  match plugins with
+  | [] -> ""
+  | _ ->
+    let unique_apps =
+      plugins
+      |> List.map (fun (p : Installer_config.plugin) -> p.app_name)
+      |> List.sort_uniq String.compare
+    in
+    let load_apps =
+      unique_apps
+      |> List.map (fun app -> generate_load_app_conf ~target_app:app)
+      |> String.concat "\n\n"
+    in
+    let symlinks =
+      plugins
+      |> List.map (fun p -> generate_plugin_symlinks ~resources ~plugin:p)
+      |> String.concat "\n\n"
+    in
+    Printf.sprintf "%s\n%s\n\n%s" load_conf_function load_apps symlinks
+
+let generate_manpages_section ~resources =
+  let app_man_dir = Printf.sprintf "%s/man" resources in
+  Printf.sprintf {|if [ -d "%s" ]; then
   mkdir -p /usr/local/share/man
   for section_dir in %s/*; do
     if [ -d "$section_dir" ]; then
@@ -56,19 +132,123 @@ WRAPPER_EOF|}
     fi
   done
 fi|}
-      app_man_dir app_man_dir
+    app_man_dir app_man_dir
+
+let generate_postinstall_script
+    ~env
+    ~app_name
+    ~binary_name
+    ~has_binary
+    ?(plugins : Installer_config.plugin list = [])
+    () =
+  let app_path = Printf.sprintf "/Applications/%s.app" app_name in
+  let resources = Printf.sprintf "%s/Contents/Resources" app_path in
+
+  let def_install_path = Printf.sprintf "INSTALL_PATH=%s" resources in
+  let wrapper_section =
+    generate_wrapper_section ~app_path ~binary_name ~has_binary ~env
   in
+  let plugin_install_section =
+    generate_plugin_install_section ~resources ~plugins
+  in
+  let manpages_section = generate_manpages_section ~resources in
+
   Printf.sprintf {|#!/bin/bash
-mkdir -p /usr/local/bin
+set -e
 
+%s
 %s
 
 %s
-%s
-
 %s
 exit 0|}
-    def_install_path wrapper_creation wrapper_chmod man_pages_section
+    def_install_path
+    wrapper_section
+    plugin_install_section
+    manpages_section
+
+
+let generate_uninstall_script ~app_name ~binary_name ~has_binary ~plugins =
+  let app_path = Printf.sprintf "/Applications/%s.app" app_name in
+  let resources = Printf.sprintf "%s/Contents/Resources" app_path in
+
+  (* Plugin symlink removal *)
+  let plugin_removal = match plugins with
+    | [] -> ""
+    | _ ->
+      let load_and_remove =
+        Printf.sprintf {|%s
+
+# Load our own install.conf to get target app paths
+if [ -f "%s/install.conf" ]; then
+  load_conf "%s/install.conf" ""
+fi
+|}
+          load_conf_function resources resources
+      in
+      let remove_symlinks =
+        List.map (fun (p : Installer_config.plugin) ->
+            let var_prefix = Plugin_utils.app_var_prefix p.app_name in
+            let plugin_basename = Filename.basename p.plugin_dir in
+            let lib_basename = Filename.basename p.lib_dir in
+            let dyn_deps_removal =
+              List.map (fun dep ->
+                  Printf.sprintf {|rm -f "${%slib}/%s" 2>/dev/null || true|}
+                    var_prefix (Filename.basename dep))
+                p.dyn_deps
+              |> String.concat "\n"
+            in
+            Printf.sprintf {|
+echo "Removing plugin %s from %s..."
+rm -f "${%splugins}/%s" 2>/dev/null || true
+rm -f "${%slib}/%s" 2>/dev/null || true
+%s|}
+              p.name p.app_name
+              var_prefix plugin_basename
+              var_prefix lib_basename
+              dyn_deps_removal)
+          plugins
+        |> String.concat "\n"
+      in
+      load_and_remove ^ remove_symlinks
+  in
+
+  let wrapper_removal =
+    if has_binary then
+      Printf.sprintf {|# Remove wrapper from /usr/local/bin
+if [ -L "/usr/local/bin/%s" ] || [ -f "/usr/local/bin/%s" ]; then
+  echo "Removing /usr/local/bin/%s"
+  rm -f "/usr/local/bin/%s"
+fi|}
+        binary_name binary_name binary_name binary_name
+    else
+      "# Plugin-only package - no wrapper to remove"
+  in
+
+  Printf.sprintf {|#!/bin/bash
+set -e
+
+echo "Uninstalling %s..."
+%s
+%s
+
+# Remove manpage symlinks
+find /usr/local/share/man -type l -lname "%s/*" -delete 2>/dev/null || true
+
+# Remove the app bundle
+if [ -d "%s" ]; then
+  echo "Removing %s"
+  rm -rf "%s"
+fi
+
+echo "Uninstallation complete!"
+|}
+    app_name
+    plugin_removal
+    wrapper_removal
+    resources
+    app_path app_path app_path
+
 
 let save_postinstall_script ~content ~scripts_dir =
   OpamFilename.mkdir scripts_dir;
@@ -76,5 +256,13 @@ let save_postinstall_script ~content ~scripts_dir =
   OpamFilename.write script_path content;
   System.call_unit System.Chmod (755, script_path);
   OpamConsole.msg "Created postinstall script: %s\n"
+    (OpamFilename.to_string script_path);
+  script_path
+
+let save_uninstall_script ~content ~resources_dir =
+  let script_path = OpamFilename.Op.(resources_dir // "uninstall.sh") in
+  OpamFilename.write script_path content;
+  System.call_unit System.Chmod (755, script_path);
+  OpamConsole.msg "Created uninstall script: %s\n"
     (OpamFilename.to_string script_path);
   script_path
