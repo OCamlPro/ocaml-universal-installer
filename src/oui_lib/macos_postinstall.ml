@@ -168,11 +168,101 @@ exit 0|}
     manpages_section
 
 
+let generate_uninstall_script ~app_name ~binary_name ~has_binary ~plugins =
+  let app_path = Printf.sprintf "/Applications/%s.app" app_name in
+  let resources = Printf.sprintf "%s/Contents/Resources" app_path in
+
+  (* Plugin symlink removal *)
+  let plugin_removal = match plugins with
+    | [] -> ""
+    | _ ->
+      let load_and_remove =
+        Printf.sprintf {|%s
+
+# Load our own install.conf to get target app paths
+if [ -f "%s/install.conf" ]; then
+  load_conf "%s/install.conf" ""
+fi
+|}
+          load_conf_function resources resources
+      in
+      let remove_symlinks =
+        List.map (fun (p : Installer_config.plugin) ->
+            let var_prefix = Plugin_utils.app_var_prefix p.app_name in
+            let plugin_basename = Filename.basename p.plugin_dir in
+            let lib_basename = Filename.basename p.lib_dir in
+            let dyn_deps_removal =
+              List.map (fun dep ->
+                  Printf.sprintf {|rm -f "${%slib}/%s" 2>/dev/null || true|}
+                    var_prefix (Filename.basename dep))
+                p.dyn_deps
+              |> String.concat "\n"
+            in
+            Printf.sprintf {|
+echo "Removing plugin %s from %s..."
+rm -f "${%splugins}/%s" 2>/dev/null || true
+rm -f "${%slib}/%s" 2>/dev/null || true
+%s|}
+              p.name p.app_name
+              var_prefix plugin_basename
+              var_prefix lib_basename
+              dyn_deps_removal)
+          plugins
+        |> String.concat "\n"
+      in
+      load_and_remove ^ remove_symlinks
+  in
+
+  let wrapper_removal =
+    if has_binary then
+      Printf.sprintf {|# Remove wrapper from /usr/local/bin
+if [ -L "/usr/local/bin/%s" ] || [ -f "/usr/local/bin/%s" ]; then
+  echo "Removing /usr/local/bin/%s"
+  rm -f "/usr/local/bin/%s"
+fi|}
+        binary_name binary_name binary_name binary_name
+    else
+      "# Plugin-only package - no wrapper to remove"
+  in
+
+  Printf.sprintf {|#!/bin/bash
+set -e
+
+echo "Uninstalling %s..."
+%s
+%s
+
+# Remove manpage symlinks
+find /usr/local/share/man -type l -lname "%s/*" -delete 2>/dev/null || true
+
+# Remove the app bundle
+if [ -d "%s" ]; then
+  echo "Removing %s"
+  rm -rf "%s"
+fi
+
+echo "Uninstallation complete!"
+|}
+    app_name
+    plugin_removal
+    wrapper_removal
+    resources
+    app_path app_path app_path
+
+
 let save_postinstall_script ~content ~scripts_dir =
   OpamFilename.mkdir scripts_dir;
   let script_path = OpamFilename.Op.(scripts_dir // "postinstall") in
   OpamFilename.write script_path content;
   System.call_unit System.Chmod (755, script_path);
   OpamConsole.msg "Created postinstall script: %s\n"
+    (OpamFilename.to_string script_path);
+  script_path
+
+let save_uninstall_script ~content ~resources_dir =
+  let script_path = OpamFilename.Op.(resources_dir // "uninstall.sh") in
+  OpamFilename.write script_path content;
+  System.call_unit System.Chmod (755, script_path);
+  OpamConsole.msg "Created uninstall script: %s\n"
     (OpamFilename.to_string script_path);
   script_path

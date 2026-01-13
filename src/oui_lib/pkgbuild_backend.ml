@@ -163,6 +163,18 @@ let create_installer
       ~scripts_dir
   in
 
+  (* Create uninstall script in bundle *)
+  let uninstall_content = Macos_postinstall.generate_uninstall_script
+      ~app_name:bundle.app_name
+      ~binary_name:binary_name_for_scripts
+      ~has_binary
+      ~plugins:installer_config.plugins
+  in
+  let _uninstall_path = Macos_postinstall.save_uninstall_script
+      ~content:uninstall_content
+      ~resources_dir:bundle.resources
+  in
+
   let component_pkg_path =
     let base = OpamFilename.chop_extension installer in
     OpamFilename.add_extension base "-component.pkg" in
