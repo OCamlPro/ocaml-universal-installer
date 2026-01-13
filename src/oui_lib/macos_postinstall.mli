@@ -13,11 +13,15 @@
     The postinstall script:
     - Creates wrapper scripts from /usr/local/bin to the .app bundle binaries
     - Installs manpages from the .app bundle to /usr/local/share/man
+    - For plugin packages: creates symlinks into target app's bundle
 *)
 val generate_postinstall_script :
-  env: (string * string) list ->
+  env:(string * string) list ->
   app_name:string ->
   binary_name:string ->
+  has_binary:bool ->
+  ?plugins:Installer_config.plugin list ->
+  unit ->
   string
 
 (** Save postinstall script to the scripts directory with executable permissions. *)

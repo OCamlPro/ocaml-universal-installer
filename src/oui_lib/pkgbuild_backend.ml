@@ -102,19 +102,23 @@ let create_installer
   (* Copy all bundle contents to Resources *)
   Macos_app_bundle.copy_bundle_contents bundle ~bundle_dir;
 
-  (* Install main binary to MacOS directory *)
-  let binary_src = match installer_config.exec_files with
-    | [] -> OpamConsole.error_and_exit `Bad_arguments
-              "No exec_files specified in config"
-    | binary :: _ -> bundle_dir // binary
+  (* Install main binary to MacOS directory (if exec_files provided) *)
+  let binary_name = match installer_config.exec_files with
+    | [] ->
+      (* Plugin-only bundle - no main binary *)
+      OpamConsole.msg "No exec_files specified, creating plugin-only package\n";
+      None
+    | binary :: _ ->
+      let binary_src = bundle_dir // binary in
+      let binary_dst =
+        Macos_app_bundle.install_binary bundle ~binary_path:binary_src
+      in
+      handle_dylibs bundle ~binary_dst;
+      (* Sign the binary with ad-hoc signature *)
+      OpamConsole.msg "Signing binary...\n";
+      Codesign.sign_binary_adhoc binary_dst;
+      Some bundle.binary_name
   in
-  let binary_dst = Macos_app_bundle.install_binary bundle ~binary_path:binary_src in
-
-  handle_dylibs bundle ~binary_dst;
-
-  (* Sign the binary with ad-hoc signature *)
-  OpamConsole.msg "Signing binary...\n";
-  Codesign.sign_binary_adhoc binary_dst;
 
   create_info_plist bundle ~installer_config;
 
@@ -141,10 +145,18 @@ let create_installer
 
   (* Create postinstall script *)
   let scripts_dir = work_dir / "scripts" in
+  let has_binary = Option.is_some binary_name in
+  let binary_name_for_scripts = match binary_name with
+    | Some n -> n
+    | None -> installer_config.name
+  in
   let postinstall_content = Macos_postinstall.generate_postinstall_script
       ~env:installer_config.environment
       ~app_name:bundle.app_name
-      ~binary_name:bundle.binary_name
+      ~binary_name:binary_name_for_scripts
+      ~has_binary
+      ~plugins:installer_config.plugins
+      ()
   in
   let _postinstall_path = Macos_postinstall.save_postinstall_script
       ~content:postinstall_content
