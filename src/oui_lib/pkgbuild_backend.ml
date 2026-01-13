@@ -63,6 +63,30 @@ let handle_dylibs bundle ~binary_dst =
       dylibs;
     Install_name_tool.relocate_to_executable_path binary_dst
 
+(** Generate install.conf content *)
+let generate_install_conf ~resources_path ~(installer_config : Installer_config.internal) =
+  let lines =
+    [ Printf.sprintf "version=%s" installer_config.version ]
+    @ (match installer_config.plugin_dirs with
+        | None -> []
+        | Some pd ->
+          [ Printf.sprintf "plugins=%s/%s" resources_path pd.Installer_config.plugins_dir
+          ; Printf.sprintf "lib=%s/%s" resources_path pd.lib_dir
+          ])
+  in
+  String.concat "\n" lines ^ "\n"
+
+let write_install_conf bundle ~installer_config =
+  let resources_path =
+    Printf.sprintf "/Applications/%s.app/Contents/Resources"
+      (String.capitalize_ascii installer_config.Installer_config.name)
+  in
+  let content = generate_install_conf ~resources_path ~installer_config in
+  let install_conf_path = bundle.Macos_app_bundle.resources // "install.conf" in
+  OpamFilename.write install_conf_path content;
+  OpamConsole.msg "Created install.conf: %s\n"
+    (OpamFilename.to_string install_conf_path)
+
 (** Create the .pkg installer from the bundle *)
 let create_installer
     ~(installer_config : Installer_config.internal) ~bundle_dir installer =
@@ -111,6 +135,9 @@ let create_installer
           "Directory %s not found in Resources, skipping symlink"
           dir_name
     ) installer_config.macos_symlink_dirs;
+
+  (* Write install.conf for plugin support *)
+  write_install_conf bundle ~installer_config;
 
   (* Create postinstall script *)
   let scripts_dir = work_dir / "scripts" in
