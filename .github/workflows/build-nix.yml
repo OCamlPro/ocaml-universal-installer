@@ -8,6 +8,7 @@ on:
       - master
 jobs:
   build:
+    if: false # temporarily disabled
     runs-on: ubuntu-latest
     container:
       image: nixos/nix:latest

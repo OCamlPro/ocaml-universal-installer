@@ -8,21 +8,12 @@
 (*                                                                        *)
 (**************************************************************************)
 
-val vars : Installer_config.vars
-
-(** [create_installer ~installer_config ~bundle_dir installer] creates
-    a standalone makeself installer [installer] based on the given
-    bundle and installer configuration. *)
-val create_installer :
-  installer_config: Installer_config.internal ->
-  bundle_dir: OpamFilename.Dir.t ->
-  OpamFilename.t ->
-  unit
-
-(**/**)
-
-(* Exposed for tests purposes only *)
-
-val install_script : Installer_config.internal -> Sh_script.t
-
-val uninstall_script : Installer_config.internal -> Sh_script.t
+(** Returns a valid prefix for app specific variables. E.g. for ["frama-c"],
+    returns ["frama_c_"]. This should be passed to load_conf. *)
+let app_var_prefix app_name =
+  (String.map
+     (fun c ->
+        match c with
+        | 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' -> c
+        | _ -> '_')
+     app_name) ^ "_"

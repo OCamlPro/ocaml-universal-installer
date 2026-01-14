@@ -13,10 +13,14 @@ open Oui
 let run installer_config bundle_dir =
   let res =
     let open Letop.Result in
+    let backend = Oui_cli.Args.autodetect_backend ~log:false () in
+    let vars = Oui_cli.Args.vars_of_backend backend in
     let* user_config = Installer_config.load installer_config in
-    let+ _installer_config =
-      Installer_config.check_and_expand ~bundle_dir user_config
+    let res, warnings =
+      Installer_config.check_and_expand ~bundle_dir ~vars user_config
     in
+    Oui_cli.Warnings.handle warnings;
+    let+ _installer_config = res in
     ()
   in
   let config_path = OpamFilename.to_string installer_config in
