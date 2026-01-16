@@ -80,7 +80,14 @@ let create_bundle cli =
              Option.map Installer_config.manpages_of_expanded
                installer_config.manpages
            in
-           let installer_config = {installer_config with manpages} in
+           let environment =
+             List.map
+               (fun (var, value) -> var, String_with_vars.of_string value)
+               installer_config.environment
+           in
+           let installer_config =
+             {installer_config with manpages; environment}
+           in
            save_bundle_and_conf ~installer_config ~bundle_dir dst
          | Some Wix ->
            let dst = OpamFilename.of_string output in

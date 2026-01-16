@@ -36,15 +36,19 @@ type plugin_dirs =
   ; lib_dir : string
   }
 
+type vars = { install_path : string }
+
 (** Manpages as association list from man section name to list of manpages *)
 type expanded_manpages = (string * string list) list
 
 (** User provided installer configuration.
     Describes the package, the content of the bundle and the paths to some
     external files such as wix icons.
-    Parametrized by the type for manpages to allow both a JSON friendly format
-    and one easy to work with internally *)
-type 'manpages t = {
+    First parameter describes the type of manpages to allow both a JSON friendly
+    format and one easy to work with internally.
+    Second parameter allows the user representation to contain non expanded
+    variables and the internal one to contain expanded strings. *)
+type ('manpages, 'string_with_vars) t = {
     name : string;
     (** Package name used as product name. Deduced from opam file *)
     fullname : string ;
@@ -52,7 +56,7 @@ type 'manpages t = {
     (** Package version used as part of product name. Deduced from opam file *)
     exec_files : string list; (** Filenames of bundled .exe binary. *)
     manpages : 'manpages option; (** Paths to manpages, split by sections. *)
-    environment : (string * string) list;
+    environment : (string * 'string_with_vars) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)
     unique_id : string;
     (** Unique ID in reverse DNS format. Used by macOS and Wix backends.
@@ -79,21 +83,22 @@ type 'manpages t = {
         Example: ["lib"; "share"] creates Contents/lib -> Resources/lib and Contents/share -> Resources/share *)
   }
 
-type user = manpages t
+type user = (manpages, String_with_vars.t) t
 
-type internal = expanded_manpages t
+type internal = (expanded_manpages, string) t
 
 (** Checks that directories and files specified in the given config exist
     with the right permissions.
-    Returns the config with manpages expanded into a list of man section names
-    paired with the list of files for each of them by expanding [Man_dir "dir"]
-    into the list of files within ["dir"].
-    @raise [Inconsistent msgs] when the given config fails the checks. [msgs]
-    is the list of failure messages. *)
+    Returns a pair made of the expanded config or the list of errors and a list
+    of warnings.
+    In the expanded config, variables are substituted and manpages expanded into
+    a list of man section names paired with the list of files for each of them
+    by expanding [Man_dir "dir"] into the list of files within ["dir"]. *)
 val check_and_expand :
   bundle_dir: OpamFilename.Dir.t ->
+  vars: vars ->
   user ->
-  (internal, [> `Inconsistent_config of string list]) result
+  (internal, [> `Inconsistent_config of string list]) result * string list
 
 (** Converts an association list to a manpage record, do not use on user
     provided data, only on trusted sources.

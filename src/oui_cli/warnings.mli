@@ -8,20 +8,4 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Generate postinstall script content for macOS .pkg installers.
-
-    The postinstall script:
-    - Creates wrapper scripts from /usr/local/bin to the .app bundle binaries
-    - Installs manpages from the .app bundle to /usr/local/share/man
-*)
-val generate_postinstall_script :
-  env: (string * string) list ->
-  app_name:string ->
-  binary_name:string ->
-  string
-
-(** Save postinstall script to the scripts directory with executable permissions. *)
-val save_postinstall_script :
-  content:string ->
-  scripts_dir:OpamFilename.Dir.t ->
-  OpamFilename.t
+val handle : string list -> unit

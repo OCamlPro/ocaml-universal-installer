@@ -8,20 +8,23 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Generate postinstall script content for macOS .pkg installers.
+type t
+[@@deriving yojson]
 
-    The postinstall script:
-    - Creates wrapper scripts from /usr/local/bin to the .app bundle binaries
-    - Installs manpages from the .app bundle to /usr/local/share/man
-*)
-val generate_postinstall_script :
-  env: (string * string) list ->
-  app_name:string ->
-  binary_name:string ->
-  string
+(** Builds a string with variables from the raw string *)
+val of_string : string -> t
 
-(** Save postinstall script to the scripts directory with executable permissions. *)
-val save_postinstall_script :
-  content:string ->
-  scripts_dir:OpamFilename.Dir.t ->
-  OpamFilename.t
+(** Returns the raw string with variables unexpanded *)
+val to_string : t -> string
+
+type subst_result =
+  { subst_string : string
+  ; unknown_vars : string list
+  }
+[@@deriving show]
+
+(** Return the input strings with known variables substituted by the provided
+    values and the list of unknown variables that were found in the input.
+    E.g. [subst ~install_path:"XX" "<install_path>/lib/<unknown>"] will return
+    [{subst_string = "XX/lib/<unknown>"; unknown_vars = ["<unknown>"]}]. *)
+val subst : install_path: string -> t -> subst_result

@@ -17,6 +17,9 @@ let (/) = Filename.concat
 let install_script_name = "install.sh"
 let uninstall_script_name = "uninstall.sh"
 
+let install_path = "INSTALL_PATH"
+let install_path_var = "$" ^ install_path
+
 let man_dst = "MAN_DEST"
 let man_dst_var = "$" ^ man_dst
 
@@ -33,18 +36,7 @@ let conf_lib = "lib"
 let check_available = "check_available"
 let check_lib = "check_lib"
 
-(* TODO:
-   - define the check_no_exist function
-   - define load_conf if there are plugins to install
-   - display all files to be installed except plugins
-   - dispay plugin and app names for each plugin to be installed
-   - load install.conf files and warn about issues if they can't be found
-   - Display plugin files to be installed??
-   - validate that none of the files + plugin files to be written exist
-   - prompt for install
-   - proceed with the install
-   - remove the plugin grouping
-*)
+let vars : Installer_config.vars = { install_path = install_path_var }
 
 (* Do a basic validation of an install.conf file and load the variables
    defined in it in an APPNAME_varname variable so it can be used in the rest
@@ -66,7 +58,7 @@ let def_load_conf =
                   [ print_errf "Invalid line in $conf: $line"
                   ; return 1
                   ]
-              }
+}
             ]
         ; assign ~var:"key" ~value:"${line%%=*}"
         ; assign ~var:"val" ~value:"${line#*=}"
@@ -163,6 +155,39 @@ let remove_symlink ?(name="symlink") ~in_ bundle_path =
     ; rm [link]
     ]
     ()
+
+(* Sets documented variables that users can rely upon when setting
+   env or for post-install commands *)
+let set_install_vars ~prefix =
+  let open Sh_script in
+  [ assign ~var:install_path ~value:prefix ]
+
+let install_binary ~prefix ~env ~in_ bundle_path =
+  let open Sh_script in
+  let base = Filename.basename bundle_path in
+  let true_binary = prefix / bundle_path in
+  let installed_binary = in_ / base in
+  let install_cmds =
+    match env with
+    | [] -> [symlink ~target:true_binary ~link:installed_binary]
+    | _ ->
+      let set_vars =
+        List.map
+          (fun (var, value) ->
+             (* VAR="VALUE" \ *)
+             Printf.sprintf "%s=\\\"%s\\\" \\" var value)
+          env
+      in
+      let wrapper_script_lines =
+        "#!/usr/bin/env sh" ::
+        set_vars
+        @ [ Printf.sprintf "exec %s \\\"\\$@\\\"" true_binary ]
+      in
+      [ write_file installed_binary wrapper_script_lines
+      ; chmod 755 [installed_binary]
+      ]
+  in
+  echof "Adding %s to %s" base in_ :: install_cmds
 
 let install_manpages ~prefix manpages =
   let open Sh_script in
@@ -293,7 +318,8 @@ let install_script (ic : Installer_config.internal) =
     def_check_available ::
     def_check_lib ::
     def_load_conf
-    @ [set_man_dest]
+    @ set_install_vars ~prefix
+    @ [ set_man_dest ]
     @ display_install_info
     @ display_plugin_install_info
     @ load_plugin_app_vars
@@ -304,15 +330,10 @@ let install_script (ic : Installer_config.internal) =
   let install_bundle =
     Sh_script.copy_all_in ~src:"." ~dst:prefix ~except:install_script_name
   in
+  let env = ic.environment in
   let binaries = ic.exec_files in
-  let add_symlinks_to_usrbin =
-    List.concat_map
-      (fun binary ->
-         [ echof "Adding %s to %s" binary usrbin
-         ; add_symlink ~prefix ~in_:usrbin binary
-         ]
-      )
-      binaries
+  let install_binaries =
+    List.concat_map (install_binary ~prefix ~env ~in_:usrbin) binaries
   in
   let manpages = Option.value ic.manpages ~default:[] in
   let install_manpages = install_manpages ~prefix manpages in
@@ -355,7 +376,7 @@ let install_script (ic : Installer_config.internal) =
   in
   setup
   @ [install_bundle]
-  @ add_symlinks_to_usrbin
+  @ install_binaries
   @ install_manpages
   @ install_plugins
   @ dump_install_conf

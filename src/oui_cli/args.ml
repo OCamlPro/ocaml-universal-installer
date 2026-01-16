@@ -40,13 +40,19 @@ let pp_backend fmt t =
   | Makeself -> Fmt.pf fmt "makeself"
   | Pkgbuild -> Fmt.pf fmt "pkgbuild"
 
+let vars_of_backend = function
+  | Makeself -> Makeself_backend.vars
+  | Wix -> Wix_backend.vars
+  | Pkgbuild -> Pkgbuild_backend.vars
+
 type 'a choice = Autodetect | Forced of 'a
 
-let autodetect_backend () =
+let autodetect_backend ?(log=true) () =
   match OpamStd.Sys.os () with
   | OpamStd.Sys.Darwin ->
-    OpamConsole.formatted_msg
-      "Detected macOS system: using pkgbuild backend.\n";
+    if log then
+      OpamConsole.formatted_msg
+        "Detected macOS system: using pkgbuild backend.\n";
     Pkgbuild
   | OpamStd.Sys.Linux
   | OpamStd.Sys.FreeBSD
@@ -55,12 +61,14 @@ let autodetect_backend () =
   | OpamStd.Sys.DragonFly
   | OpamStd.Sys.Unix
   | OpamStd.Sys.Other _ ->
-    OpamConsole.formatted_msg
-      "Detected UNIX system: using makeself backend.\n";
+    if log then
+      OpamConsole.formatted_msg
+        "Detected UNIX system: using makeself backend.\n";
     Makeself
   | OpamStd.Sys.Win32
   | OpamStd.Sys.Cygwin ->
-    OpamConsole.formatted_msg "Detected Windows system: using WiX backend.\n";
+    if log then
+      OpamConsole.formatted_msg "Detected Windows system: using WiX backend.\n";
     Wix
 
 let backend_conv ~make ~print =

@@ -9,6 +9,14 @@
 ;------------------------------------------------------------------------;
 
 (library
+ (name tests)
+ (inline_tests)
+ (modules test_string_with_vars)
+ (preprocess
+  (pps ppx_expect))
+ (libraries base oui.lib opam-format ppx_expect.config_types))
+
+(library
  (name linux_tests)
  (inline_tests)
  (modules test_ldd test_makeself_backend)
