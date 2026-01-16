@@ -144,9 +144,14 @@ let file_in ~bundle_dir path =
   OpamFilename.Op.(bundle_dir // path)
 
 let can_exec perm =
-  Int.equal (perm land 0o001) 0o001
-  && Int.equal (perm land 0o010) 0o010
-  && Int.equal (perm land 0o100) 0o100
+  match OpamStd.Sys.os () with
+  | OpamStd.Sys.Win32
+  | OpamStd.Sys.Cygwin ->
+      true
+  | _ ->
+    Int.equal (perm land 0o001) 0o001
+    && Int.equal (perm land 0o010) 0o010
+    && Int.equal (perm land 0o100) 0o100
 
 let errors_list l =
   List.filter_map (function Ok _ -> None | Error msg -> Some msg) l
@@ -165,6 +170,22 @@ let collect_error_opt ~f x =
 let guard cond fmt =
   if cond then Printf.ksprintf (fun _ -> Ok ()) fmt
   else errorf fmt
+
+let check_unique_id unique_id =
+  let valid_first_char c =
+       c >= 'A' && c <= 'Z'
+    || c >= 'a' && c <= 'z'
+    || c = '_'
+  in
+  let valid_char c =
+       valid_first_char c
+    || c >= '0' && c <= '9'
+    || c = '.'
+  in
+  guard (String.length unique_id > 0 &&
+         valid_first_char unique_id.[0] &&
+         String.for_all valid_char unique_id)
+    "unique_id: '%s' has invalid characters (must contain only alphanumeric, underscore or dot, must start with alphabetic or underscore)" unique_id
 
 let check_dir ~field dir =
   guard (OpamFilename.exists_dir dir)
@@ -251,6 +272,9 @@ let expand_environment ~vars env =
   List.rev expanded, List.rev warnings
 
 let check_and_expand ~bundle_dir ~vars user =
+  let id_errors =
+    collect_errors ~f:(check_unique_id) [user.unique_id]
+  in
   let exec_errors =
     collect_errors ~f:(check_exec ~bundle_dir) user.exec_files
   in
@@ -283,7 +307,7 @@ let check_and_expand ~bundle_dir ~vars user =
   let plugin_errors = List.concat_map (check_plugin ~bundle_dir) user.plugins in
   let plugin_dirs_errors = check_plugin_dirs ~bundle_dir user.plugin_dirs in
   let all_errors =
-    exec_errors @ manpages_errors @ wix_icon_error @ wix_dlg_bmp_error
+    id_errors @ exec_errors @ manpages_errors @ wix_icon_error @ wix_dlg_bmp_error
     @ wix_banner_bmp_error @ wix_license_error @ macos_symlink_dirs_errors
     @ plugin_dirs_errors @ plugin_errors
   in

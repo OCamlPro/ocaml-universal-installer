@@ -18,8 +18,8 @@ end
 (** Information module used to generated main wxs document. *)
 type info = {
 
-  (* Indicates this is a plugin *)
-  is_plugin: bool;
+  (* Indicates this is a plugin for the given application *)
+  plugin_for: string option;
 
   (* Package unique ID (replaces GUID) *)
   unique_id: string;
@@ -28,10 +28,7 @@ type info = {
   manufacturer: string;
 
   (* Package name used as product name *)
-  short_name: string;
-
-  (* More descriptive package name *)
-  long_name: string;
+  name: string;
 
   (* Package version *)
   version: string;
@@ -64,7 +61,7 @@ type info = {
   background: string;
 
   (* License filename (absolute) *)
-  license: string;
+  license: string option;
 }
 
 and shortcut =
@@ -78,7 +75,7 @@ and var = {
 }
 
 and key = {
-  key_name: string;
+  key_name: string option;
   key_type: string;
   key_value: string;
 }
