@@ -62,6 +62,8 @@ let make_config
   ; macos_symlink_dirs = []
   }
 
+let pp_sh = Sh_script.pp_sh ~version:false
+
 let%expect_test "install_script: simple" =
   let manpages =
     make_expanded_manpages
@@ -77,10 +79,11 @@ let%expect_test "install_script: simple" =
       ()
   in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     PREFIX="/opt"
     BINPREFIX="/usr/local"
     usage() {
@@ -214,10 +217,11 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
   in
   let config = make_config ~name:"t-name" ~version:"t.version" ~plugin_dirs () in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     PREFIX="/opt"
     BINPREFIX="/usr/local"
     usage() {
@@ -347,10 +351,11 @@ let%expect_test "install_script: install plugins" =
       ~plugins:[app_a_plugin; app_b_plugin] ()
   in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     PREFIX="/opt"
     BINPREFIX="/usr/local"
     usage() {
@@ -549,10 +554,11 @@ let%expect_test "uninstall_script: uninstall plugins" =
       ~plugins:[app_a_plugin; app_b_plugin] ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
-  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     BINPREFIX="/usr/local"
     INSTALLDIR="$(dirname "$0")"
     PREFIX="$(dirname "$INSTALLDIR")"
@@ -685,10 +691,11 @@ let%expect_test "uninstall_script: simple" =
       ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
-  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     BINPREFIX="/usr/local"
     INSTALLDIR="$(dirname "$0")"
     PREFIX="$(dirname "$INSTALLDIR")"
@@ -775,10 +782,11 @@ let%expect_test "uninstall_script: simple" =
 let%expect_test "install_script: binary in sub folder" =
   let config = make_config ~exec_files:[{ path = "bin/do"; symlink = true; deps = true }] () in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     PREFIX="/opt"
     BINPREFIX="/usr/local"
     usage() {
@@ -895,10 +903,11 @@ let%expect_test "install_script: binary in sub folder" =
 let%expect_test "uninstall_script: binary in sub folder" =
   let config = make_config ~exec_files:[{ path = "bin/do"; symlink = true; deps = true }] () in
   let uninstall_script = Makeself_backend.uninstall_script config in
-  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     BINPREFIX="/usr/local"
     INSTALLDIR="$(dirname "$0")"
     PREFIX="$(dirname "$INSTALLDIR")"
@@ -968,10 +977,11 @@ let%expect_test "install_script: set environment for binaries" =
       ()
   in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     PREFIX="/opt"
     BINPREFIX="/usr/local"
     usage() {
