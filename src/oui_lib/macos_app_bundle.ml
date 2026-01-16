@@ -28,8 +28,7 @@ let create ~installer_config ~work_dir =
   let app_name_cap = String.capitalize_ascii app_name in
   let bundle_id = installer_config.unique_id in
   let binary_name = match installer_config.exec_files with
-    | [] -> OpamConsole.error_and_exit `Bad_arguments
-              "No exec_files specified in config"
+    | [] -> installer_config.name  (* Plugin-only package uses app name *)
     | binary :: _ -> Filename.basename binary
   in
   let app_bundle_dir = work_dir / (app_name_cap ^ ".app") in
