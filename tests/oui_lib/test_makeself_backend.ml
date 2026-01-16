@@ -62,6 +62,8 @@ let make_config
   ; macos_symlink_dirs = []
   }
 
+let pp_sh = Sh_script.pp_sh ~version:false
+
 let%expect_test "install_script: simple" =
   let manpages =
     make_expanded_manpages
@@ -76,10 +78,11 @@ let%expect_test "install_script: simple" =
       ()
   in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -152,10 +155,11 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
   in
   let config = make_config ~name:"t-name" ~version:"t.version" ~plugin_dirs () in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -227,10 +231,11 @@ let%expect_test "install_script: install plugins" =
       ~plugins:[app_a_plugin; app_b_plugin] ()
   in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -371,10 +376,11 @@ let%expect_test "uninstall_script: uninstall plugins" =
       ~plugins:[app_a_plugin; app_b_plugin] ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
-  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -479,10 +485,11 @@ let%expect_test "uninstall_script: simple" =
       ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
-  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -542,10 +549,11 @@ let%expect_test "uninstall_script: simple" =
 let%expect_test "install_script: binary in sub folder" =
   let config = make_config ~exec_files:["bin/do"] () in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -601,10 +609,11 @@ let%expect_test "install_script: binary in sub folder" =
 let%expect_test "uninstall_script: binary in sub folder" =
   let config = make_config ~exec_files:["bin/do"] () in
   let uninstall_script = Makeself_backend.uninstall_script config in
-  Format.printf "%a" Sh_script.pp_sh uninstall_script;
+  Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
@@ -647,10 +656,11 @@ let%expect_test "install_script: set environment for binaries" =
       ()
   in
   let install_script = Makeself_backend.install_script config in
-  Format.printf "%a" Sh_script.pp_sh install_script;
+  Format.printf "%a" pp_sh install_script;
   [%expect {|
     #!/usr/bin/env sh
     set -e
+
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
