@@ -26,3 +26,12 @@
   (with-stdout-to
    %{target}
    (run ocaml-crunch ../../data -m plain -o dataDir.ml))))
+
+(rule
+ (target version.ml)
+ (deps
+  (:script version.mlt))
+ (action
+  (with-stdout-to
+   %{target}
+   (run %{ocaml} -I +unix unix.cma %{script} %{version:oui}))))

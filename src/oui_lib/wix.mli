@@ -33,8 +33,11 @@ type info = {
   (* Package version *)
   version: string;
 
-  (* Package description *)
-  description: string option;
+  (* Package subject/description (name & revision) *)
+  subject: string option;
+
+  (* Package comments *)
+  comments: string option;
 
   (* Package keywords *)
   keywords: string list;

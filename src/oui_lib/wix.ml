@@ -27,7 +27,8 @@ type info = {
   manufacturer: string;
   name: string;
   version: string;
-  description: string option;
+  subject: string option;
+  comments: string option;
   keywords: string list;
   directory: string;
   shortcuts: shortcut list;
@@ -76,7 +77,7 @@ let print_package fmt info =
 
     <SummaryInformation
       Manufacturer="%s" %s
-      Comments="%s" %s />
+      %s %s />
 
     <MajorUpgrade Schedule="afterInstallInitialize" MigrateFeatures="yes"
       DowngradeErrorMessage="A newer version of this product is already installed"
@@ -85,10 +86,12 @@ let print_package fmt info =
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" MaximumUncompressedMediaSize="64" />
 |} info.unique_id info.manufacturer info.name info.version
    info.manufacturer
-   (match info.description with
+   (match info.subject with
     | None -> ""
     | Some d -> Printf.sprintf {|Description="%s"|} d)
-   info.name
+   (match info.comments with
+    | None -> ""
+    | Some c -> Printf.sprintf {|Comments="%s"|} c)
    (match info.keywords with
     | [] -> ""
     | kw -> Printf.sprintf {|Keywords="%s"|} (String.concat "; " kw))
