@@ -30,7 +30,11 @@ type command =
   | Echo of string
   | Print_err of string
   | Eval of string
+  | Eval_inplace of command
+  | Shift
   | Assign of {var: string; value: string}
+  | Assign_eval of {var: string; command: command}
+  | Dirname of string
   | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
@@ -42,7 +46,8 @@ type command =
   | If of {condition : condition; then_ : command list; else_: command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
-  | Write_file of {file: string; lines : string list}
+  | While of {condition: condition; while_: command list}
+  | Write_file of {file: string; lines : string list; append:bool}
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
@@ -59,7 +64,10 @@ let exit i = Exit i
 let echof fmt = Format.kasprintf (fun s -> Echo s) fmt
 let print_errf fmt = Format.kasprintf (fun s -> Print_err s) fmt
 let eval s = Eval s
+let shift = Shift
 let assign ~var ~value = Assign {var; value}
+let assign_eval var command = Assign_eval {var; command}
+let dirname path = Dirname path
 let mkdir ?permissions dirs = Mkdir {permissions; dirs}
 let chmod permissions files = Chmod {permissions; files}
 let cp ~src ~dst = Cp {src; dst}
@@ -69,7 +77,8 @@ let symlink ~target ~link = Symlink {target; link}
 let if_ condition then_ ?(else_=[]) () = If {condition; then_; else_}
 let prompt ~question ~varname = Prompt {question; varname}
 let case varname cases = Case {varname; cases}
-let write_file file lines = Write_file {file; lines}
+let while_ condition while_ = While { condition; while_ }
+let write_file ?(append=false) file lines = Write_file {file; lines; append}
 let def_fun name body = Def_fun {name; body}
 let call_fun name args = Call_fun {name; args}
 
@@ -100,9 +109,12 @@ let rec pp_sh_condition fmtr condition =
   | Not (And _ as c) -> Format.fprintf fmtr "! (%a)" pp_sh_condition c
   | Not c -> Format.fprintf fmtr "! %a" pp_sh_condition c
 
-let rec pp_sh_command ~indent fmtr command =
+let rec pp_sh_command ?(newline=true) ~indent fmtr command =
   let indent_str = String.make indent ' ' in
-  let fpf fmt = Format.fprintf fmtr ("%s" ^^ fmt ^^ "\n") indent_str in
+  let fpf ?(indent=true) ?(newline=newline) fmt =
+    Format.fprintf fmtr ("%s" ^^ fmt ^^ (if newline then "\n" else ""))
+      (if indent then indent_str else "")
+  in
   let pp_files = Fmt.(list ~sep:(const string " ") (using (fun x -> "\""^x^"\"") string)) in
   match command with
   | Continue -> fpf "continue"
@@ -111,7 +123,17 @@ let rec pp_sh_command ~indent fmtr command =
   | Echo s -> fpf "echo %S" s
   | Print_err s -> fpf "printf '%%s\\n' %S >&2" s
   | Eval s -> fpf "eval \"%s\"" s
+  | Eval_inplace command ->
+    fpf ~newline:false "$(";
+    pp_sh_command ~newline:false ~indent fmtr command;
+    fpf ~indent:false ")"
+  | Shift -> fpf "%s" "shift"
   | Assign {var; value} -> fpf "%s=%S" var value
+  | Assign_eval {var; command} ->
+    fpf ~newline:false "%s=\"" var;
+    pp_sh_command ~newline:false ~indent:0 fmtr (Eval_inplace command);
+    fpf ~indent:false "\""
+  | Dirname s -> fpf "dirname %S" s
   | Mkdir {permissions = None; dirs} -> fpf "mkdir -p %a" pp_files dirs
   | Mkdir {permissions = Some perm; dirs} ->
     fpf "mkdir -p -m %i %a" perm pp_files dirs
@@ -145,10 +167,15 @@ let rec pp_sh_command ~indent fmtr command =
     fpf {|case "$%s" in|} varname;
     List.iter (pp_sh_case ~indent:(indent + 2) fmtr) cases;
     fpf "esac"
-  | Write_file {file; lines} ->
+  | While {condition; while_} ->
+    fpf {|while %a; do|} pp_sh_condition condition;
+    List.iter (pp_sh_command ~indent:(indent + 2) fmtr) while_;
+    fpf "done"
+  | Write_file {file; lines; append} ->
     fpf "{";
     List.iter (fpf "  printf '%%s\\n' \"%s\"") lines;
-    fpf "} > \"%s\"" file
+    fpf "} %s \"%s\""
+      (if append then ">>" else ">") file
   | Read_file {file; line_var; process_line} ->
     fpf "while IFS= read -r %s || [ -n \"$%s\" ]; do" line_var line_var;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) process_line;
