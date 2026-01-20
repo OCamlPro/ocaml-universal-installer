@@ -25,7 +25,7 @@ let man_dst_var = "$" ^ man_dst
 
 let usrbin = "/usr/local/bin"
 let usrshareman = "/usr/local/share/man"
-let usrman = "usr/local/man"
+let usrman = "/usr/local/man"
 
 let install_conf = "install.conf"
 let load_conf = "load_conf"
