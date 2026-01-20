@@ -81,6 +81,8 @@ let%expect_test "install_script: simple" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    PREFIX="/opt"
+    BINPREFIX="/usr/local"
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -93,23 +95,23 @@ let%expect_test "install_script: simple" =
         exit 1
       fi
     }
-    INSTALL_PATH="/opt/aaa"
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    INSTALL_PATH="$PREFIX/aaa"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
-    echo "Installing aaa.x.y.z to /opt/aaa"
+    echo "Installing aaa.x.y.z to $PREFIX/aaa"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/aaa"
-    echo "- /usr/local/bin/aaa-command"
-    echo "- /usr/local/bin/aaa-utility"
+    echo "- $PREFIX/aaa"
+    echo "- $BINPREFIX/bin/aaa-command"
+    echo "- $BINPREFIX/bin/aaa-utility"
     echo "- $MAN_DEST/man1/aaa-command.1"
     echo "- $MAN_DEST/man1/aaa-utility.1"
     echo "- $MAN_DEST/man5/aaa-file.1"
-    check_available "/opt/aaa"
-    check_available "/usr/local/bin/aaa-command"
-    check_available "/usr/local/bin/aaa-utility"
+    check_available "$PREFIX/aaa"
+    check_available "$BINPREFIX/bin/aaa-command"
+    check_available "$BINPREFIX/bin/aaa-utility"
     check_available "$MAN_DEST/man1/aaa-command.1"
     check_available "$MAN_DEST/man1/aaa-utility.1"
     check_available "$MAN_DEST/man5/aaa-file.1"
@@ -127,24 +129,24 @@ let%expect_test "install_script: simple" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 "/opt/aaa"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/aaa" \;
-    echo "Adding aaa-command to /usr/local/bin"
-    ln -s "/opt/aaa/aaa-command" "/usr/local/bin/aaa-command"
-    echo "Adding aaa-utility to /usr/local/bin"
-    ln -s "/opt/aaa/aaa-utility" "/usr/local/bin/aaa-utility"
+    mkdir -p -m 755 "$PREFIX/aaa"
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/aaa" \;
+    echo "Adding aaa-command to $BINPREFIX/bin"
+    ln -s "$PREFIX/aaa/aaa-command" "$BINPREFIX/bin/aaa-command"
+    echo "Adding aaa-utility to $BINPREFIX/bin"
+    ln -s "$PREFIX/aaa/aaa-utility" "$BINPREFIX/bin/aaa-utility"
     echo "Installing manpages to $MAN_DEST..."
     mkdir -p -m 755 "$MAN_DEST/man1"
-    ln -s "/opt/aaa/man/man1/aaa-command.1" "$MAN_DEST/man1/aaa-command.1"
-    ln -s "/opt/aaa/man/man1/aaa-utility.1" "$MAN_DEST/man1/aaa-utility.1"
+    ln -s "$PREFIX/aaa/man/man1/aaa-command.1" "$MAN_DEST/man1/aaa-command.1"
+    ln -s "$PREFIX/aaa/man/man1/aaa-utility.1" "$MAN_DEST/man1/aaa-utility.1"
     mkdir -p -m 755 "$MAN_DEST/man5"
-    ln -s "/opt/aaa/man/man5/aaa-file.1" "$MAN_DEST/man5/aaa-file.1"
+    ln -s "$PREFIX/aaa/man/man5/aaa-file.1" "$MAN_DEST/man5/aaa-file.1"
     {
       printf '%s\n' "version=x.y.z"
-    } > "/opt/aaa/install.conf"
-    chmod 644 "/opt/aaa/install.conf"
+    } > "$PREFIX/aaa/install.conf"
+    chmod 644 "$PREFIX/aaa/install.conf"
     echo "Installation complete!"
-    echo "If you want to safely uninstall aaa, please run /opt/aaa/uninstall.sh."
+    echo "If you want to safely uninstall aaa, please run $PREFIX/aaa/uninstall.sh."
     |}]
 
 let%expect_test "install_script: plugin_dirs dumped in install.conf" =
@@ -157,6 +159,8 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    PREFIX="/opt"
+    BINPREFIX="/usr/local"
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -169,16 +173,16 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
         exit 1
       fi
     }
-    INSTALL_PATH="/opt/t-name"
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    INSTALL_PATH="$PREFIX/t-name"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
-    echo "Installing t-name.t.version to /opt/t-name"
+    echo "Installing t-name.t.version to $PREFIX/t-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/t-name"
-    check_available "/opt/t-name"
+    echo "- $PREFIX/t-name"
+    check_available "$PREFIX/t-name"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -193,16 +197,16 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 "/opt/t-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/t-name" \;
+    mkdir -p -m 755 "$PREFIX/t-name"
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
     {
       printf '%s\n' "version=t.version"
-      printf '%s\n' "plugins=/opt/t-name/path/to/plugins"
-      printf '%s\n' "lib=/opt/t-name/path/to/lib"
-    } > "/opt/t-name/install.conf"
-    chmod 644 "/opt/t-name/install.conf"
+      printf '%s\n' "plugins=$PREFIX/t-name/path/to/plugins"
+      printf '%s\n' "lib=$PREFIX/t-name/path/to/lib"
+    } > "$PREFIX/t-name/install.conf"
+    chmod 644 "$PREFIX/t-name/install.conf"
     echo "Installation complete!"
-    echo "If you want to safely uninstall t-name, please run /opt/t-name/uninstall.sh."
+    echo "If you want to safely uninstall t-name, please run $PREFIX/t-name/uninstall.sh."
     |}]
 
 let%expect_test "install_script: install plugins" =
@@ -232,6 +236,8 @@ let%expect_test "install_script: install plugins" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    PREFIX="/opt"
+    BINPREFIX="/usr/local"
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -274,31 +280,31 @@ let%expect_test "install_script: install plugins" =
       done < "$conf"
       return 0
     }
-    INSTALL_PATH="/opt/t-name"
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    INSTALL_PATH="$PREFIX/t-name"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
-    echo "Installing t-name.t.version to /opt/t-name"
+    echo "Installing t-name.t.version to $PREFIX/t-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/t-name"
+    echo "- $PREFIX/t-name"
     echo "The following plugins will be installed:"
     echo "- app-a-name for app-a"
     echo "- app-b-name for app-b"
-    if [ -d "/opt/app-a" ] && [ -f "/opt/app-a/install.conf" ]; then
-      load_conf /opt/app-a/install.conf app_a_
+    if [ -d "$PREFIX/app-a" ] && [ -f "$PREFIX/app-a/install.conf" ]; then
+      load_conf $PREFIX/app-a/install.conf app_a_
     else
       printf '%s\n' "Could not locate app-a install path" >&2
       exit 1
     fi
-    if [ -d "/opt/app-b" ] && [ -f "/opt/app-b/install.conf" ]; then
-      load_conf /opt/app-b/install.conf app_b_
+    if [ -d "$PREFIX/app-b" ] && [ -f "$PREFIX/app-b/install.conf" ]; then
+      load_conf $PREFIX/app-b/install.conf app_b_
     else
       printf '%s\n' "Could not locate app-b install path" >&2
       exit 1
     fi
-    check_available "/opt/t-name"
+    check_available "$PREFIX/t-name"
     check_available "$app_a_lib/app-a-name"
     check_available "$app_a_plugins/name"
     check_available "$app_b_lib/app-b-name"
@@ -319,23 +325,23 @@ let%expect_test "install_script: install plugins" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 "/opt/t-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/t-name" \;
+    mkdir -p -m 755 "$PREFIX/t-name"
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
     echo "Installing plugin app-a-name to app-a..."
-    ln -s "/opt/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
+    ln -s "$PREFIX/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
     if ! [ -L "$app_a_lib/app-a-name" ] && ! [ -d "$app_a_lib/app-a-name" ]; then
-      ln -s "/opt/t-name/lib/app-a-name" "$app_a_lib/app-a-name"
+      ln -s "$PREFIX/t-name/lib/app-a-name" "$app_a_lib/app-a-name"
     fi
     echo "Installing plugin app-b-name to app-b..."
-    ln -s "/opt/t-name/lib/app-b/plugins/name" "$app_b_plugins/name"
+    ln -s "$PREFIX/t-name/lib/app-b/plugins/name" "$app_b_plugins/name"
     if ! [ -L "$app_b_lib/app-b-name" ] && ! [ -d "$app_b_lib/app-b-name" ]; then
-      ln -s "/opt/t-name/lib/app-b-name" "$app_b_lib/app-b-name"
+      ln -s "$PREFIX/t-name/lib/app-b-name" "$app_b_lib/app-b-name"
     fi
     if ! [ -L "$app_b_lib/dep-a" ] && ! [ -d "$app_b_lib/dep-a" ]; then
-      ln -s "/opt/t-name/lib/dep-a" "$app_b_lib/dep-a"
+      ln -s "$PREFIX/t-name/lib/dep-a" "$app_b_lib/dep-a"
     fi
     if ! [ -L "$app_b_lib/dep-b" ] && ! [ -d "$app_b_lib/dep-b" ]; then
-      ln -s "/opt/t-name/lib/dep-b" "$app_b_lib/dep-b"
+      ln -s "$PREFIX/t-name/lib/dep-b" "$app_b_lib/dep-b"
     fi
     {
       printf '%s\n' "version=t.version"
@@ -343,10 +349,10 @@ let%expect_test "install_script: install plugins" =
       printf '%s\n' "app_a_plugins=$app_a_plugins"
       printf '%s\n' "app_b_lib=$app_b_lib"
       printf '%s\n' "app_b_plugins=$app_b_plugins"
-    } > "/opt/t-name/install.conf"
-    chmod 644 "/opt/t-name/install.conf"
+    } > "$PREFIX/t-name/install.conf"
+    chmod 644 "$PREFIX/t-name/install.conf"
     echo "Installation complete!"
-    echo "If you want to safely uninstall t-name, please run /opt/t-name/uninstall.sh."
+    echo "If you want to safely uninstall t-name, please run $PREFIX/t-name/uninstall.sh."
     |}]
 
 let%expect_test "uninstall_script: uninstall plugins" =
@@ -376,15 +382,16 @@ let%expect_test "uninstall_script: uninstall plugins" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    BINPREFIX="/usr/local"
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
       exit 1
     fi
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
     load_conf() {
       var_prefix="$2"
@@ -416,10 +423,10 @@ let%expect_test "uninstall_script: uninstall plugins" =
       done < "$conf"
       return 0
     }
-    load_conf /opt/t-name/install.conf
+    load_conf $PREFIX/t-name/install.conf
     echo "About to uninstall t-name."
     echo "The following files and folders will be removed from the system:"
-    echo "- /opt/t-name"
+    echo "- $PREFIX/t-name"
     echo "- $app_a_plugins/name"
     echo "- $app_a_lib/app-a-name"
     echo "- $app_b_plugins/name"
@@ -435,9 +442,9 @@ let%expect_test "uninstall_script: uninstall plugins" =
         exit 1
       ;;
     esac
-    if [ -d "/opt/t-name" ]; then
-      echo "Removing /opt/t-name..."
-      rm -rf "/opt/t-name"
+    if [ -d "$PREFIX/t-name" ]; then
+      echo "Removing $PREFIX/t-name..."
+      rm -rf "$PREFIX/t-name"
     fi
     if [ -L "$app_a_lib/app-a-name" ]; then
       echo "Removing symlink $app_a_lib/app-a-name..."
@@ -485,21 +492,22 @@ let%expect_test "uninstall_script: simple" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    BINPREFIX="/usr/local"
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
       exit 1
     fi
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
     echo "About to uninstall aaa."
     echo "The following files and folders will be removed from the system:"
-    echo "- /opt/aaa"
-    echo "- /usr/local/bin/aaa-command"
-    echo "- /usr/local/bin/aaa-utility"
+    echo "- $PREFIX/aaa"
+    echo "- $BINPREFIX/bin/aaa-command"
+    echo "- $BINPREFIX/bin/aaa-utility"
     echo "- $MAN_DEST/man1/aaa-command.1"
     echo "- $MAN_DEST/man1/aaa-utility.1"
     echo "- $MAN_DEST/man5/aaa-file.1"
@@ -512,17 +520,17 @@ let%expect_test "uninstall_script: simple" =
         exit 1
       ;;
     esac
-    if [ -d "/opt/aaa" ]; then
-      echo "Removing /opt/aaa..."
-      rm -rf "/opt/aaa"
+    if [ -d "$PREFIX/aaa" ]; then
+      echo "Removing $PREFIX/aaa..."
+      rm -rf "$PREFIX/aaa"
     fi
-    if [ -L "/usr/local/bin/aaa-command" ]; then
-      echo "Removing symlink /usr/local/bin/aaa-command..."
-      rm -f "/usr/local/bin/aaa-command"
+    if [ -L "$BINPREFIX/bin/aaa-command" ]; then
+      echo "Removing symlink $BINPREFIX/bin/aaa-command..."
+      rm -f "$BINPREFIX/bin/aaa-command"
     fi
-    if [ -L "/usr/local/bin/aaa-utility" ]; then
-      echo "Removing symlink /usr/local/bin/aaa-utility..."
-      rm -f "/usr/local/bin/aaa-utility"
+    if [ -L "$BINPREFIX/bin/aaa-utility" ]; then
+      echo "Removing symlink $BINPREFIX/bin/aaa-utility..."
+      rm -f "$BINPREFIX/bin/aaa-utility"
     fi
     if [ -L "$MAN_DEST/man1/aaa-command.1" ]; then
       echo "Removing manpage $MAN_DEST/man1/aaa-command.1..."
@@ -548,6 +556,8 @@ let%expect_test "install_script: binary in sub folder" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    PREFIX="/opt"
+    BINPREFIX="/usr/local"
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -560,18 +570,18 @@ let%expect_test "install_script: binary in sub folder" =
         exit 1
       fi
     }
-    INSTALL_PATH="/opt/test-name"
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    INSTALL_PATH="$PREFIX/test-name"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
-    echo "Installing test-name.test.version to /opt/test-name"
+    echo "Installing test-name.test.version to $PREFIX/test-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/test-name"
-    echo "- /usr/local/bin/do"
-    check_available "/opt/test-name"
-    check_available "/usr/local/bin/do"
+    echo "- $PREFIX/test-name"
+    echo "- $BINPREFIX/bin/do"
+    check_available "$PREFIX/test-name"
+    check_available "$BINPREFIX/bin/do"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -586,16 +596,16 @@ let%expect_test "install_script: binary in sub folder" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 "/opt/test-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/test-name" \;
-    echo "Adding do to /usr/local/bin"
-    ln -s "/opt/test-name/bin/do" "/usr/local/bin/do"
+    mkdir -p -m 755 "$PREFIX/test-name"
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
+    echo "Adding do to $BINPREFIX/bin"
+    ln -s "$PREFIX/test-name/bin/do" "$BINPREFIX/bin/do"
     {
       printf '%s\n' "version=test.version"
-    } > "/opt/test-name/install.conf"
-    chmod 644 "/opt/test-name/install.conf"
+    } > "$PREFIX/test-name/install.conf"
+    chmod 644 "$PREFIX/test-name/install.conf"
     echo "Installation complete!"
-    echo "If you want to safely uninstall test-name, please run /opt/test-name/uninstall.sh."
+    echo "If you want to safely uninstall test-name, please run $PREFIX/test-name/uninstall.sh."
     |}]
 
 (* Regression test that ensures that if the binaries are not at the bundle's
@@ -607,20 +617,21 @@ let%expect_test "uninstall_script: binary in sub folder" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    BINPREFIX="/usr/local"
     if [ "$(id -u)" -ne 0 ]; then
       echo "Not running as root. Aborting."
       echo "Please run again as root."
       exit 1
     fi
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
     echo "About to uninstall test-name."
     echo "The following files and folders will be removed from the system:"
-    echo "- /opt/test-name"
-    echo "- /usr/local/bin/bin/do"
+    echo "- $PREFIX/test-name"
+    echo "- $BINPREFIX/bin/bin/do"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -630,13 +641,13 @@ let%expect_test "uninstall_script: binary in sub folder" =
         exit 1
       ;;
     esac
-    if [ -d "/opt/test-name" ]; then
-      echo "Removing /opt/test-name..."
-      rm -rf "/opt/test-name"
+    if [ -d "$PREFIX/test-name" ]; then
+      echo "Removing $PREFIX/test-name..."
+      rm -rf "$PREFIX/test-name"
     fi
-    if [ -L "/usr/local/bin/do" ]; then
-      echo "Removing symlink /usr/local/bin/do..."
-      rm -f "/usr/local/bin/do"
+    if [ -L "$BINPREFIX/bin/do" ]; then
+      echo "Removing symlink $BINPREFIX/bin/do..."
+      rm -f "$BINPREFIX/bin/do"
     fi
     echo "Uninstallation complete!"
     |}]
@@ -653,6 +664,8 @@ let%expect_test "install_script: set environment for binaries" =
   [%expect {|
     #!/usr/bin/env sh
     set -e
+    PREFIX="/opt"
+    BINPREFIX="/usr/local"
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -665,18 +678,18 @@ let%expect_test "install_script: set environment for binaries" =
         exit 1
       fi
     }
-    INSTALL_PATH="/opt/test-name"
-    if [ -d "/usr/local/share/man" ]; then
-      MAN_DEST="/usr/local/share/man"
+    INSTALL_PATH="$PREFIX/test-name"
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
     else
-      MAN_DEST="/usr/local/man"
+      MAN_DEST="$BINPREFIX/man"
     fi
-    echo "Installing test-name.test.version to /opt/test-name"
+    echo "Installing test-name.test.version to $PREFIX/test-name"
     echo "The following files and directories will be written to the system:"
-    echo "- /opt/test-name"
-    echo "- /usr/local/bin/app"
-    check_available "/opt/test-name"
-    check_available "/usr/local/bin/app"
+    echo "- $PREFIX/test-name"
+    echo "- $BINPREFIX/bin/app"
+    check_available "$PREFIX/test-name"
+    check_available "$BINPREFIX/bin/app"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -691,20 +704,20 @@ let%expect_test "install_script: set environment for binaries" =
       echo "Please run again as root."
       exit 1
     fi
-    mkdir -p -m 755 "/opt/test-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/test-name" \;
-    echo "Adding app to /usr/local/bin"
+    mkdir -p -m 755 "$PREFIX/test-name"
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
+    echo "Adding app to $BINPREFIX/bin"
     {
       printf '%s\n' "#!/usr/bin/env sh"
       printf '%s\n' "VAR1=\"value1\" \"
       printf '%s\n' "VAR2=\"$INSTALL_PATH/lib\" \"
-      printf '%s\n' "exec /opt/test-name/bin/app \"\$@\""
-    } > "/usr/local/bin/app"
-    chmod 755 "/usr/local/bin/app"
+      printf '%s\n' "exec $PREFIX/test-name/bin/app \"\$@\""
+    } > "$BINPREFIX/bin/app"
+    chmod 755 "$BINPREFIX/bin/app"
     {
       printf '%s\n' "version=test.version"
-    } > "/opt/test-name/install.conf"
-    chmod 644 "/opt/test-name/install.conf"
+    } > "$PREFIX/test-name/install.conf"
+    chmod 644 "$PREFIX/test-name/install.conf"
     echo "Installation complete!"
-    echo "If you want to safely uninstall test-name, please run /opt/test-name/uninstall.sh."
+    echo "If you want to safely uninstall test-name, please run $PREFIX/test-name/uninstall.sh."
     |}]
