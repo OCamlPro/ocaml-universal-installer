@@ -96,7 +96,7 @@ let%expect_test "install_script: simple" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "Installing aaa.x.y.z to /opt/aaa"
     echo "The following files and directories will be written to the system:"
@@ -172,7 +172,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "Installing t-name.t.version to /opt/t-name"
     echo "The following files and directories will be written to the system:"
@@ -277,7 +277,7 @@ let%expect_test "install_script: install plugins" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "Installing t-name.t.version to /opt/t-name"
     echo "The following files and directories will be written to the system:"
@@ -383,7 +383,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     load_conf() {
       var_prefix="$2"
@@ -491,7 +491,7 @@ let%expect_test "uninstall_script: simple" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "About to uninstall aaa."
     echo "The following files and folders will be removed from the system:"
@@ -562,7 +562,7 @@ let%expect_test "install_script: binary in sub folder" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "Installing test-name.test.version to /opt/test-name"
     echo "The following files and directories will be written to the system:"
@@ -613,7 +613,7 @@ let%expect_test "uninstall_script: binary in sub folder" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "About to uninstall test-name."
     echo "The following files and folders will be removed from the system:"
@@ -667,7 +667,7 @@ let%expect_test "install_script: set environment for binaries" =
     if [ -d "/usr/local/share/man" ]; then
       MAN_DEST="/usr/local/share/man"
     else
-      MAN_DEST="usr/local/man"
+      MAN_DEST="/usr/local/man"
     fi
     echo "Installing test-name.test.version to /opt/test-name"
     echo "The following files and directories will be written to the system:"
