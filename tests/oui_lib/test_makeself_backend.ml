@@ -83,6 +83,11 @@ let%expect_test "install_script: simple" =
     set -e
     PREFIX="/opt"
     BINPREFIX="/usr/local"
+    usage() {
+      echo "Ocaml Universal Installer for aaa.x.y.z"
+      echo ""
+      echo "Options:"
+    }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -161,6 +166,11 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     set -e
     PREFIX="/opt"
     BINPREFIX="/usr/local"
+    usage() {
+      echo "Ocaml Universal Installer for t-name.t.version"
+      echo ""
+      echo "Options:"
+    }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -238,6 +248,11 @@ let%expect_test "install_script: install plugins" =
     set -e
     PREFIX="/opt"
     BINPREFIX="/usr/local"
+    usage() {
+      echo "Ocaml Universal Installer for t-name.t.version"
+      echo ""
+      echo "Options:"
+    }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -558,6 +573,11 @@ let%expect_test "install_script: binary in sub folder" =
     set -e
     PREFIX="/opt"
     BINPREFIX="/usr/local"
+    usage() {
+      echo "Ocaml Universal Installer for test-name.test.version"
+      echo ""
+      echo "Options:"
+    }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
@@ -666,6 +686,11 @@ let%expect_test "install_script: set environment for binaries" =
     set -e
     PREFIX="/opt"
     BINPREFIX="/usr/local"
+    usage() {
+      echo "Ocaml Universal Installer for test-name.test.version"
+      echo ""
+      echo "Options:"
+    }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2

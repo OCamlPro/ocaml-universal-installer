@@ -291,6 +291,16 @@ let install_script (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
   let version = ic.version in
+  let usage =
+    let open Sh_script in
+    [
+      Printf.sprintf "Ocaml Universal Installer for %s.%s" package version ;
+      "";
+      "Options:";
+    ]
+    |> List.map (fun s -> Echo s)
+    |> def_fun "usage"
+  in
   let prefix = opt_v / package in
   let plugin_apps =
     List.map (fun (p : Installer_config.plugin) -> p.app_name) ic.plugins
@@ -331,6 +341,7 @@ let install_script (ic : Installer_config.internal) =
   let setup =
     assign ~var:"PREFIX" ~value:opt ::
     assign ~var:"BINPREFIX" ~value:usrpre ::
+    usage ::
     def_check_available ::
     def_check_lib ::
     def_load_conf
