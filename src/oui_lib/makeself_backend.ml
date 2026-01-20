@@ -246,7 +246,8 @@ let def_check_lib =
         ()
     ]
 
-let check_available path = Sh_script.call_fun check_available [path]
+let check_available path =
+  Sh_script.call_fun check_available [Printf.sprintf "%S" path]
 
 let check_lib path = Sh_script.call_fun check_lib [path]
 

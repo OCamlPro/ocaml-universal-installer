@@ -119,7 +119,7 @@ let rec pp_sh_command ~indent fmtr command =
   | Cp {src; dst} -> fpf "cp %s %s" src dst
   | Rm {rec_ = true; files} -> fpf "rm -rf %a" pp_files files
   | Rm {rec_ = false; files} -> fpf "rm -f %a" pp_files files
-  | Symlink {target; link} -> fpf "ln -s %s %s" target link
+  | Symlink {target; link} -> fpf "ln -s %S %S" target link
   | Set_permissions_in {on; permissions; starting_point} ->
     fpf "find %s -type %a -exec chmod %i {} +"
       starting_point
@@ -127,7 +127,7 @@ let rec pp_sh_command ~indent fmtr command =
       permissions
   | Copy_all_in {src; dst; except} ->
     fpf
-      "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %s \\;"
+      "find %s -mindepth 1 -maxdepth 1 ! -name '%s' -exec cp -rp {} %S \\;"
       src except dst
   | If {condition; then_; else_} ->
     fpf "if %a; then" pp_sh_condition condition;
