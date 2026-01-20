@@ -71,7 +71,8 @@ let%expect_test "install_script: simple" =
   in
   let config =
     make_config ~name:"aaa" ~version:"x.y.z"
-      ~exec_files:["aaa-command"; "aaa-utility"]
+      ~exec_files:[{ path = "aaa-command"; symlink = true; deps = true };
+                   { path = "aaa-utility"; symlink = true; deps = true } ]
       ~manpages
       ()
   in
@@ -474,7 +475,8 @@ let%expect_test "uninstall_script: simple" =
   in
   let config =
     make_config ~name:"aaa"
-      ~exec_files:["aaa-command"; "aaa-utility"]
+      ~exec_files:[{ path = "aaa-command"; symlink = true; deps = true };
+                   { path = "aaa-utility"; symlink = true; deps = true } ]
       ~manpages
       ()
   in
@@ -540,7 +542,7 @@ let%expect_test "uninstall_script: simple" =
 (* Regression test that ensures that if the binaries are not at the bundle's
    root, the symlink are still installed correctly. *)
 let%expect_test "install_script: binary in sub folder" =
-  let config = make_config ~exec_files:["bin/do"] () in
+  let config = make_config ~exec_files:[{ path = "bin/do"; symlink = true; deps = true }] () in
   let install_script = Makeself_backend.install_script config in
   Format.printf "%a" Sh_script.pp_sh install_script;
   [%expect {|
@@ -599,7 +601,7 @@ let%expect_test "install_script: binary in sub folder" =
 (* Regression test that ensures that if the binaries are not at the bundle's
    root, the symlinks are correctly removed by the uninstall script. *)
 let%expect_test "uninstall_script: binary in sub folder" =
-  let config = make_config ~exec_files:["bin/do"] () in
+  let config = make_config ~exec_files:[{ path = "bin/do"; symlink = true; deps = true }] () in
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" Sh_script.pp_sh uninstall_script;
   [%expect {|
@@ -642,7 +644,7 @@ let%expect_test "uninstall_script: binary in sub folder" =
 let%expect_test "install_script: set environment for binaries" =
   let config =
     make_config
-      ~exec_files:["bin/app"]
+      ~exec_files:[{ path = "bin/app"; symlink = true; deps = true }]
       ~environment:[("VAR1", "value1"); ("VAR2", "$INSTALL_PATH/lib")]
       ()
   in

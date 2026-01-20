@@ -10,6 +10,30 @@
 
 open Compat
 
+type exec_file = {
+    path : string;
+    symlink : bool; [@default true]
+    deps : bool; [@default true]
+  }
+[@@deriving yojson {meta = true}]
+
+let exec_file_to_yojson exec_file =
+  if exec_file.symlink && exec_file.deps then
+    `String exec_file.path
+  else
+    [%to_yojson: exec_file] exec_file
+
+let exec_file_of_yojson : Yojson.Safe.t -> (exec_file, string) result =
+  function
+  | `String path -> Ok ({ path; symlink = true; deps = true})
+  | `Assoc _ as json ->
+    let open Letop.Result in
+    let* exec_file = [%of_yojson: exec_file] json in
+    Ok (exec_file)
+  | _ ->
+    Error
+      "Invalid exec_file, should be a JSON string or an object."
+
 type man_section =
   | Man_dir of string
   | Man_files of string list
@@ -66,7 +90,7 @@ type ('manpages, 'env_val) t = {
     name : string;
     fullname : string ;
     version : string;
-    exec_files : string list; [@default []]
+    exec_files : exec_file list; [@default []]
     manpages : 'manpages option; [@default None]
     environment : (string * 'env_val) list; [@default []]
     unique_id : string;
@@ -205,8 +229,9 @@ let check_file ~field file =
     "%s: file %s does not exist"
     field (OpamFilename.to_string file)
 
-let check_exec ~bundle_dir rel_path =
+let check_exec ~bundle_dir (exec_file : exec_file) =
   let open Letop.Result in
+  let rel_path = exec_file.path in
   let field = "exec_files" in
   let path = file_in ~exec:true ~bundle_dir rel_path in
   let path_str = OpamFilename.to_string path in

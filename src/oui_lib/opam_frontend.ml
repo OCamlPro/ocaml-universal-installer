@@ -357,13 +357,18 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
   OpamConsole.formatted_msg "Bundle created.\n";
   let open Installer_config in
   let name = OpamPackage.Name.to_string (OpamPackage.name package) in
+  let exec_files =
+    List.map (fun x ->
+        { path = OpamFilename.Base.to_string x; symlink = true; deps = true }
+      ) exe_bases
+  in
   let wix_manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam) in
   (bundle_dir,
    {
      name;
      fullname = OpamPackage.to_string package;
      version = wix_version ~opam_oui_conf package;
-     exec_files = List.map OpamFilename.Base.to_string exe_bases;
+     exec_files;
      manpages = manpages_paths;
      environment = package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files;
      unique_id = sanitize_id (String.concat "." [wix_manufacturer; name]);

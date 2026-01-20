@@ -111,7 +111,7 @@ let find_and_load_conf app_name =
 
 let list_all_files ~prefix (ic : Installer_config.internal) =
   prefix ::
-  List.map (fun x -> usrbin / (Filename.basename x)) ic.exec_files
+  List.map (fun (x : Installer_config.exec_file) -> usrbin / (Filename.basename x.path)) ic.exec_files
   @ List.concat_map
     (fun (section, files) ->
        let dir = man_dst_var / section in
@@ -162,8 +162,9 @@ let set_install_vars ~prefix =
   let open Sh_script in
   [ assign ~var:install_path ~value:prefix ]
 
-let install_binary ~prefix ~env ~in_ bundle_path =
+let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
   let open Sh_script in
+  let bundle_path = binary.path in
   let base = Filename.basename bundle_path in
   let true_binary = prefix / bundle_path in
   let installed_binary = in_ / base in
@@ -188,6 +189,12 @@ let install_binary ~prefix ~env ~in_ bundle_path =
       ]
   in
   echof "Adding %s to %s" base in_ :: install_cmds
+
+let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
+  if binary.symlink then
+    install_binary ~prefix ~env ~in_ binary
+  else
+    []
 
 let install_manpages ~prefix manpages =
   let open Sh_script in
@@ -418,8 +425,13 @@ let uninstall_script (ic : Installer_config.internal) =
       ]
   in
   let display_symlinks =
-    List.map
-      (fun binary -> echof "- %s/%s" usrbin binary)
+    List.filter_map
+      (fun (binary : Installer_config.exec_file) ->
+         if binary.symlink then
+           Some (echof "- %s/%s" usrbin binary.path)
+         else
+           None
+      )
       binaries
   in
   let manpages = Option.value ic.manpages ~default:[] in
@@ -454,7 +466,14 @@ let uninstall_script (ic : Installer_config.internal) =
         ()
     ]
   in
-  let remove_symlinks = List.map (remove_symlink ~in_:usrbin) binaries in
+  let remove_symlinks =
+    List.filter_map (fun (x : Installer_config.exec_file) ->
+        if x.symlink then
+          Some (remove_symlink ~in_:usrbin x.path)
+        else
+          None
+      ) binaries
+  in
   let remove_manpages =
     List.concat_map
       (fun (section, pages) ->
@@ -473,8 +492,8 @@ let uninstall_script (ic : Installer_config.internal) =
   @ remove_plugins
   @ notify_uninstall_complete
 
-let add_sos_to_bundle ~bundle_dir binary =
-  let binary = OpamFilename.Op.(bundle_dir // binary) in
+let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
+  let binary = OpamFilename.Op.(bundle_dir // binary.path) in
   let sos = Ldd.get_sos binary in
   match sos with
   | [] -> ()
@@ -482,6 +501,10 @@ let add_sos_to_bundle ~bundle_dir binary =
     let dst_dir = OpamFilename.dirname binary in
     List.iter (fun so -> OpamFilename.copy_in so dst_dir) sos;
     System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
+
+let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
+  if binary.deps then
+    add_sos_to_bundle ~bundle_dir binary
 
 let create_installer
     ~(installer_config : Installer_config.internal) ~bundle_dir installer =

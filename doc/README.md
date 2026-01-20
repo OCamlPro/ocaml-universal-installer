@@ -37,10 +37,13 @@ are:
 - `fullname`, **string**, **required**: *TODO* (remove or make WiX specific?)
 - `version`, **string**, **required**: the version of the app. *Example:*
   `"1.0.0"`. WiX backend requires that in `major.minor.patch`, `major`, `minor` and `patch` are strictly numerical.
-- `exec_files`, **string array**, **optional**: The list of executables to
-  install from the bundle. Should be a list of paths, relative to the bundle
-  root, pointing to executable files that should be installed and made available
-  to the user. *Example:* `["bin/oui", "bin/opam-oui"]`.
+- `exec_files`, **(string | object) array**, **optional**: The list of executables to
+  install from the bundle. Each executable is described either by a simple string or
+  an object. Either way, these contain paths, relative to the bundle root, pointing
+  to executable files that should be installed and made available to the user.
+  *Example (strings only):* `["bin/oui", "bin/opam-oui"]`.
+  See the [exec_files object section](#exec_files-object) for the object
+  format.
 - `manpages`, **object**, **optional**: A JSON object describing where manpages
   are located within the bundle so they can be properly installed on the target
   system. See the [manpages object section](#manpages-object) for the object
@@ -83,6 +86,28 @@ are:
   in `Contents/`. Used by macOS backend only. See
   [macOS / Application Bundle section](#macos--application-bundle) for details.
   *Example:* `["lib", "share"]`.
+
+### exec_files object
+
+To give more control over the actions performed on executables files to be
+installed, an object can be use instead of a plain string.
+
+It contains the following fields:
+- `path`, **string**, **required**: Paths to the executable file, relative to
+  the bundle root
+- `symlink`, **boolean**, **optional**: Whether to create symlinks to the
+  executable in `/usr/local/bin`. True by default.
+- `deps`, **boolean**, **optional**: Whether to resolve shared library
+  dependencies on the executable. True by default.
+
+*Example:*
+```json
+{
+  "path": "bin/myapp",
+  "symlink": true,
+  "deps": true
+}
+```
 
 ### manpages object
 
