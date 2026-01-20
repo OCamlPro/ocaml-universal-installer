@@ -107,12 +107,12 @@ let%expect_test "install_script: simple" =
     echo "- $MAN_DEST/man1/aaa-command.1"
     echo "- $MAN_DEST/man1/aaa-utility.1"
     echo "- $MAN_DEST/man5/aaa-file.1"
-    check_available /opt/aaa
-    check_available /usr/local/bin/aaa-command
-    check_available /usr/local/bin/aaa-utility
-    check_available $MAN_DEST/man1/aaa-command.1
-    check_available $MAN_DEST/man1/aaa-utility.1
-    check_available $MAN_DEST/man5/aaa-file.1
+    check_available "/opt/aaa"
+    check_available "/usr/local/bin/aaa-command"
+    check_available "/usr/local/bin/aaa-utility"
+    check_available "$MAN_DEST/man1/aaa-command.1"
+    check_available "$MAN_DEST/man1/aaa-utility.1"
+    check_available "$MAN_DEST/man5/aaa-file.1"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -128,17 +128,17 @@ let%expect_test "install_script: simple" =
       exit 1
     fi
     mkdir -p -m 755 "/opt/aaa"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/aaa \;
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/aaa" \;
     echo "Adding aaa-command to /usr/local/bin"
-    ln -s /opt/aaa/aaa-command /usr/local/bin/aaa-command
+    ln -s "/opt/aaa/aaa-command" "/usr/local/bin/aaa-command"
     echo "Adding aaa-utility to /usr/local/bin"
-    ln -s /opt/aaa/aaa-utility /usr/local/bin/aaa-utility
+    ln -s "/opt/aaa/aaa-utility" "/usr/local/bin/aaa-utility"
     echo "Installing manpages to $MAN_DEST..."
     mkdir -p -m 755 "$MAN_DEST/man1"
-    ln -s /opt/aaa/man/man1/aaa-command.1 $MAN_DEST/man1/aaa-command.1
-    ln -s /opt/aaa/man/man1/aaa-utility.1 $MAN_DEST/man1/aaa-utility.1
+    ln -s "/opt/aaa/man/man1/aaa-command.1" "$MAN_DEST/man1/aaa-command.1"
+    ln -s "/opt/aaa/man/man1/aaa-utility.1" "$MAN_DEST/man1/aaa-utility.1"
     mkdir -p -m 755 "$MAN_DEST/man5"
-    ln -s /opt/aaa/man/man5/aaa-file.1 $MAN_DEST/man5/aaa-file.1
+    ln -s "/opt/aaa/man/man5/aaa-file.1" "$MAN_DEST/man5/aaa-file.1"
     {
       printf '%s\n' "version=x.y.z"
     } > "/opt/aaa/install.conf"
@@ -178,7 +178,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     echo "Installing t-name.t.version to /opt/t-name"
     echo "The following files and directories will be written to the system:"
     echo "- /opt/t-name"
-    check_available /opt/t-name
+    check_available "/opt/t-name"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -194,7 +194,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       exit 1
     fi
     mkdir -p -m 755 "/opt/t-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/t-name \;
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/t-name" \;
     {
       printf '%s\n' "version=t.version"
       printf '%s\n' "plugins=/opt/t-name/path/to/plugins"
@@ -298,13 +298,13 @@ let%expect_test "install_script: install plugins" =
       printf '%s\n' "Could not locate app-b install path" >&2
       exit 1
     fi
-    check_available /opt/t-name
-    check_available $app_a_lib/app-a-name
-    check_available $app_a_plugins/name
-    check_available $app_b_lib/app-b-name
-    check_available $app_b_plugins/name
-    check_lib $app_b_lib/dep-a
-    check_lib $app_b_lib/dep-b
+    check_available "/opt/t-name"
+    check_available "$app_a_lib/app-a-name"
+    check_available "$app_a_plugins/name"
+    check_available "$app_b_lib/app-b-name"
+    check_available "$app_b_plugins/name"
+    check_lib "$app_b_lib/dep-a"
+    check_lib "$app_b_lib/dep-b"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -320,22 +320,22 @@ let%expect_test "install_script: install plugins" =
       exit 1
     fi
     mkdir -p -m 755 "/opt/t-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/t-name \;
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/t-name" \;
     echo "Installing plugin app-a-name to app-a..."
-    ln -s /opt/t-name/lib/app-a/plugins/name $app_a_plugins/name
+    ln -s "/opt/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
     if ! [ -L "$app_a_lib/app-a-name" ] && ! [ -d "$app_a_lib/app-a-name" ]; then
-      ln -s /opt/t-name/lib/app-a-name $app_a_lib/app-a-name
+      ln -s "/opt/t-name/lib/app-a-name" "$app_a_lib/app-a-name"
     fi
     echo "Installing plugin app-b-name to app-b..."
-    ln -s /opt/t-name/lib/app-b/plugins/name $app_b_plugins/name
+    ln -s "/opt/t-name/lib/app-b/plugins/name" "$app_b_plugins/name"
     if ! [ -L "$app_b_lib/app-b-name" ] && ! [ -d "$app_b_lib/app-b-name" ]; then
-      ln -s /opt/t-name/lib/app-b-name $app_b_lib/app-b-name
+      ln -s "/opt/t-name/lib/app-b-name" "$app_b_lib/app-b-name"
     fi
     if ! [ -L "$app_b_lib/dep-a" ] && ! [ -d "$app_b_lib/dep-a" ]; then
-      ln -s /opt/t-name/lib/dep-a $app_b_lib/dep-a
+      ln -s "/opt/t-name/lib/dep-a" "$app_b_lib/dep-a"
     fi
     if ! [ -L "$app_b_lib/dep-b" ] && ! [ -d "$app_b_lib/dep-b" ]; then
-      ln -s /opt/t-name/lib/dep-b $app_b_lib/dep-b
+      ln -s "/opt/t-name/lib/dep-b" "$app_b_lib/dep-b"
     fi
     {
       printf '%s\n' "version=t.version"
@@ -570,8 +570,8 @@ let%expect_test "install_script: binary in sub folder" =
     echo "The following files and directories will be written to the system:"
     echo "- /opt/test-name"
     echo "- /usr/local/bin/do"
-    check_available /opt/test-name
-    check_available /usr/local/bin/do
+    check_available "/opt/test-name"
+    check_available "/usr/local/bin/do"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -587,9 +587,9 @@ let%expect_test "install_script: binary in sub folder" =
       exit 1
     fi
     mkdir -p -m 755 "/opt/test-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/test-name \;
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/test-name" \;
     echo "Adding do to /usr/local/bin"
-    ln -s /opt/test-name/bin/do /usr/local/bin/do
+    ln -s "/opt/test-name/bin/do" "/usr/local/bin/do"
     {
       printf '%s\n' "version=test.version"
     } > "/opt/test-name/install.conf"
@@ -675,8 +675,8 @@ let%expect_test "install_script: set environment for binaries" =
     echo "The following files and directories will be written to the system:"
     echo "- /opt/test-name"
     echo "- /usr/local/bin/app"
-    check_available /opt/test-name
-    check_available /usr/local/bin/app
+    check_available "/opt/test-name"
+    check_available "/usr/local/bin/app"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -692,7 +692,7 @@ let%expect_test "install_script: set environment for binaries" =
       exit 1
     fi
     mkdir -p -m 755 "/opt/test-name"
-    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} /opt/test-name \;
+    find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "/opt/test-name" \;
     echo "Adding app to /usr/local/bin"
     {
       printf '%s\n' "#!/usr/bin/env sh"

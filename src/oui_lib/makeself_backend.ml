@@ -253,9 +253,11 @@ let def_check_lib =
         ()
     ]
 
-let call_check_available path = Sh_script.call_fun check_available [path]
+let call_check_available path =
+  Sh_script.call_fun check_available [Printf.sprintf "%S" path]
 
-let call_check_lib path = Sh_script.call_fun check_lib [path]
+let call_check_lib path =
+  Sh_script.call_fun check_lib [Printf.sprintf "%S" path]
 
 let check_plugin_available (plugin : Installer_config.plugin) =
   let var_prefix = app_var_prefix plugin.app_name in
