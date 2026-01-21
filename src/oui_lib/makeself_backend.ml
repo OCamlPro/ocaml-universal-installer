@@ -13,15 +13,16 @@
 open Stdlib
 
 let (/) = Filename.concat
+let (!$) v = "$" ^ v
 
 let install_script_name = "install.sh"
 let uninstall_script_name = "uninstall.sh"
 
 let install_path = "INSTALL_PATH"
-let install_path_var = "$" ^ install_path
+let install_path_var = !$ install_path
 
 let man_dst = "MAN_DEST"
-let man_dst_var = "$" ^ man_dst
+let man_dst_var = !$ man_dst
 
 let opt = "/opt"
 let opt_v = "$PREFIX"
@@ -221,8 +222,8 @@ let install_manpages ~prefix manpages =
 let install_plugin ~prefix (plugin : Installer_config.plugin) =
   let open Sh_script in
   let var_prefix = app_var_prefix plugin.app_name in
-  let lib_dir = "$" ^ lib_var ~var_prefix in
-  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  let lib_dir = !$ (lib_var ~var_prefix) in
+  let plugins_dir = !$ (plugins_var ~var_prefix) in
   let add_symlink_if_missing ~prefix ~in_ path =
     let dst = in_ / (Filename.basename path) in
     if_ ((Not (Link_exists dst)) && (Not (Dir_exists dst)))
@@ -266,8 +267,8 @@ let call_check_lib path =
 
 let check_plugin_available (plugin : Installer_config.plugin) =
   let var_prefix = app_var_prefix plugin.app_name in
-  let lib_dir = "$" ^ lib_var ~var_prefix in
-  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  let lib_dir = !$ (lib_var ~var_prefix) in
+  let plugins_dir = !$ (plugins_var ~var_prefix) in
   let paths =
     [ lib_dir / (Filename.basename plugin.lib_dir)
     ; plugins_dir / (Filename.basename plugin.plugin_dir)
@@ -413,8 +414,8 @@ let display_plugin (plugin : Installer_config.plugin) =
   let open Sh_script in
   let b = Filename.basename in
   let var_prefix = app_var_prefix plugin.app_name in
-  let lib_dir = "$" ^ lib_var ~var_prefix in
-  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  let lib_dir = !$ (lib_var ~var_prefix) in
+  let plugins_dir = !$ (plugins_var ~var_prefix) in
   [ echof "- %s/%s" plugins_dir (b plugin.plugin_dir)
   ; echof "- %s/%s" lib_dir (b plugin.lib_dir)
   ]
@@ -422,8 +423,8 @@ let display_plugin (plugin : Installer_config.plugin) =
 
 let uninstall_plugin (plugin : Installer_config.plugin) =
   let var_prefix = app_var_prefix plugin.app_name in
-  let lib_dir = "$" ^ lib_var ~var_prefix in
-  let plugins_dir = "$" ^ plugins_var ~var_prefix in
+  let lib_dir = !$ (lib_var ~var_prefix) in
+  let plugins_dir = !$ (plugins_var ~var_prefix) in
   [ remove_symlink ~in_:lib_dir plugin.lib_dir
   ; remove_symlink ~in_:plugins_dir plugin.plugin_dir
   ]
