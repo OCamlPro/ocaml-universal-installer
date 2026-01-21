@@ -25,10 +25,13 @@ let man_dst = "MAN_DEST"
 let man_dst_var = !$ man_dst
 
 let opt = "/opt"
-let opt_v = "$PREFIX"
+let opt_nv = "PREFIX"
+let opt_v = !$ opt_nv
 
 let usrpre = "/usr/local"
-let usrpre_v = "$BINPREFIX"
+let usrpre_user = "$HOME/.local"
+let usrpre_nv = "BINPREFIX"
+let usrpre_v = !$ usrpre_nv
 let usrbin = usrpre_v ^ "/bin"
 let usrshareman = usrpre_v ^ "/share/man"
 let usrman = usrpre_v ^ "/man"
@@ -134,12 +137,50 @@ let check_makeself_installed () =
 
 let check_run_as_root =
   let open Sh_script in
-  if_ Is_not_root
-    [ echof "Not running as root. Aborting."
-    ; echof "Please run again as root."
-    ; exit 1
+  let dirnamev = "dir_name" in
+  let cond_not_writable_and_not_root opt_v =
+    (And (Not (Writable_as_user opt_v), Is_not_root))
+  in
+  let cond_writable_and_not_root opt_v =
+    (And (Writable_as_user opt_v, Is_not_root))
+  in
+  let set_user_usr =
+    assign ~var:usrpre_nv ~value:usrpre_user
+  in
+  let abort opt_v =
+    [
+      echof "Not running as root. Aborting.";
+      echof "Need root permission for %s" opt_v;
+      echof "Please run again as root.";
+      exit 1;
     ]
-    ()
+  in
+  [
+    if_ (Dir_exists opt_v) [
+      if_ (cond_not_writable_and_not_root opt_v)
+        (abort opt_v)
+        ~else_:[
+          if_ (cond_writable_and_not_root opt_v) [
+            set_user_usr;
+          ] ();
+        ] ();
+    ] ~else_:[
+      (* This part id not needed in case of uninstall, we won't create the dir *)
+      assign_eval dirnamev (dirname opt_v);
+      if_ (Not (Dir_exists (!$ dirnamev))) [
+        echof "Parent directory not found: %s" (!$ dirnamev);
+        echof "Aborting.";
+        exit 1;
+      ] ();
+      if_ (cond_not_writable_and_not_root (!$ dirnamev))
+        (abort (!$ dirnamev))
+        ~else_:[
+          if_ (cond_writable_and_not_root (!$ dirnamev)) [
+            set_user_usr;
+          ] ();
+        ] ();
+    ] ();
+  ]
 
 let set_man_dest =
   let open Sh_script in
@@ -293,18 +334,53 @@ let prompt_for_confirmation =
       ]
   ]
 
+let read_arguments =
+  let open Sh_script in
+  let check_arg =
+    if_ (Num_op ("#",Lt,2)) [echof "Option $1 requires an argument"; exit 2] ()
+  in
+  while_ (Num_op ("#",Gt,0)) [
+    case "1" [
+      { pattern = "--prefix";
+        commands = [
+          check_arg;
+          shift;
+          assign ~var:opt_nv ~value:"$1";
+        ]};
+      { pattern = "--help";
+        commands = [
+          call_fun "usage" [];
+          exit 0
+        ]};
+      { pattern = "*";
+        commands = [
+          call_fun "usage" [];
+          exit 0
+        ]};
+    ];
+    shift;
+  ]
+
 let install_script (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
   let version = ic.version in
-  let usage =
+  let def_usage =
     let open Sh_script in
     [
-      Printf.sprintf "Ocaml Universal Installer for %s.%s" package version ;
+      Printf.sprintf "Ocaml Universal Installer for %s.%s"
+        package version;
       "";
       "Options:";
+      Printf.sprintf
+        "    --prefix PREFIX        Install bundle in PREFIX (default is %s)"
+        opt;
+      Printf.sprintf
+        "                           If PREFIX points to a user owned directory \
+         symlinks and manpage will be put un %s, otherwise (root directory) \
+         in %s" usrpre_user usrpre;
     ]
-    |> List.map (fun s -> Echo s)
+    |> List.map (echof "%s")
     |> def_fun "usage"
   in
   let prefix = opt_v / package in
@@ -340,17 +416,29 @@ let install_script (ic : Installer_config.internal) =
     @ List.concat_map check_plugin_available ic.plugins
   in
   let check_permissions =
-    [ check_run_as_root
-    ; mkdir ~permissions:755 [prefix]
+    [
+      create_if_not_found opt_v;
+      mkdir ~permissions:755 [prefix];
+      create_if_not_found usrpre_v;
     ]
   in
-  let setup =
-    assign ~var:"PREFIX" ~value:opt ::
-    assign ~var:"BINPREFIX" ~value:usrpre ::
-    usage ::
-    def_check_available ::
-    def_check_lib ::
+  let assigns = [
+    assign ~var:opt_nv ~value:opt;
+    assign ~var:usrpre_nv ~value:usrpre
+  ]
+  in
+  let deffuns = [
+    def_usage;
+    def_check_available;
+    def_check_lib;
+  ] @
     def_load_conf
+  in
+  let setup =
+    assigns
+    @ deffuns
+    @ [read_arguments]
+    @ check_run_as_root
     @ set_install_vars ~prefix
     @ [ set_man_dest ]
     @ display_install_info
@@ -403,8 +491,9 @@ let install_script (ic : Installer_config.internal) =
             ])
     in
     let install_conf = prefix / install_conf in
-    [ Sh_script.write_file install_conf (lines @ plugin_app_lines)
-    ; Sh_script.chmod 644 [install_conf]
+    [
+      Sh_script.write_file install_conf (lines @ plugin_app_lines);
+      Sh_script.chmod 644 [install_conf];
     ]
   in
   setup
@@ -470,12 +559,21 @@ let uninstall_script (ic : Installer_config.internal) =
       manpages
   in
   let display_plugins = List.concat_map display_plugin ic.plugins in
-  let setup =
-    [ check_run_as_root
-    ; set_man_dest
+  let set_prefixes =
+    let install_dir = "INSTALLDIR" in
+    [
+      assign ~var:usrpre_nv ~value:usrpre;
+      assign_eval install_dir (dirname "$0");
+      assign_eval opt_nv (dirname (!$ install_dir));
     ]
-    @ load_install_conf @
-    [ echof "About to uninstall %s." package
+  in
+  let setup =
+    set_prefixes
+    @ load_install_conf
+    @ check_run_as_root
+    @ [set_man_dest]
+    @ [
+      echof "About to uninstall %s." package
     ; echof "The following files and folders will be removed from the system:"
     ; echof "- %s" prefix
     ]
@@ -509,7 +607,6 @@ let uninstall_script (ic : Installer_config.internal) =
   in
   let remove_plugins = List.concat_map uninstall_plugin ic.plugins in
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
-  assign ~var:"BINPREFIX" ~value:usrpre::
   setup
   @ prompt_for_confirmation
   @ remove_install_folder

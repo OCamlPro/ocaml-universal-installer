@@ -87,6 +87,8 @@ let%expect_test "install_script: simple" =
       echo "Ocaml Universal Installer for aaa.x.y.z"
       echo ""
       echo "Options:"
+      echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -100,6 +102,56 @@ let%expect_test "install_script: simple" =
         exit 1
       fi
     }
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --prefix)
+          if [ $# -lt 2 ]; then
+            echo "Option $1 requires an argument"
+            exit 2
+          fi
+          shift
+          PREFIX="$1"
+        ;;
+        --help)
+          usage
+          exit 0
+        ;;
+        *)
+          usage
+          exit 0
+        ;;
+      esac
+      shift
+    done
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    fi
     INSTALL_PATH="$PREFIX/aaa"
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -129,12 +181,13 @@ let%expect_test "install_script: simple" =
         exit 1
       ;;
     esac
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    if ! [ -d "$PREFIX" ]; then
+      mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/aaa"
+    if ! [ -d "$BINPREFIX" ]; then
+      mkdir -p -m 755 "$BINPREFIX"
+    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/aaa" \;
     if ! [ -d "$BINPREFIX/bin" ]; then
       mkdir -p -m 755 "$BINPREFIX/bin"
@@ -176,6 +229,8 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo "Ocaml Universal Installer for t-name.t.version"
       echo ""
       echo "Options:"
+      echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -189,6 +244,56 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
         exit 1
       fi
     }
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --prefix)
+          if [ $# -lt 2 ]; then
+            echo "Option $1 requires an argument"
+            exit 2
+          fi
+          shift
+          PREFIX="$1"
+        ;;
+        --help)
+          usage
+          exit 0
+        ;;
+        *)
+          usage
+          exit 0
+        ;;
+      esac
+      shift
+    done
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    fi
     INSTALL_PATH="$PREFIX/t-name"
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -208,12 +313,13 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
         exit 1
       ;;
     esac
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    if ! [ -d "$PREFIX" ]; then
+      mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/t-name"
+    if ! [ -d "$BINPREFIX" ]; then
+      mkdir -p -m 755 "$BINPREFIX"
+    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
     {
       printf '%s\n' "version=t.version"
@@ -258,6 +364,8 @@ let%expect_test "install_script: install plugins" =
       echo "Ocaml Universal Installer for t-name.t.version"
       echo ""
       echo "Options:"
+      echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -301,6 +409,56 @@ let%expect_test "install_script: install plugins" =
       done < "$conf"
       return 0
     }
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --prefix)
+          if [ $# -lt 2 ]; then
+            echo "Option $1 requires an argument"
+            exit 2
+          fi
+          shift
+          PREFIX="$1"
+        ;;
+        --help)
+          usage
+          exit 0
+        ;;
+        *)
+          usage
+          exit 0
+        ;;
+      esac
+      shift
+    done
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    fi
     INSTALL_PATH="$PREFIX/t-name"
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -341,12 +499,13 @@ let%expect_test "install_script: install plugins" =
         exit 1
       ;;
     esac
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    if ! [ -d "$PREFIX" ]; then
+      mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/t-name"
+    if ! [ -d "$BINPREFIX" ]; then
+      mkdir -p -m 755 "$BINPREFIX"
+    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
     echo "Installing plugin app-a-name to app-a..."
     ln -s "$PREFIX/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
@@ -404,16 +563,8 @@ let%expect_test "uninstall_script: uninstall plugins" =
     #!/usr/bin/env sh
     set -e
     BINPREFIX="/usr/local"
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
-    fi
-    if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
-    else
-      MAN_DEST="$BINPREFIX/man"
-    fi
+    INSTALLDIR="$(dirname "$0")"
+    PREFIX="$(dirname "$INSTALLDIR")"
     load_conf() {
       var_prefix="$2"
       conf="$1"
@@ -445,6 +596,40 @@ let%expect_test "uninstall_script: uninstall plugins" =
       return 0
     }
     load_conf $PREFIX/t-name/install.conf
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    fi
+    if [ -d "$BINPREFIX/share/man" ]; then
+      MAN_DEST="$BINPREFIX/share/man"
+    else
+      MAN_DEST="$BINPREFIX/man"
+    fi
     echo "About to uninstall t-name."
     echo "The following files and folders will be removed from the system:"
     echo "- $PREFIX/t-name"
@@ -514,10 +699,36 @@ let%expect_test "uninstall_script: simple" =
     #!/usr/bin/env sh
     set -e
     BINPREFIX="/usr/local"
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    INSTALLDIR="$(dirname "$0")"
+    PREFIX="$(dirname "$INSTALLDIR")"
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
     fi
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -583,6 +794,8 @@ let%expect_test "install_script: binary in sub folder" =
       echo "Ocaml Universal Installer for test-name.test.version"
       echo ""
       echo "Options:"
+      echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -596,6 +809,56 @@ let%expect_test "install_script: binary in sub folder" =
         exit 1
       fi
     }
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --prefix)
+          if [ $# -lt 2 ]; then
+            echo "Option $1 requires an argument"
+            exit 2
+          fi
+          shift
+          PREFIX="$1"
+        ;;
+        --help)
+          usage
+          exit 0
+        ;;
+        *)
+          usage
+          exit 0
+        ;;
+      esac
+      shift
+    done
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    fi
     INSTALL_PATH="$PREFIX/test-name"
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -617,12 +880,13 @@ let%expect_test "install_script: binary in sub folder" =
         exit 1
       ;;
     esac
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    if ! [ -d "$PREFIX" ]; then
+      mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
+    if ! [ -d "$BINPREFIX" ]; then
+      mkdir -p -m 755 "$BINPREFIX"
+    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
     if ! [ -d "$BINPREFIX/bin" ]; then
       mkdir -p -m 755 "$BINPREFIX/bin"
@@ -647,10 +911,36 @@ let%expect_test "uninstall_script: binary in sub folder" =
     #!/usr/bin/env sh
     set -e
     BINPREFIX="/usr/local"
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    INSTALLDIR="$(dirname "$0")"
+    PREFIX="$(dirname "$INSTALLDIR")"
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
     fi
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -699,6 +989,8 @@ let%expect_test "install_script: set environment for binaries" =
       echo "Ocaml Universal Installer for test-name.test.version"
       echo ""
       echo "Options:"
+      echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -712,6 +1004,56 @@ let%expect_test "install_script: set environment for binaries" =
         exit 1
       fi
     }
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --prefix)
+          if [ $# -lt 2 ]; then
+            echo "Option $1 requires an argument"
+            exit 2
+          fi
+          shift
+          PREFIX="$1"
+        ;;
+        --help)
+          usage
+          exit 0
+        ;;
+        *)
+          usage
+          exit 0
+        ;;
+      esac
+      shift
+    done
+    if [ -d "$PREFIX" ]; then
+      if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $PREFIX"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    else
+      dir_name="$(dirname "$PREFIX")"
+      if ! [ -d "$dir_name" ]; then
+        echo "Parent directory not found: $dir_name"
+        echo "Aborting."
+        exit 1
+      fi
+      if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+        echo "Not running as root. Aborting."
+        echo "Need root permission for $dir_name"
+        echo "Please run again as root."
+        exit 1
+      else
+        if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
+          BINPREFIX="$HOME/.local"
+        fi
+      fi
+    fi
     INSTALL_PATH="$PREFIX/test-name"
     if [ -d "$BINPREFIX/share/man" ]; then
       MAN_DEST="$BINPREFIX/share/man"
@@ -733,12 +1075,13 @@ let%expect_test "install_script: set environment for binaries" =
         exit 1
       ;;
     esac
-    if [ "$(id -u)" -ne 0 ]; then
-      echo "Not running as root. Aborting."
-      echo "Please run again as root."
-      exit 1
+    if ! [ -d "$PREFIX" ]; then
+      mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
+    if ! [ -d "$BINPREFIX" ]; then
+      mkdir -p -m 755 "$BINPREFIX"
+    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
     if ! [ -d "$BINPREFIX/bin" ]; then
       mkdir -p -m 755 "$BINPREFIX/bin"
