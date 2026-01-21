@@ -277,12 +277,15 @@ let install_plugin ~prefix (plugin : Installer_config.plugin) =
        (fun dyn_dep -> add_symlink_if_missing ~prefix dyn_dep ~in_:lib_dir)
        plugin.dyn_deps)
 
-let def_check_available =
+let def_check_available prefix =
   let open Sh_script in
   def_fun check_available
     [ if_ (Exists "$1")
-        [ print_errf "$1 already exists on the system! Aborting"
-        ; exit 1
+        [
+          print_errf "$1 already exists on the system! Aborting";
+          print_errf "Use %s/%s to uninstall it"
+            prefix uninstall_script_name;
+          exit 1
         ]
         ()
     ]
@@ -421,7 +424,7 @@ let install_script (ic : Installer_config.internal) =
   in
   let deffuns = [
     def_usage;
-    def_check_available;
+    def_check_available prefix;
     def_check_lib;
   ] @
     def_load_conf
