@@ -12,14 +12,25 @@ type find_type =
   | Files
   | Dirs
 
+type numerical_op =
+  | Gt
+  | Lt
+  | Eq
+
+type string_op =
+ | Not_empty of string
+
 type condition =
   | Exists of string
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
   | Is_not_root
+  | Writable_as_user of string
   | And of condition * condition
   | Not of condition
+  | Num_op of string * numerical_op * int
+  | Str_op of string_op
 
 val (&&) : condition -> condition -> condition
 

@@ -12,14 +12,25 @@ type find_type =
   | Files
   | Dirs
 
+type numerical_op =
+  | Gt
+  | Lt
+  | Eq
+
+type string_op =
+ | Not_empty of string
+
 type condition =
   | Exists of string
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
   | Is_not_root
+  | Writable_as_user of string
   | And of condition * condition
   | Not of condition
+  | Num_op of string * numerical_op * int
+  | Str_op of string_op
 
 let (&&) c1 c2 = And (c1, c2)
 
@@ -95,12 +106,21 @@ let pp_sh_find_type fmtr ft =
   | Files -> Format.fprintf fmtr "f"
   | Dirs -> Format.fprintf fmtr "d"
 
+let pp_num_op = function
+  | Gt -> "gt"
+  | Lt -> "lt"
+  | Eq -> "eq"
+
+let pp_str_op = function
+| Not_empty s -> Printf.sprintf "-n \"%s\"" s
+
 let rec pp_sh_condition fmtr condition =
   match condition with
   | Exists s -> Format.fprintf fmtr "[ -e %S ]" s
   | Dir_exists s -> Format.fprintf fmtr "[ -d %S ]" s
   | Link_exists s -> Format.fprintf fmtr "[ -L %S ]" s
   | File_exists s -> Format.fprintf fmtr "[ -f %S ]" s
+  | Writable_as_user s -> Format.fprintf fmtr "[ -w %S ]" s
   | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
   | And (c1, c2) ->
     Format.fprintf fmtr "%a && %a"
@@ -108,6 +128,10 @@ let rec pp_sh_condition fmtr condition =
       pp_sh_condition c2
   | Not (And _ as c) -> Format.fprintf fmtr "! (%a)" pp_sh_condition c
   | Not c -> Format.fprintf fmtr "! %a" pp_sh_condition c
+  | Num_op (var, op, value) ->
+    Format.fprintf fmtr "[ $%s -%s %d ]" var (pp_num_op op) value
+  | Str_op s ->
+    Format.fprintf fmtr "[ %s ]" (pp_str_op s)
 
 let rec pp_sh_command ?(newline=true) ~indent fmtr command =
   let indent_str = String.make indent ' ' in
