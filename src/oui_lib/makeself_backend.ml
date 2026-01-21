@@ -168,6 +168,10 @@ let set_install_vars ~prefix =
   let open Sh_script in
   [ assign ~var:install_path ~value:prefix ]
 
+let create_if_not_found dir =
+  let open Sh_script in
+  if_ (Not (Dir_exists dir)) [mkdir ~permissions:755 [dir]] ()
+
 let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
   let open Sh_script in
   let bundle_path = binary.path in
@@ -194,6 +198,7 @@ let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
       ; chmod 755 [installed_binary]
       ]
   in
+  create_if_not_found in_ ::
   echof "Adding %s to %s" base in_ :: install_cmds
 
 let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =

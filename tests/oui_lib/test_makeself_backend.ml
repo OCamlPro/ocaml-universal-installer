@@ -136,8 +136,14 @@ let%expect_test "install_script: simple" =
     fi
     mkdir -p -m 755 "$PREFIX/aaa"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/aaa" \;
+    if ! [ -d "$BINPREFIX/bin" ]; then
+      mkdir -p -m 755 "$BINPREFIX/bin"
+    fi
     echo "Adding aaa-command to $BINPREFIX/bin"
     ln -s "$PREFIX/aaa/aaa-command" "$BINPREFIX/bin/aaa-command"
+    if ! [ -d "$BINPREFIX/bin" ]; then
+      mkdir -p -m 755 "$BINPREFIX/bin"
+    fi
     echo "Adding aaa-utility to $BINPREFIX/bin"
     ln -s "$PREFIX/aaa/aaa-utility" "$BINPREFIX/bin/aaa-utility"
     echo "Installing manpages to $MAN_DEST..."
@@ -618,6 +624,9 @@ let%expect_test "install_script: binary in sub folder" =
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
+    if ! [ -d "$BINPREFIX/bin" ]; then
+      mkdir -p -m 755 "$BINPREFIX/bin"
+    fi
     echo "Adding do to $BINPREFIX/bin"
     ln -s "$PREFIX/test-name/bin/do" "$BINPREFIX/bin/do"
     {
@@ -731,6 +740,9 @@ let%expect_test "install_script: set environment for binaries" =
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
+    if ! [ -d "$BINPREFIX/bin" ]; then
+      mkdir -p -m 755 "$BINPREFIX/bin"
+    fi
     echo "Adding app to $BINPREFIX/bin"
     {
       printf '%s\n' "#!/usr/bin/env sh"
