@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -74,6 +74,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          opam pin --no-action add oui.dev .
           opam install conf-mingw-w64-gcc-x86_64 conf-mingw-w64-gcc-i686 conf-mingw-w64-g++-x86_64 conf-mingw-w64-g++-i686 mingw-w64-shims
           opam install . --deps-only -t
           opam clean
