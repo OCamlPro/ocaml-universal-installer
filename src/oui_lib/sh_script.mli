@@ -12,14 +12,25 @@ type find_type =
   | Files
   | Dirs
 
+type numerical_op =
+  | Gt
+  | Lt
+  | Eq
+
+type string_op =
+ | Not_empty of string
+
 type condition =
   | Exists of string
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
   | Is_not_root
+  | Writable_as_user of string
   | And of condition * condition
   | Not of condition
+  | Num_op of string * numerical_op * int
+  | Str_op of string_op
 
 val (&&) : condition -> condition -> condition
 
@@ -30,7 +41,11 @@ type command =
   | Echo of string
   | Print_err of string
   | Eval of string
+  | Eval_inplace of command
+  | Shift
   | Assign of {var: string; value: string}
+  | Assign_eval of {var: string; command: command}
+  | Dirname of string
   | Mkdir of {permissions: int option; dirs: string list}
   | Chmod of {permissions: int; files: string list}
   | Cp of {src: string; dst: string}
@@ -42,7 +57,8 @@ type command =
   | If of {condition : condition; then_ : command list; else_: command list}
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
-  | Write_file of {file: string; lines : string list}
+  | While of {condition: condition; while_: command list}
+  | Write_file of {file: string; lines : string list; append:bool}
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
@@ -67,8 +83,17 @@ val exit : int -> command
 (** [eval s] is ["eval \"s\""] *)
 val eval : string -> command
 
+(** [shift] is [shift] *)
+val shift : command
+
 (** [assign ~var:"VAR" ~value:"value"] is ["VAR=\"value\""] *)
 val assign : var: string -> value: string -> command
+
+(** [assign_eval var command] is ["VAR=\"$(command)\""] *)
+val assign_eval : string -> command -> command
+
+(** [dirname path] is ["dirname \"path\""] *)
+val dirname : string -> command
 
 (** [echo fmt args] is ["echo \"s\""] where [s] is the expanded format
     string. *)
@@ -119,9 +144,17 @@ val prompt : question: string -> varname: string -> command
 
 val case : string -> case list -> command
 
+(** [while condition commands] is
+    ["while [ condition ]; do
+      commands
+    done"] *)
+val while_ : condition -> command list -> command
+
 (** [write_file file lines] is
-    ["{ printf \"line1\n\"; printf \"line2\n\"; ... } > file"] *)
-val write_file : string -> string list -> command
+    ["{ printf \"line1\n\"; printf \"line2\n\"; ... } > file"].
+    If append is set to true (default is false), append to file
+    using ">>".*)
+val write_file : ?append:bool -> string -> string list -> command
 
 (** [read_file ~line_var file process_line] is
     ["while IFS= read -r line_var || [ -n $line_var]; do \
