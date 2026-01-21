@@ -88,11 +88,12 @@ let%expect_test "install_script: simple" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        printf '%s\n' "Use $PREFIX/aaa/uninstall.sh to uninstall it" >&2
         exit 1
       fi
     }
@@ -118,7 +119,7 @@ let%expect_test "install_script: simple" =
         ;;
         *)
           usage
-          exit 0
+          exit 3
         ;;
       esac
       shift
@@ -127,7 +128,7 @@ let%expect_test "install_script: simple" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -144,7 +145,7 @@ let%expect_test "install_script: simple" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -154,24 +155,24 @@ let%expect_test "install_script: simple" =
     fi
     INSTALL_PATH="$PREFIX/aaa"
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "Installing aaa.x.y.z to $PREFIX/aaa"
     echo "The following files and directories will be written to the system:"
     echo "- $PREFIX/aaa"
     echo "- $BINPREFIX/bin/aaa-command"
     echo "- $BINPREFIX/bin/aaa-utility"
-    echo "- $MAN_DEST/man1/aaa-command.1"
-    echo "- $MAN_DEST/man1/aaa-utility.1"
-    echo "- $MAN_DEST/man5/aaa-file.1"
+    echo "- $MANPREFIX/man1/aaa-command.1"
+    echo "- $MANPREFIX/man1/aaa-utility.1"
+    echo "- $MANPREFIX/man5/aaa-file.1"
     check_available "$PREFIX/aaa"
     check_available "$BINPREFIX/bin/aaa-command"
     check_available "$BINPREFIX/bin/aaa-utility"
-    check_available "$MAN_DEST/man1/aaa-command.1"
-    check_available "$MAN_DEST/man1/aaa-utility.1"
-    check_available "$MAN_DEST/man5/aaa-file.1"
+    check_available "$MANPREFIX/man1/aaa-command.1"
+    check_available "$MANPREFIX/man1/aaa-utility.1"
+    check_available "$MANPREFIX/man5/aaa-file.1"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -185,26 +186,20 @@ let%expect_test "install_script: simple" =
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/aaa"
-    if ! [ -d "$BINPREFIX" ]; then
-      mkdir -p -m 755 "$BINPREFIX"
-    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/aaa" \;
     if ! [ -d "$BINPREFIX/bin" ]; then
       mkdir -p -m 755 "$BINPREFIX/bin"
     fi
     echo "Adding aaa-command to $BINPREFIX/bin"
     ln -s "$PREFIX/aaa/aaa-command" "$BINPREFIX/bin/aaa-command"
-    if ! [ -d "$BINPREFIX/bin" ]; then
-      mkdir -p -m 755 "$BINPREFIX/bin"
-    fi
     echo "Adding aaa-utility to $BINPREFIX/bin"
     ln -s "$PREFIX/aaa/aaa-utility" "$BINPREFIX/bin/aaa-utility"
-    echo "Installing manpages to $MAN_DEST..."
-    mkdir -p -m 755 "$MAN_DEST/man1"
-    ln -s "$PREFIX/aaa/man/man1/aaa-command.1" "$MAN_DEST/man1/aaa-command.1"
-    ln -s "$PREFIX/aaa/man/man1/aaa-utility.1" "$MAN_DEST/man1/aaa-utility.1"
-    mkdir -p -m 755 "$MAN_DEST/man5"
-    ln -s "$PREFIX/aaa/man/man5/aaa-file.1" "$MAN_DEST/man5/aaa-file.1"
+    echo "Installing manpages to $MANPREFIX..."
+    mkdir -p -m 755 "$MANPREFIX/man1"
+    ln -s "$PREFIX/aaa/man/man1/aaa-command.1" "$MANPREFIX/man1/aaa-command.1"
+    ln -s "$PREFIX/aaa/man/man1/aaa-utility.1" "$MANPREFIX/man1/aaa-utility.1"
+    mkdir -p -m 755 "$MANPREFIX/man5"
+    ln -s "$PREFIX/aaa/man/man5/aaa-file.1" "$MANPREFIX/man5/aaa-file.1"
     {
       printf '%s\n' "version=x.y.z"
     } > "$PREFIX/aaa/install.conf"
@@ -230,11 +225,12 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        printf '%s\n' "Use $PREFIX/t-name/uninstall.sh to uninstall it" >&2
         exit 1
       fi
     }
@@ -260,7 +256,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
         ;;
         *)
           usage
-          exit 0
+          exit 3
         ;;
       esac
       shift
@@ -269,7 +265,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -286,7 +282,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -296,9 +292,9 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     fi
     INSTALL_PATH="$PREFIX/t-name"
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "Installing t-name.t.version to $PREFIX/t-name"
     echo "The following files and directories will be written to the system:"
@@ -317,9 +313,6 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/t-name"
-    if ! [ -d "$BINPREFIX" ]; then
-      mkdir -p -m 755 "$BINPREFIX"
-    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
     {
       printf '%s\n' "version=t.version"
@@ -365,11 +358,12 @@ let%expect_test "install_script: install plugins" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        printf '%s\n' "Use $PREFIX/t-name/uninstall.sh to uninstall it" >&2
         exit 1
       fi
     }
@@ -425,7 +419,7 @@ let%expect_test "install_script: install plugins" =
         ;;
         *)
           usage
-          exit 0
+          exit 3
         ;;
       esac
       shift
@@ -434,7 +428,7 @@ let%expect_test "install_script: install plugins" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -451,7 +445,7 @@ let%expect_test "install_script: install plugins" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -461,9 +455,9 @@ let%expect_test "install_script: install plugins" =
     fi
     INSTALL_PATH="$PREFIX/t-name"
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "Installing t-name.t.version to $PREFIX/t-name"
     echo "The following files and directories will be written to the system:"
@@ -503,9 +497,6 @@ let%expect_test "install_script: install plugins" =
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/t-name"
-    if ! [ -d "$BINPREFIX" ]; then
-      mkdir -p -m 755 "$BINPREFIX"
-    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
     echo "Installing plugin app-a-name to app-a..."
     ln -s "$PREFIX/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
@@ -600,7 +591,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -617,7 +608,7 @@ let%expect_test "uninstall_script: uninstall plugins" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -626,9 +617,9 @@ let%expect_test "uninstall_script: uninstall plugins" =
       fi
     fi
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "About to uninstall t-name."
     echo "The following files and folders will be removed from the system:"
@@ -705,7 +696,7 @@ let%expect_test "uninstall_script: simple" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -722,7 +713,7 @@ let%expect_test "uninstall_script: simple" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -731,18 +722,18 @@ let%expect_test "uninstall_script: simple" =
       fi
     fi
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "About to uninstall aaa."
     echo "The following files and folders will be removed from the system:"
     echo "- $PREFIX/aaa"
     echo "- $BINPREFIX/bin/aaa-command"
     echo "- $BINPREFIX/bin/aaa-utility"
-    echo "- $MAN_DEST/man1/aaa-command.1"
-    echo "- $MAN_DEST/man1/aaa-utility.1"
-    echo "- $MAN_DEST/man5/aaa-file.1"
+    echo "- $MANPREFIX/man1/aaa-command.1"
+    echo "- $MANPREFIX/man1/aaa-utility.1"
+    echo "- $MANPREFIX/man5/aaa-file.1"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -764,17 +755,17 @@ let%expect_test "uninstall_script: simple" =
       echo "Removing symlink $BINPREFIX/bin/aaa-utility..."
       rm -f "$BINPREFIX/bin/aaa-utility"
     fi
-    if [ -L "$MAN_DEST/man1/aaa-command.1" ]; then
-      echo "Removing manpage $MAN_DEST/man1/aaa-command.1..."
-      rm -f "$MAN_DEST/man1/aaa-command.1"
+    if [ -L "$MANPREFIX/man1/aaa-command.1" ]; then
+      echo "Removing manpage $MANPREFIX/man1/aaa-command.1..."
+      rm -f "$MANPREFIX/man1/aaa-command.1"
     fi
-    if [ -L "$MAN_DEST/man1/aaa-utility.1" ]; then
-      echo "Removing manpage $MAN_DEST/man1/aaa-utility.1..."
-      rm -f "$MAN_DEST/man1/aaa-utility.1"
+    if [ -L "$MANPREFIX/man1/aaa-utility.1" ]; then
+      echo "Removing manpage $MANPREFIX/man1/aaa-utility.1..."
+      rm -f "$MANPREFIX/man1/aaa-utility.1"
     fi
-    if [ -L "$MAN_DEST/man5/aaa-file.1" ]; then
-      echo "Removing manpage $MAN_DEST/man5/aaa-file.1..."
-      rm -f "$MAN_DEST/man5/aaa-file.1"
+    if [ -L "$MANPREFIX/man5/aaa-file.1" ]; then
+      echo "Removing manpage $MANPREFIX/man5/aaa-file.1..."
+      rm -f "$MANPREFIX/man5/aaa-file.1"
     fi
     echo "Uninstallation complete!"
     |}]
@@ -795,11 +786,12 @@ let%expect_test "install_script: binary in sub folder" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        printf '%s\n' "Use $PREFIX/test-name/uninstall.sh to uninstall it" >&2
         exit 1
       fi
     }
@@ -825,7 +817,7 @@ let%expect_test "install_script: binary in sub folder" =
         ;;
         *)
           usage
-          exit 0
+          exit 3
         ;;
       esac
       shift
@@ -834,7 +826,7 @@ let%expect_test "install_script: binary in sub folder" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -851,7 +843,7 @@ let%expect_test "install_script: binary in sub folder" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -861,9 +853,9 @@ let%expect_test "install_script: binary in sub folder" =
     fi
     INSTALL_PATH="$PREFIX/test-name"
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "Installing test-name.test.version to $PREFIX/test-name"
     echo "The following files and directories will be written to the system:"
@@ -884,9 +876,6 @@ let%expect_test "install_script: binary in sub folder" =
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
-    if ! [ -d "$BINPREFIX" ]; then
-      mkdir -p -m 755 "$BINPREFIX"
-    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
     if ! [ -d "$BINPREFIX/bin" ]; then
       mkdir -p -m 755 "$BINPREFIX/bin"
@@ -917,7 +906,7 @@ let%expect_test "uninstall_script: binary in sub folder" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -934,7 +923,7 @@ let%expect_test "uninstall_script: binary in sub folder" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -943,9 +932,9 @@ let%expect_test "uninstall_script: binary in sub folder" =
       fi
     fi
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "About to uninstall test-name."
     echo "The following files and folders will be removed from the system:"
@@ -990,11 +979,12 @@ let%expect_test "install_script: set environment for binaries" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put un $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
     }
     check_available() {
       if [ -e "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
+        printf '%s\n' "Use $PREFIX/test-name/uninstall.sh to uninstall it" >&2
         exit 1
       fi
     }
@@ -1020,7 +1010,7 @@ let%expect_test "install_script: set environment for binaries" =
         ;;
         *)
           usage
-          exit 0
+          exit 3
         ;;
       esac
       shift
@@ -1029,7 +1019,7 @@ let%expect_test "install_script: set environment for binaries" =
       if ! [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $PREFIX"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$PREFIX" ] && [ "$(id -u)" -ne 0 ]; then
@@ -1046,7 +1036,7 @@ let%expect_test "install_script: set environment for binaries" =
       if ! [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
         echo "Not running as root. Aborting."
         echo "Need root permission for $dir_name"
-        echo "Please run again as root."
+        echo "Please run again as root or use the --prefix option to set a custom install path"
         exit 1
       else
         if [ -w "$dir_name" ] && [ "$(id -u)" -ne 0 ]; then
@@ -1056,9 +1046,9 @@ let%expect_test "install_script: set environment for binaries" =
     fi
     INSTALL_PATH="$PREFIX/test-name"
     if [ -d "$BINPREFIX/share/man" ]; then
-      MAN_DEST="$BINPREFIX/share/man"
+      MANPREFIX="$BINPREFIX/share/man"
     else
-      MAN_DEST="$BINPREFIX/man"
+      MANPREFIX="$BINPREFIX/man"
     fi
     echo "Installing test-name.test.version to $PREFIX/test-name"
     echo "The following files and directories will be written to the system:"
@@ -1079,9 +1069,6 @@ let%expect_test "install_script: set environment for binaries" =
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
-    if ! [ -d "$BINPREFIX" ]; then
-      mkdir -p -m 755 "$BINPREFIX"
-    fi
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
     if ! [ -d "$BINPREFIX/bin" ]; then
       mkdir -p -m 755 "$BINPREFIX/bin"
