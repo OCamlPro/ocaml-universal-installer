@@ -71,7 +71,7 @@ let rva_to_address sect_hdr rva =
   | None ->
       0
 
-let get_dlls ic =
+let get_dlls_ic ic =
 
   let mz_header = Bytes.create mz_header_size in
   begin
@@ -167,10 +167,10 @@ let get_dlls ic =
   let names = aux 0 [] in
   names
 
-let get_dlls binary =
+let get_dlls_t binary =
   let ic = open_in_bin binary in
   let dlls =
-    try get_dlls ic
+    try get_dlls_ic ic
     with
     | Exit | InvalidHeader _ -> []
     | e -> close_in ic; raise e
@@ -206,7 +206,7 @@ external resolve_dll : string -> string option = "ml_resolve_dll"
 
 let get_dlls binary =
   let rec aux dlls binary =
-    let binary_dlls = get_dlls binary in
+    let binary_dlls = get_dlls_t binary in
     let new_dlls =
       List.filter_map (fun dll ->
           match resolve_dll dll with
