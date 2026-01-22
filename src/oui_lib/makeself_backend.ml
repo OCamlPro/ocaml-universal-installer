@@ -524,7 +524,13 @@ let create_installer
       "--numeric-owner";
       "--owner=0";
       "--group=0";
-      "--sort=name";
+      (* "--sort=name"; *)
+      (* --sort is not defined for bsdtar, which can be used by makeself
+         tar selection:
+         > TAR=`exec <&- 2>&-; which gtar || command -v gtar || type gtar`
+         > test -x "$TAR" || TAR=`exec <&- 2>&-; which bsdtar || command -v bsdtar || type bsdtar`
+         > test -x "$TAR" || TAR=tar
+      *)
     ]
   in
   let args : System.makeself =
