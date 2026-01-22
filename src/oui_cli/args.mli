@@ -54,3 +54,6 @@ val verbose : int Cmdliner.Term.t
 
 (** Debug level for opam lib *)
 val debug : int Cmdliner.Term.t
+
+(** Files timestamps to use for installed files *)
+val mtime : string option Cmdliner.Term.t

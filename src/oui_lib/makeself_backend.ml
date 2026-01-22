@@ -506,7 +506,20 @@ let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
   if binary.deps then
     add_sos_to_bundle ~bundle_dir binary
 
-let create_installer
+let update_mtime mtime bundle_dir =
+  let files =
+    OpamFilename.rec_files bundle_dir
+    |> List.map OpamFilename.to_string
+  in
+  let dirs =
+    OpamFilename.rec_dirs bundle_dir
+    |> List.map OpamFilename.Dir.to_string
+  in
+  System.call_list
+    (List.map (fun file -> System.Touch, {System.mtime; file})
+       (dirs @ files))
+
+let create_installer ?mtime
     ~(installer_config : Installer_config.internal) ~bundle_dir installer =
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
@@ -519,6 +532,7 @@ let create_installer
   Sh_script.save uninstall_script uninstall_sh;
   System.call_unit Chmod (755, install_sh);
   System.call_unit Chmod (755, uninstall_sh);
+  Option.iter (fun mtime -> update_mtime mtime bundle_dir) mtime;
   let tar_extra =
     [
       "--numeric-owner";
