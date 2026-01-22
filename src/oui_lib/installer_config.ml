@@ -202,7 +202,7 @@ let check_exec ~bundle_dir rel_path =
   let field = "exec_files" in
   let path = file_in ~bundle_dir rel_path in
   let path_str = OpamFilename.to_string path in
-  let* () = check_file ~field:"exec_files" path in
+  let* () = check_file ~field path in
   let stats = Unix.stat path_str in
   let perm = stats.st_perm in
   guard (can_exec perm)
