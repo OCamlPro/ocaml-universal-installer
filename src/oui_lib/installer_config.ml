@@ -185,7 +185,8 @@ let check_unique_id unique_id =
   guard (String.length unique_id > 0 &&
          valid_first_char unique_id.[0] &&
          String.for_all valid_char unique_id)
-    "unique_id: '%s' has invalid characters (must contain only alphanumeric, underscore or dot, must start with alphabetic or underscore)" unique_id
+    "unique_id: '%s' has invalid characters (must contain only alphanumeric, \
+     underscore or dot, must start with alphabetic or underscore)" unique_id
 
 let check_dir ~field dir =
   guard (OpamFilename.exists_dir dir)
