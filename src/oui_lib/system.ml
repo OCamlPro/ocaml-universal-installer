@@ -273,3 +273,13 @@ let resolve_path (type a) env
 
 let resolve_file_path env path =
   resolve_path env (module FILE_IMPL) path
+let maybe_exe =
+  match OpamStd.Sys.os () with
+  | OpamStd.Sys.Win32
+  | OpamStd.Sys.Cygwin ->
+    fun ~dir ~path ->
+      let path_exe = path ^ ".exe" in
+      let fexe = OpamFilename.Op.(dir // path_exe) in
+      if OpamFilename.exists fexe then path_exe else path
+  | _ ->
+    fun ~dir:_ ~path -> path

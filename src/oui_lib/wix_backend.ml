@@ -25,6 +25,7 @@ let check_wix_installed () =
       (Format.sprintf "Wix binaries couldn't be found.")
 
 let add_dlls_to_bundle ~bundle_dir binary =
+  let binary = System.maybe_exe ~dir:bundle_dir ~path:binary in
   let dlls = Win_ldd.get_dlls (bundle_dir // binary) in
   match dlls with
   | [] -> ()
