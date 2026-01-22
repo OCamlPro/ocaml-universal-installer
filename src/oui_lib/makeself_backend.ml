@@ -86,7 +86,7 @@ let app_var_prefix app_name =
        | _ -> '_')
     app_name) ^ "_"
 
-let load_conf ?var_prefix file =
+let call_load_conf ?var_prefix file =
   let var_prefix_arg = Option.to_list var_prefix in
   Sh_script.call_fun load_conf (file::var_prefix_arg)
 
@@ -102,7 +102,7 @@ let find_and_load_conf app_name =
   let var_prefix = app_var_prefix app_name in
   let conf = app_dir / install_conf in
   if_ ((Dir_exists app_dir) && (File_exists conf))
-    [load_conf ~var_prefix conf]
+    [call_load_conf ~var_prefix conf]
     ~else_:
       [ print_errf "Could not locate %s install path" app_name
       ; exit 1
@@ -246,9 +246,9 @@ let def_check_lib =
         ()
     ]
 
-let check_available path = Sh_script.call_fun check_available [path]
+let call_check_available path = Sh_script.call_fun check_available [path]
 
-let check_lib path = Sh_script.call_fun check_lib [path]
+let call_check_lib path = Sh_script.call_fun check_lib [path]
 
 let check_plugin_available (plugin : Installer_config.plugin) =
   let var_prefix = app_var_prefix plugin.app_name in
@@ -259,9 +259,9 @@ let check_plugin_available (plugin : Installer_config.plugin) =
     ; plugins_dir / (Filename.basename plugin.plugin_dir)
     ]
   in
-  List.map check_available paths
+  List.map call_check_available paths
   @ List.map
-    (fun x -> check_lib (lib_dir / (Filename.basename x)))
+    (fun x -> call_check_lib (lib_dir / (Filename.basename x)))
     plugin.dyn_deps
 
 let prompt_for_confirmation =
@@ -306,7 +306,7 @@ let install_script (ic : Installer_config.internal) =
   in
   let load_plugin_app_vars = List.map find_and_load_conf plugin_apps in
   let check_all_available =
-    List.map check_available all_files
+    List.map call_check_available all_files
     @ List.concat_map check_plugin_available ic.plugins
   in
   let check_permissions =
@@ -414,7 +414,7 @@ let uninstall_script (ic : Installer_config.internal) =
     | [] -> []
     | _ ->
       [ def_load_conf
-      ; load_conf (prefix / install_conf)
+      ; call_load_conf (prefix / install_conf)
       ]
   in
   let display_symlinks =
