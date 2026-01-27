@@ -10,7 +10,7 @@
 
 open Oui
 
-let run keep_wxs backend mtime installer_config bundle_dir output
+let run keep_wxs backend mtime tar_extra installer_config bundle_dir output
   verbose_level debug_level =
   OpamCoreConfig.init ~verbose_level ~debug_level ();
   let res =
@@ -35,7 +35,8 @@ let run keep_wxs backend mtime installer_config bundle_dir output
          | Wix ->
            Wix_backend.create_installer ~keep_wxs ~tmp_dir ~installer_config ~bundle_dir dst
          | Makeself ->
-           Makeself_backend.create_installer ?mtime ~installer_config ~bundle_dir dst
+           Makeself_backend.create_installer ?mtime ?tar_extra ~installer_config
+             ~bundle_dir dst
          | Pkgbuild ->
            Pkgbuild_backend.create_installer ~installer_config ~bundle_dir dst)
   in
@@ -48,6 +49,7 @@ let term =
   $ Oui_cli.Args.wix_keep_wxs
   $ Oui_cli.Args.backend
   $ Oui_cli.Args.mtime
+  $ Oui_cli.Args.tar_extra
   $ Oui_cli.Args.installer_config
   $ Oui_cli.Args.bundle_dir
   $ Oui_cli.Args.output

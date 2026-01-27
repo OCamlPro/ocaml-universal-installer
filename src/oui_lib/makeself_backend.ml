@@ -519,7 +519,7 @@ let update_mtime mtime bundle_dir =
     (List.map (fun file -> System.Touch, {System.mtime; file})
        (dirs @ files))
 
-let create_installer ?mtime
+let create_installer ?mtime ?tar_extra
     ~(installer_config : Installer_config.internal) ~bundle_dir installer =
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
@@ -534,18 +534,21 @@ let create_installer ?mtime
   System.call_unit Chmod (755, uninstall_sh);
   Option.iter (fun mtime -> update_mtime mtime bundle_dir) mtime;
   let tar_extra =
-    [
-      "--numeric-owner";
-      "--owner=0";
-      "--group=0";
-      (* "--sort=name"; *)
-      (* --sort is not defined for bsdtar, which can be used by makeself
-         tar selection:
-         > TAR=`exec <&- 2>&-; which gtar || command -v gtar || type gtar`
-         > test -x "$TAR" || TAR=`exec <&- 2>&-; which bsdtar || command -v bsdtar || type bsdtar`
-         > test -x "$TAR" || TAR=tar
-      *)
-    ]
+    match tar_extra with
+    | None ->
+      [
+        "--numeric-owner";
+        "--owner=0";
+        "--group=0";
+        (* "--sort=name"; *)
+        (* --sort is not defined for bsdtar, which can be used by makeself
+           tar selection:
+           > TAR=`exec <&- 2>&-; which gtar || command -v gtar || type gtar`
+           > test -x "$TAR" || TAR=`exec <&- 2>&-; which bsdtar || command -v bsdtar || type bsdtar`
+           > test -x "$TAR" || TAR=tar
+        *)
+      ]
+    | Some l -> l
   in
   let args : System.makeself =
     { archive_dir = bundle_dir

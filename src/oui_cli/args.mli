@@ -57,3 +57,6 @@ val debug : int Cmdliner.Term.t
 
 (** Files timestamps to use for installed files *)
 val mtime : string option Cmdliner.Term.t
+
+(** Extra tar option for makeself archives *)
+val tar_extra : string list option Cmdliner.Term.t

@@ -190,3 +190,11 @@ let mtime =
      information."
   in
   value & opt (some string) None & info ["mtime"] ~docv ~doc
+
+let tar_extra =
+  let none = "--numeric-owner,--owner=0,--group=0" in
+  let doc =
+    "Comma seperated list of command line options to forward to tar when \
+     creating makeself installer."
+  in
+  value & opt (some ~none (list string)) None & info ["tar-extra"] ~doc
