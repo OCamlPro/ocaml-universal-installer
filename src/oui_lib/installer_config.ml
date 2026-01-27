@@ -140,8 +140,15 @@ let errorf fmt =
 let dir_in ~bundle_dir path =
   OpamFilename.Op.(bundle_dir / path)
 
-let file_in ~bundle_dir path =
-  OpamFilename.Op.(bundle_dir // path)
+let file_in ?(exec=false) ~bundle_dir path =
+  let full_path p = OpamFilename.Op.(bundle_dir // p) in
+  match OpamStd.Sys.os () with
+  | OpamStd.Sys.Win32
+  | OpamStd.Sys.Cygwin ->
+    if exec then
+      full_path (System.maybe_exe ~dir:bundle_dir ~path)
+    else full_path path
+  | _ -> full_path path
 
 let can_exec perm =
   match OpamStd.Sys.os () with
@@ -201,7 +208,7 @@ let check_file ~field file =
 let check_exec ~bundle_dir rel_path =
   let open Letop.Result in
   let field = "exec_files" in
-  let path = file_in ~bundle_dir rel_path in
+  let path = file_in ~exec:true ~bundle_dir rel_path in
   let path_str = OpamFilename.to_string path in
   let* () = check_file ~field path in
   let stats = Unix.stat path_str in

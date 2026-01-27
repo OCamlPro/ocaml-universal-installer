@@ -133,3 +133,7 @@ module FILE_IMPL : FILE_INTF with type t = OpamFilename.t
 val resolve_path : OpamFilter.env ->
                    (module FILE_INTF with type t = 'a) -> string -> 'a
 val resolve_file_path : OpamFilter.env -> string -> OpamFilename.t
+
+(** On Windows, returns path.exe if dir:path.exe exists.
+    Otherwise return path. *)
+val maybe_exe : dir:OpamFilename.Dir.t -> path:string -> string
