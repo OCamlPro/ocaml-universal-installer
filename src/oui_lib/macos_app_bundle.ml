@@ -30,7 +30,7 @@ let create ~installer_config ~work_dir =
   let binary_name = match installer_config.exec_files with
     | [] -> OpamConsole.error_and_exit `Bad_arguments
               "No exec_files specified in config"
-    | binary :: _ -> Filename.basename binary
+    | binary :: _ -> Filename.basename binary.path
   in
   let app_bundle_dir = work_dir / (app_name_cap ^ ".app") in
   let contents = app_bundle_dir / "Contents" in

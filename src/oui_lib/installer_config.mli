@@ -8,6 +8,12 @@
 (*                                                                        *)
 (**************************************************************************)
 
+type exec_file = {
+    path : string;
+    symlink : bool; [@default true]
+    deps : bool; [@default true]
+  }
+
 type man_section =
   | Man_dir of string
   | Man_files of string list
@@ -54,7 +60,7 @@ type ('manpages, 'string_with_vars) t = {
     fullname : string ;
     version : string;
     (** Package version used as part of product name. Deduced from opam file *)
-    exec_files : string list; (** Filenames of bundled .exe binary. *)
+    exec_files : exec_file list; (** Filenames of bundled .exe binary. *)
     manpages : 'manpages option; (** Paths to manpages, split by sections. *)
     environment : (string * 'string_with_vars) list;
     (** Environement variables to set/unset in Windows terminal on install/uninstall respectively. *)

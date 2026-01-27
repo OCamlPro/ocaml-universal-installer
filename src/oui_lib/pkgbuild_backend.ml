@@ -82,7 +82,7 @@ let create_installer
   let binary_src = match installer_config.exec_files with
     | [] -> OpamConsole.error_and_exit `Bad_arguments
               "No exec_files specified in config"
-    | binary :: _ -> bundle_dir // binary
+    | binary :: _ -> bundle_dir // binary.path
   in
   let binary_dst = Macos_app_bundle.install_binary bundle ~binary_path:binary_src in
 

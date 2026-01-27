@@ -24,8 +24,8 @@ let check_wix_installed () =
     raise @@ System.System_error
       (Format.sprintf "Wix binaries couldn't be found.")
 
-let add_dlls_to_bundle ~bundle_dir binary =
-  let binary = System.maybe_exe ~dir:bundle_dir ~path:binary in
+let add_dlls_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
+  let binary = System.maybe_exe ~dir:bundle_dir ~path:binary.path in
   let dlls = Win_ldd.get_dlls (bundle_dir // binary) in
   match dlls with
   | [] -> ()
@@ -35,6 +35,10 @@ let add_dlls_to_bundle ~bundle_dir binary =
       let bin_dir = OpamFilename.Op.(bundle_dir / "bin") in
       OpamFilename.mkdir bin_dir;
       List.iter (fun dll -> OpamFilename.copy_in dll bin_dir) dlls
+
+let add_dlls_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
+  if binary.deps then
+    add_dlls_to_bundle ~bundle_dir binary
 
 let data_file ~tmp_dir ~default:(name, content) data_path =
   match data_path with
