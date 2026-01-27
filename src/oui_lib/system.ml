@@ -15,10 +15,11 @@ type wix = {
 }
 
 type makeself = {
+  tar_extra : string list;
   archive_dir : OpamFilename.Dir.t;
   installer : OpamFilename.t;
   description : string;
-  startup_script : string
+  startup_script : string;
 }
 
 type cygpath_out = [ `Win | `WinAbs | `Cyg | `CygAbs ]
@@ -56,6 +57,11 @@ type productbuild_args = {
   output : OpamFilename.t;
 }
 
+type touch_args = {
+  mtime : string;
+  file  : string;
+}
+
 type patchelf_args =
   | Set_rpath of {rpath: string; binary: OpamFilename.t}
 
@@ -73,6 +79,7 @@ type _ command =
   | Pkgbuild : pkgbuild_args command
   | Productbuild : productbuild_args command
   | Patchelf : patchelf_args command
+  | Touch : touch_args command
 
 exception System_error of string
 
@@ -101,13 +108,17 @@ let call_inner : type a. a command -> a -> string * string list =
       @ wix_files @ ["-o"; wix_out; "-pdbtype"; "none"]
     in
     wix, args
-  | Makeself, { archive_dir; installer; description; startup_script } ->
+  | Makeself
+    , { tar_extra; archive_dir; installer; description; startup_script } ->
     let makeself = "makeself" in
     let args =
-      [ OpamFilename.Dir.to_string archive_dir
-      ; OpamFilename.to_string installer
-      ; Printf.sprintf "%S" description
-      ; startup_script
+      [
+        "--tar-extra";
+        String.concat " " tar_extra;
+        OpamFilename.Dir.to_string archive_dir;
+        OpamFilename.to_string installer;
+        Printf.sprintf "%S" description;
+        startup_script;
       ]
     in
     makeself, args
@@ -147,6 +158,8 @@ let call_inner : type a. a command -> a -> string * string list =
     ]
   | Patchelf, (Set_rpath {rpath; binary}) ->
     "patchelf", ["--set-rpath"; rpath; OpamFilename.to_string binary]
+  | Touch, { mtime; file } ->
+    "touch", [ "-t"; mtime; file ]
 
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)
