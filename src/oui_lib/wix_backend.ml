@@ -70,13 +70,22 @@ let create_installer ?(keep_wxs=false) ~tmp_dir
       | None -> None
       | lic -> Some (data_file ~tmp_dir ~default:Data.LICENSES.gpl3 lic)
   in
+  let subject =
+    Some (
+      Printf.sprintf "%s, packed with Oui %s, commit %s, date %s"
+        installer_config.name
+        Version.version
+        (match Version.commit_hash with None -> "-" | Some c -> c)
+        (match Version.commit_date with None -> "-" | Some d -> d))
+  in
   let info = Wix.{
       plugin_for;
       unique_id = installer_config.unique_id;
       manufacturer = installer_config.wix_manufacturer;
       name = installer_config.name;
       version = installer_config.version;
-      description = installer_config.wix_description;
+      subject;
+      comments = installer_config.wix_description;
       keywords = installer_config.wix_tags;
       directory = OpamFilename.Dir.to_string bundle_dir;
       shortcuts = [];
