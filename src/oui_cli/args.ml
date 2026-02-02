@@ -180,3 +180,21 @@ let debug =
   let docv = "LEVEL" in
   let doc = "Debug output level ('OPAMDEBUG' level)" in
   value & opt int 0 & info [ "d"; "debug" ] ~doc ~docv
+
+let mtime =
+  let open Cmdliner.Arg in
+  let docv = "MTIME" in
+  let doc =
+    "Set MTIME on to be installed files when creating the installer. \
+     The format is [[CC]YY]MMDDhhmm[.SS], see {i touch -t} argument for more \
+     information."
+  in
+  value & opt (some string) None & info ["mtime"] ~docv ~doc
+
+let tar_extra =
+  let none = "--numeric-owner,--owner=0,--group=0" in
+  let doc =
+    "Comma seperated list of command line options to forward to tar when \
+     creating makeself installer."
+  in
+  value & opt (some ~none (list string)) None & info ["tar-extra"] ~doc

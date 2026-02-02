@@ -22,10 +22,11 @@ type wix = {
 
 (** makeself script arguments *)
 type makeself = {
+  tar_extra : string list;
   archive_dir : OpamFilename.Dir.t;
   installer : OpamFilename.t;
   description : string;
-  startup_script : string
+  startup_script : string;
 }
 
 (** Expected output path type *)
@@ -78,6 +79,12 @@ type productbuild_args = {
 type patchelf_args =
   | Set_rpath of {rpath: string; binary: OpamFilename.t}
 
+(* touch command arguments *)
+type touch_args = {
+  mtime : string;
+  file  : string;
+}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
@@ -93,6 +100,7 @@ type _ command =
   | Pkgbuild : pkgbuild_args command (** {b pkgbuild} command to create macOS component packages *)
   | Productbuild : productbuild_args command (** {b productbuild} command to create macOS installer packages *)
   | Patchelf : patchelf_args command
+  | Touch : touch_args command (** {b touch} command to change files timestamps *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)
