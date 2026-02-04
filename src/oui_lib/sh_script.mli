@@ -69,8 +69,10 @@ and case =
 
 type t = command list
 
-(** Prints the given script using shell syntax to the given formatter. *)
-val pp_sh : Format.formatter -> t -> unit
+(** Prints the given script using shell syntax to the given formatter.
+  If [version] is set to true, a comment containing oui version and commit hash
+  is printed as a comment in scripts. *)
+val pp_sh : version:bool -> Format.formatter -> t -> unit
 
 val continue : command
 
