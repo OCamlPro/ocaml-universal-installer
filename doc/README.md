@@ -372,7 +372,7 @@ For convenience, it should be written to the root of the repo alongside your
 
 Now you can generate the installer by running:
 ```
-oui oui.json <installation-bundle-dir>
+oui build oui.json <installation-bundle-dir>
 ```
 
 ## Installing plugins
