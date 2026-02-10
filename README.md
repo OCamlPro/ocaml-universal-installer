@@ -10,6 +10,11 @@ You won't need to teach your users how to install OCaml, Opam or any other
 tools that they don't need. Just download and run the installer and you're good
 to go.
 
+Detailed documentation can be found [here](doc/README.md).
+
+This project is built on top of `opam-wix`. The project's original documentation
+is still available [here](doc/opam-wix.md).
+
 ## Installation
 
 `oui` is still in development but if you wish to try the latest dev version, you
@@ -41,9 +46,18 @@ You can dowload the latest official release from the
 
 Windows MSI are built using the [Wix6 toolkit](https://wixtoolset.org/).
 
-## Documentation
+## Usage
 
-Detailed documentation can be found [here](doc/README.md).
+To assemble an installer for your current platform you need to provide:
+- an installation bundle (a directory containing all binaries and files to
+  install), usually produced by running `dune build @install` and
+  `dune install --relocatable --prefix <install-bundle-dir>`.
+- a JSON configuration file for `oui`, describing the important parts of the
+  bundle and some project metadata. The format is fully documented
+  [here](doc/README.md#ouijson-file-format).
 
-This project is built on top of `opam-wix`. The project's original documentation
-is still available [here](doc/opam-wix.md).
+You can then run `oui lint` to check that the configuration and bundle are
+consistent.
+
+Once this is good, you can run `oui build oui.json <install-bundle-dir>` to
+generate an installer.
