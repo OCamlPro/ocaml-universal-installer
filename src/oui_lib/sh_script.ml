@@ -19,6 +19,7 @@ type numerical_op =
 
 type string_op =
  | Not_empty of string
+ | Equal of string * string
 
 type condition =
   | Exists of string
@@ -112,7 +113,8 @@ let pp_num_op = function
   | Eq -> "eq"
 
 let pp_str_op = function
-| Not_empty s -> Printf.sprintf "-n \"%s\"" s
+  | Not_empty s -> Printf.sprintf "-n \"%s\"" s
+  | Equal (s1, s2) -> Printf.sprintf "\"%s\" = \"%s\"" s1 s2
 
 let rec pp_sh_condition fmtr condition =
   match condition with

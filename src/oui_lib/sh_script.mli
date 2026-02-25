@@ -19,6 +19,7 @@ type numerical_op =
 
 type string_op =
  | Not_empty of string
+ | Equal of string * string
 
 type condition =
   | Exists of string

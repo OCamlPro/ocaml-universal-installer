@@ -25,6 +25,6 @@ val create_installer :
 
 (* Exposed for tests purposes only *)
 
-val install_script : Installer_config.internal -> Sh_script.t
+val install_script : installer_name: string -> Installer_config.internal -> Sh_script.t
 
 val uninstall_script : Installer_config.internal -> Sh_script.t

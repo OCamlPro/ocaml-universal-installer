@@ -21,20 +21,34 @@ let uninstall_script_name = "uninstall.sh"
 let install_path_nv = "INSTALL_PATH"
 let install_path_v = !$ install_path_nv
 
-let manpre_nv = "MANPREFIX"
-let manpre_v = !$ manpre_nv
+let is_user_install_nv = "IS_USER_INSTALL"
+let is_user_install_v = !$ is_user_install_nv
 
-let opt = "/opt"
+(* In this module [prefix] refers to the folder where we will create
+   the [install_dir] and [install_dir] to the folder that will contain
+   the installed files. E.g. [/opt] is the default [prefix] and
+   [/opt/package_name] the default [install_dir] for a global install. *)
 let prefix_nv = "PREFIX"
 let prefix_v = !$ prefix_nv
+let mandir_nv = "MANDIR"
+let mandir_v = !$ mandir_nv
+let bindir_nv = "BINDIR"
+let bindir_v = !$ bindir_nv
 
-let usrpre = "/usr/local"
-let usrpre_user = "$HOME/.local"
-let usrpre_nv = "BINPREFIX"
-let usrpre_v = !$ usrpre_nv
-let usrbin = usrpre_v ^ "/bin"
-let usrshareman = usrpre_v ^ "/share/man"
-let usrman = usrpre_v ^ "/man"
+let opt = "/opt"
+
+module Global = struct
+  let pre = "/usr/local"
+  let bin = pre / "bin"
+  let shareman = pre / "share/man"
+  let man = pre / "man"
+end
+
+module User = struct
+  let pre = "$HOME/.local"
+  let bin = pre / "bin"
+  let man = pre / "man"
+end
 
 let install_conf = "install.conf"
 let load_conf = "load_conf"
@@ -67,7 +81,7 @@ let def_load_conf =
                   [ print_errf "Invalid line in $conf: $line"
                   ; return 1
                   ]
-}
+              }
             ]
         ; assign ~var:"key" ~value:"${line%%=*}"
         ; assign ~var:"val" ~value:"${line#*=}"
@@ -110,12 +124,16 @@ let find_and_load_conf app_name =
       ]
     ()
 
-let list_all_files ~prefix (ic : Installer_config.internal) =
-  prefix ::
-  List.map (fun (x : Installer_config.exec_file) -> usrbin / (Filename.basename x.path)) ic.exec_files
+let list_all_files ~install_dir ~bindir ~mandir
+    (ic : Installer_config.internal) =
+  install_dir ::
+  List.map
+    (fun (x : Installer_config.exec_file) ->
+       bindir / (Filename.basename x.path))
+    ic.exec_files
   @ List.concat_map
     (fun (section, files) ->
-       let dir = manpre_v / section in
+       let dir = mandir / section in
        List.map (fun x -> dir / (Filename.basename x)) files)
     (Option.value ic.manpages ~default:[])
 
@@ -127,65 +145,68 @@ let check_makeself_installed () =
       "Could not find makeself, \
        Please install makeself and run this command again."
 
-let check_prefix_permissions =
+let set_user_prefixes =
   let open Sh_script in
-  let dirnamev = "dir_name" in
-  let cond_not_writable_and_not_root prefix_v =
-    (And (Not (Writable_as_user prefix_v), Is_not_root))
-  in
-  let cond_writable_and_not_root prefix_v =
-    (And (Writable_as_user prefix_v, Is_not_root))
-  in
-  let set_user_usr =
-    assign ~var:usrpre_nv ~value:usrpre_user
-  in
-  let abort prefix_v =
+  [ assign ~var:bindir_nv ~value:User.bin
+  ; assign ~var:mandir_nv ~value:User.man
+  ]
+
+(* checks whether this is a user or global install based on the
+   current user and install path and sets variables accordingly.
+   Abort if they are inconsistent e.g. the install path is
+   /opt/pkg-name but we're not running as root. *)
+let setup_install_kind ~installer_name ~prefix =
+  let open Sh_script in
+  let dirname_nv = "dir_name" in
+  let dirname_v = !$ dirname_nv in
+  let abort path =
     [
       echof "Not running as root. Aborting.";
-      echof "Need root permission for %s" prefix_v;
-      echof "Please run again as root or use the --prefix option to set a \
-             custom install path";
+      echof "Need root permission for %s" path;
+      echof "Please run again as root or use the install script --prefix \
+             option to set a custom install path";
+      echof "You can pass options to the install script by running \
+             ./%s -- <install-script-options>" installer_name;
       exit 1;
     ]
   in
   [
-    if_ (Dir_exists prefix_v) [
-      if_ (cond_not_writable_and_not_root prefix_v)
-        (abort prefix_v)
-        ~else_:[
-          if_ (cond_writable_and_not_root prefix_v) [
-            set_user_usr;
-          ] ();
-        ] ();
-    ] ~else_:[
-      (* This part is not needed in case of uninstall, we won't create the dir *)
-      assign_eval dirnamev (dirname prefix_v);
-      if_ (Not (Dir_exists (!$ dirnamev))) [
-        echof "Parent directory not found: %s" (!$ dirnamev);
+    if_ (Dir_exists prefix)
+      [ assign ~var:dirname_nv ~value:prefix ]
+      ~else_:[assign_eval dirname_nv (dirname prefix)]
+      ();
+    if_ (Dir_exists dirname_v) [
+      if_ Is_not_root
+        [ if_ (Writable_as_user dirname_v)
+            (assign ~var:is_user_install_nv ~value:"true"::set_user_prefixes)
+            ~else_:(abort dirname_v)
+            ()
+        ]
+        ()
+    ]
+      ~else_:[
+        echof "Parent directory not found: %s" dirname_v;
         echof "Aborting.";
         exit 1;
       ] ();
-      if_ (cond_not_writable_and_not_root (!$ dirnamev))
-        (abort (!$ dirnamev))
-        ~else_:[
-          if_ (cond_writable_and_not_root (!$ dirnamev)) [
-            set_user_usr;
-          ] ();
-        ] ();
-    ] ();
   ]
 
-let set_man_dest =
+let set_default_mandir =
   let open Sh_script in
-  if_ (Dir_exists usrshareman)
-    [assign ~var:manpre_nv ~value:usrshareman]
-    ~else_:[assign ~var:manpre_nv ~value:usrman]
-    ()
+  [ if_ (Dir_exists Global.shareman)
+      [assign ~var:mandir_nv ~value:Global.shareman]
+      ~else_:[assign ~var:mandir_nv ~value:Global.man]
+      ()
+  ]
 
-let add_symlink ~prefix ~in_ bundle_path =
+let set_root_prefixes =
+  let open Sh_script in
+  assign ~var:bindir_nv ~value:Global.bin :: set_default_mandir
+
+let add_symlink ~install_dir ~in_ bundle_path =
   let open Sh_script in
   let base = Filename.basename bundle_path in
-  symlink ~target:(prefix / bundle_path) ~link:(in_ / base)
+  symlink ~target:(install_dir / bundle_path) ~link:(in_ / base)
 
 let remove_symlink ?(name="symlink") ~in_ bundle_path =
   let open Sh_script in
@@ -198,19 +219,20 @@ let remove_symlink ?(name="symlink") ~in_ bundle_path =
 
 (* Sets documented variables that users can rely upon when setting
    env or for post-install commands *)
-let set_install_vars ~prefix =
+let set_install_vars ~install_dir =
   let open Sh_script in
-  [ assign ~var:install_path_nv ~value:prefix ]
+  [ assign ~var:install_path_nv ~value:install_dir ]
 
 let create_if_not_found dir =
   let open Sh_script in
   if_ (Not (Dir_exists dir)) [mkdir ~permissions:755 [dir]] ()
 
-let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
+let true_install_binary ~install_dir ~env ~in_
+    (binary : Installer_config.exec_file) =
   let open Sh_script in
   let bundle_path = binary.path in
   let base = Filename.basename bundle_path in
-  let true_binary = prefix / bundle_path in
+  let true_binary = install_dir / bundle_path in
   let installed_binary = in_ / base in
   let install_cmds =
     match env with
@@ -234,46 +256,46 @@ let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
   in
   echof "Adding %s to %s" base in_ :: install_cmds
 
-let install_binary ~prefix ~env ~in_ (binary : Installer_config.exec_file) =
+let install_binary ~install_dir ~env ~in_ (binary : Installer_config.exec_file) =
   if binary.symlink then
-    install_binary ~prefix ~env ~in_ binary
+    true_install_binary ~install_dir ~env ~in_ binary
   else
     []
 
-let install_manpages ~prefix manpages =
+let install_manpages ~install_dir ~in_ manpages =
   let open Sh_script in
-  let install_page ~section page = add_symlink ~prefix ~in_:section page in
+  let install_page ~section page = add_symlink ~install_dir ~in_:section page in
   match manpages with
   | [] -> []
   | _ ->
     let install_manpages =
       List.concat_map
         (fun (section, pages) ->
-           let section = manpre_v / section in
+           let section = in_ / section in
            mkdir ~permissions:755 [section]
            :: (List.map (install_page ~section) pages))
         manpages
     in
-    echof "Installing manpages to %s..." manpre_v
+    echof "Installing manpages to %s..." in_
     :: install_manpages
 
-let install_plugin ~prefix (plugin : Installer_config.plugin) =
+let install_plugin ~install_dir (plugin : Installer_config.plugin) =
   let open Sh_script in
   let var_prefix = app_var_prefix plugin.app_name in
   let lib_dir = !$ (lib_var ~var_prefix) in
   let plugins_dir = !$ (plugins_var ~var_prefix) in
-  let add_symlink_if_missing ~prefix ~in_ path =
+  let add_symlink_if_missing ~install_dir ~in_ path =
     let dst = in_ / (Filename.basename path) in
     if_ ((Not (Link_exists dst)) && (Not (Dir_exists dst)))
-      [ add_symlink ~prefix ~in_ path ]
+      [ add_symlink ~install_dir ~in_ path ]
       ()
   in
   [ echof "Installing plugin %s to %s..." plugin.name plugin.app_name
-  ; add_symlink ~prefix plugin.plugin_dir ~in_:plugins_dir
-  ; add_symlink_if_missing ~prefix plugin.lib_dir ~in_:lib_dir
+  ; add_symlink ~install_dir plugin.plugin_dir ~in_:plugins_dir
+  ; add_symlink_if_missing ~install_dir plugin.lib_dir ~in_:lib_dir
   ]
   @ (List.map
-       (fun dyn_dep -> add_symlink_if_missing ~prefix dyn_dep ~in_:lib_dir)
+       (fun dyn_dep -> add_symlink_if_missing ~install_dir dyn_dep ~in_:lib_dir)
        plugin.dyn_deps)
 
 let def_check_available prefix =
@@ -356,7 +378,7 @@ let read_arguments =
     shift;
   ]
 
-let install_script (ic : Installer_config.internal) =
+let install_script ~installer_name (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
   let version = ic.version in
@@ -373,24 +395,39 @@ let install_script (ic : Installer_config.internal) =
       Printf.sprintf
         "                           If PREFIX points to a user owned directory \
          symlinks and manpage will be put in %s, otherwise (root directory) \
-         in %s" usrpre_user usrpre;
+         in %s" User.pre Global.pre;
     ]
     |> List.map (echof "%s")
     |> def_fun "usage"
   in
-  let prefix = prefix_v / package in
+  let install_dir = prefix_v / package in
+  let set_prefixes =
+    (* Sets the prefix variables PREFIX, BINPREFIX, MANPREFIX based
+       on the CLI options and type of install (global vs user). *)
+    let set_defaults =
+      (* By default they are set for a global install *)
+      [ assign ~var:prefix_nv ~value:opt
+      ; assign ~var:is_user_install_nv ~value:"false"
+      ] @ set_root_prefixes
+    in
+    set_defaults
+    @ [read_arguments] (* PREFIX can be overwritten via --prefix *)
+    @ setup_install_kind ~installer_name ~prefix:prefix_v
+  in
   let plugin_apps =
     List.map (fun (p : Installer_config.plugin) -> p.app_name) ic.plugins
     |> List.sort_uniq String.compare
   in
-  let all_files = list_all_files ~prefix ic in
+  let all_files =
+    list_all_files ~install_dir ~bindir:bindir_v ~mandir:mandir_v ic
+  in
   let def_load_conf =
     match ic.plugins with
     | [] -> []
     | _ -> [def_load_conf]
   in
   let display_install_info =
-    [ echof "Installing %s.%s to %s" package version prefix
+    [ echof "Installing %s.%s to %s" package version install_dir
     ; echof "The following files and directories will be written to the system:"
     ]
     @ (List.map (echof "- %s") all_files)
@@ -410,40 +447,32 @@ let install_script (ic : Installer_config.internal) =
     List.map call_check_available all_files
     @ List.concat_map check_plugin_available ic.plugins
   in
-  let check_permissions =
+  let create_install_dir =
     [
       create_if_not_found prefix_v;
-      mkdir ~permissions:755 [prefix];
+      mkdir ~permissions:755 [install_dir];
     ]
-  in
-  let assigns = [
-    assign ~var:prefix_nv ~value:opt;
-    assign ~var:usrpre_nv ~value:usrpre
-  ]
   in
   let deffuns = [
     def_usage;
-    def_check_available prefix;
+    def_check_available install_dir;
     def_check_lib;
   ] @
     def_load_conf
   in
   let setup =
-    assigns
-    @ deffuns
-    @ [read_arguments]
-    @ check_prefix_permissions
-    @ set_install_vars ~prefix
-    @ [ set_man_dest ]
+    deffuns
+    @ set_prefixes
+    @ set_install_vars ~install_dir
     @ display_install_info
     @ display_plugin_install_info
     @ load_plugin_app_vars
     @ check_all_available
     @ prompt_for_confirmation
-    @ check_permissions
+    @ create_install_dir
   in
   let install_bundle =
-    Sh_script.copy_all_in ~src:"." ~dst:prefix ~except:install_script_name
+    Sh_script.copy_all_in ~src:"." ~dst:install_dir ~except:install_script_name
   in
   let env = ic.environment in
   let binaries = ic.exec_files in
@@ -451,30 +480,31 @@ let install_script (ic : Installer_config.internal) =
     match binaries with
     | [] -> []
     | _ ->
-      create_if_not_found usrbin ::
-      List.concat_map (install_binary ~prefix ~env ~in_:usrbin) binaries
+      create_if_not_found bindir_v ::
+      List.concat_map (install_binary ~install_dir ~env ~in_:bindir_v) binaries
   in
   let manpages = Option.value ic.manpages ~default:[] in
-  let install_manpages = install_manpages ~prefix manpages in
+  let install_manpages = install_manpages ~install_dir ~in_:mandir_v manpages in
   let notify_install_complete =
     [ echof "Installation complete!"
     ; echof
         "If you want to safely uninstall %s, please run %s/%s."
-        package prefix uninstall_script_name
+        package install_dir uninstall_script_name
     ]
   in
-  let install_plugins = List.concat_map (install_plugin ~prefix) ic.plugins in
+  let install_plugins = List.concat_map (install_plugin ~install_dir) ic.plugins in
   let dump_install_conf =
     let lines =
       List.filter_map (fun x -> x)
         [ Some (Printf.sprintf "%s=%s" conf_version ic.version)
+        ; Some (Printf.sprintf "%s=%s" is_user_install_nv is_user_install_v)
         ; Option.map
             (fun (plgdr : Installer_config.plugin_dirs) ->
-               Printf.sprintf "%s=%s" conf_plugins (prefix / plgdr.plugins_dir))
+               Printf.sprintf "%s=%s" conf_plugins (install_dir / plgdr.plugins_dir))
             ic.plugin_dirs
         ; Option.map
             (fun (plgdr : Installer_config.plugin_dirs) ->
-               Printf.sprintf "%s=%s" conf_lib (prefix / plgdr.lib_dir))
+               Printf.sprintf "%s=%s" conf_lib (install_dir / plgdr.lib_dir))
             ic.plugin_dirs
         ]
     in
@@ -488,7 +518,7 @@ let install_script (ic : Installer_config.internal) =
             ; Printf.sprintf "%s=$%s" plugins_var plugins_var
             ])
     in
-    let install_conf = prefix / install_conf in
+    let install_conf = install_dir / install_conf in
     [
       Sh_script.write_file install_conf (lines @ plugin_app_lines);
       Sh_script.chmod 644 [install_conf];
@@ -526,21 +556,19 @@ let uninstall_script (ic : Installer_config.internal) =
   let open Sh_script in
   let (/) = Filename.concat in
   let package = ic.name in
-  let prefix = prefix_v / package in
+  let install_dir_nv = "INSTALL_DIR" in
+  let install_dir = !$ install_dir_nv in
   let binaries = ic.exec_files in
-  let load_install_conf =
-    match ic.plugins with
-    | [] -> []
-    | _ ->
-      [ def_load_conf
-      ; call_load_conf (prefix / install_conf)
-      ]
+  let load_install_conf ~install_dir =
+    [ def_load_conf
+    ; call_load_conf (install_dir / install_conf)
+    ]
   in
   let display_symlinks =
     List.filter_map
       (fun (binary : Installer_config.exec_file) ->
          if binary.symlink then
-           Some (echof "- %s/%s" usrbin binary.path)
+           Some (echof "- %s/%s" bindir_v (Filename.basename binary.path))
          else
            None
       )
@@ -552,37 +580,52 @@ let uninstall_script (ic : Installer_config.internal) =
       (fun (section, pages) ->
          List.map
            (fun page ->
-              echof "- %s/%s/%s" manpre_v section (Filename.basename page))
+              echof "- %s/%s/%s" mandir_v section (Filename.basename page))
            pages)
       manpages
   in
   let display_plugins = List.concat_map display_plugin ic.plugins in
-  let set_prefixes =
-    let install_dir = "INSTALLDIR" in
+  let set_prefix_and_install_dir =
     [
-      assign ~var:usrpre_nv ~value:usrpre;
-      assign_eval install_dir (dirname "$0");
+      assign_eval install_dir_nv (dirname "$0");
       assign_eval prefix_nv (dirname (!$ install_dir));
     ]
   in
-  let setup =
-    set_prefixes
-    @ load_install_conf
-    @ check_prefix_permissions
-    @ [set_man_dest]
-    @ [
-      echof "About to uninstall %s." package
-    ; echof "The following files and folders will be removed from the system:"
-    ; echof "- %s" prefix
+  let set_man_and_bin_prefixes =
+    [ if_ (Str_op (Equal (is_user_install_v, "true")))
+        set_user_prefixes
+        ~else_:set_root_prefixes
+        ()
     ]
+  in
+  let setup =
+    set_prefix_and_install_dir
+    @ load_install_conf ~install_dir
+    @ set_man_and_bin_prefixes
+    @ [ echof "About to uninstall %s." package
+      ; echof "The following files and folders will be removed from the system:"
+      ; echof "- %s" install_dir
+      ]
     @ display_symlinks
     @ display_manpages
     @ display_plugins
   in
+  let check_permissions =
+    [ if_ Is_not_root
+        [ if_ (Not (Writable_as_user install_dir))
+            [ echof "Need root permission for %s" install_dir
+            ; echof "Not running as root. Aborting"
+            ; exit 1
+            ]
+            ()
+        ]
+        ()
+    ]
+  in
   let remove_install_folder =
-    [ if_ (Dir_exists prefix)
-        [ echof "Removing %s..." prefix
-        ; rm_rf [prefix]
+    [ if_ (Dir_exists install_dir)
+        [ echof "Removing %s..." install_dir
+        ; rm_rf [install_dir]
         ]
         ()
     ]
@@ -590,7 +633,7 @@ let uninstall_script (ic : Installer_config.internal) =
   let remove_symlinks =
     List.filter_map (fun (x : Installer_config.exec_file) ->
         if x.symlink then
-          Some (remove_symlink ~in_:usrbin x.path)
+          Some (remove_symlink ~in_:bindir_v x.path)
         else
           None
       ) binaries
@@ -599,7 +642,7 @@ let uninstall_script (ic : Installer_config.internal) =
     List.concat_map
       (fun (section, pages) ->
          List.map
-           (remove_symlink ~name:"manpage" ~in_:(manpre_v / section))
+           (remove_symlink ~name:"manpage" ~in_:(mandir_v / section))
            pages)
       manpages
   in
@@ -607,6 +650,7 @@ let uninstall_script (ic : Installer_config.internal) =
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
   setup
   @ prompt_for_confirmation
+  @ check_permissions
   @ remove_install_folder
   @ remove_symlinks
   @ remove_manpages
@@ -645,7 +689,8 @@ let create_installer ?mtime ?tar_extra
   check_makeself_installed ();
   OpamConsole.formatted_msg "Preparing makeself archive... \n";
   List.iter (add_sos_to_bundle ~bundle_dir) installer_config.exec_files;
-  let install_script = install_script installer_config in
+  let installer_name = OpamFilename.(basename installer |> Base.to_string) in
+  let install_script = install_script ~installer_name installer_config in
   let uninstall_script = uninstall_script installer_config in
   let install_sh = OpamFilename.Op.(bundle_dir // install_script_name) in
   let uninstall_sh = OpamFilename.Op.(bundle_dir // uninstall_script_name) in
