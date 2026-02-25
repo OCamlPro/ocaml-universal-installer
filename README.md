@@ -46,6 +46,9 @@ You can dowload the latest official release from the
 
 Windows MSI are built using the [Wix6 toolkit](https://wixtoolset.org/).
 
+You can install Wix 6 from the [GitHub releases
+page](https://github.com/wixtoolset/wix/releases/tag/v6.0.2).
+
 ## Usage
 
 To assemble an installer for your current platform you need to provide:
