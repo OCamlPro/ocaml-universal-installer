@@ -150,6 +150,7 @@ let%expect_test "install_script: simple" =
           echo "Need root permission for $dir_name"
           echo "Please run again as root or use the install script --prefix option to set a custom install path"
           echo "You can pass options to the install script by running ./aaa-x-y-z.run -- <install-script-options>"
+          echo "example: ./aaa-x-y-z.run -- --prefix /tmp"
           exit 1
         fi
       fi
@@ -286,6 +287,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
           echo "Need root permission for $dir_name"
           echo "Please run again as root or use the install script --prefix option to set a custom install path"
           echo "You can pass options to the install script by running ./t-name-t-version.run -- <install-script-options>"
+          echo "example: ./t-name-t-version.run -- --prefix /tmp"
           exit 1
         fi
       fi
@@ -448,6 +450,7 @@ let%expect_test "install_script: install plugins" =
           echo "Need root permission for $dir_name"
           echo "Please run again as root or use the install script --prefix option to set a custom install path"
           echo "You can pass options to the install script by running ./t-name-t-version.run -- <install-script-options>"
+          echo "example: ./t-name-t-version.run -- --prefix /tmp"
           exit 1
         fi
       fi
@@ -844,6 +847,7 @@ let%expect_test "install_script: binary in sub folder" =
           echo "Need root permission for $dir_name"
           echo "Please run again as root or use the install script --prefix option to set a custom install path"
           echo "You can pass options to the install script by running ./installer.run -- <install-script-options>"
+          echo "example: ./installer.run -- --prefix /tmp"
           exit 1
         fi
       fi
@@ -1051,6 +1055,7 @@ let%expect_test "install_script: set environment for binaries" =
           echo "Need root permission for $dir_name"
           echo "Please run again as root or use the install script --prefix option to set a custom install path"
           echo "You can pass options to the install script by running ./installer.run -- <install-script-options>"
+          echo "example: ./installer.run -- --prefix /tmp"
           exit 1
         fi
       fi

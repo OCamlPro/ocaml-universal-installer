@@ -48,7 +48,7 @@ are:
   are located within the bundle so they can be properly installed on the target
   system. See the [manpages object section](#manpages-object) for the object
   format.
-- `environement`, **string array array**, **optional**: A list of environment
+- `environment`, **string array array**, **optional**: A list of environment
   variables and associated values to set when running the application on the
   target system. You can refer to the application's install directory absolute
   path using the `<install_path>` variable.
@@ -304,8 +304,12 @@ if [ -n "$QUIET" ]; then
 fi
 ```
 
-After running this script on your installation bundle it should be ready
-for `oui`!
+You can run it as follows:
+```
+./clean_up_bundle.sh <install-bundle_dir>
+```
+
+Once that's done, your bundle should be ready for `oui`!
 
 Note that if you are using `dune-site` for plugins support, you will need
 to install `META` files as its plugin loading mechanism relies on them.
@@ -377,7 +381,7 @@ oui build oui.json <installation-bundle-dir>
 
 ## Installing plugins
 
-`oui` can handle installation of plugins for apps that have been instaled by a
+`oui` can handle installation of plugins for apps that have been installed by a
 `oui` generated installer separately.
 
 Plugins are just treated as a part of a bundle and can be installed alongside a
