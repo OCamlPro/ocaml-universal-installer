@@ -167,6 +167,7 @@ let setup_install_kind ~installer_name ~prefix =
              option to set a custom install path";
       echof "You can pass options to the install script by running \
              ./%s -- <install-script-options>" installer_name;
+      echof "example: ./%s -- --prefix /tmp" installer_name;
       exit 1;
     ]
   in
