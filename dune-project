@@ -13,5 +13,7 @@
 (name oui)
 (cram enable)
 
+(version 0.1.0)
+
 (formatting
  (enabled_for dune))
