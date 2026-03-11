@@ -5,6 +5,9 @@ maintainer: "Mohamed Hernouf <mohamed.hernouf@ocamlpro.com>"
 authors: [
     "Raja Boujbel"
     "Mohamed Hernouf"
+    "Artemiy Rozovyk"
+    "David Declerck"
+    "Nathan Rebours"
 ]
 tags: ["wix" "msi" "windows" "cygwin"]
 license: "GPL-3.0-only"
