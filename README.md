@@ -17,13 +17,17 @@ is still available [here](doc/opam-wix.md).
 
 ## Installation
 
-`oui` is still in development but if you wish to try the latest dev version, you
-can install it via opam:
+You can install the latest `oui` release via opam:
 ```
-opam pin oui.0.0.0 https://github.com/OCamlPro/ocaml-universal-installer.git#master
+opam install oui
 ```
 
-`oui` does require some opam libraries so you will need `opam.2.4.0` or higher.
+or the development version with:
+```
+opam pin oui https://github.com/OCamlPro/ocaml-universal-installer.git#master
+```
+
+`oui` does still require some opam libraries so you will need `opam.2.4.0` or higher.
 
 ### Platform specific dependencies
 
