@@ -389,7 +389,9 @@ let pretty_object_error ~file ~keys ?field json =
     (match first_invalid_key ~keys l with
      | None -> invalid_config ~file "please report upstream"
      | Some key ->
-       let key = match field with None -> key | Some f -> f ^ "." ^ key in
+       let key =
+         match field with None -> key | Some f -> Printf.sprintf "%s.%s" f key
+       in
        invalid_config ~file "invalid key %S" key)
   | _ ->
     let prefix =
@@ -434,7 +436,8 @@ let pretty_error ~file ~msg json =
     let field_name =
       match String.split_on_char '.' msg with
       | ["Installer_config"; "t"; field_name] -> field_name
-      | ["Installer_config"; subtype; field_name] -> subtype ^ "." ^ field_name
+      | ["Installer_config"; subtype; field_name] ->
+        Printf.sprintf "%s.%s" subtype field_name
       | _ -> msg
     in
     invalid_config ~file "missing or invalid field %S" field_name

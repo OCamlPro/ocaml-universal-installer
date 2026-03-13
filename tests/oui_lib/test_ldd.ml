@@ -18,11 +18,15 @@ let pp_result fmt x =
   | Some (name, path) ->
     Format.fprintf fmt "Some (%S, %S)" name (OpamFilename.to_string path)
 
+[@@@yalo.warning "YALO-3"] (* Disable tab character warning *)
+
 let%expect_test "parse_true_so_line: special .so" =
   let line = "	linux-vdso.so.1 (0x00007ffdf7bb4000)" in
   let result = Ldd.parse_true_so_line line in
   Format.printf "%a" pp_result result;
   [%expect {| None |}]
+
+[@@@yalo.warning "YALO+3"]
 
 let%expect_test "parse_true_so_line: regular .so" =
   let line =
