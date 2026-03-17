@@ -411,8 +411,8 @@ let install_script ~installer_name (ic : Installer_config.internal) =
       ; assign ~var:is_user_install_nv ~value:"false"
       ] @ set_root_prefixes
     in
-    set_defaults @
-    read_arguments (* PREFIX can be overwritten via --prefix *)
+    set_defaults
+    @ read_arguments (* PREFIX can be overwritten via --prefix *)
     :: setup_install_kind ~installer_name ~prefix:prefix_v
   in
   let plugin_apps =
