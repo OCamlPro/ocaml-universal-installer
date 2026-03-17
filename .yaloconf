@@ -22,7 +22,7 @@ search_path = [
 
 (* List of specifications to activate warnings *)
 warnings = [
-  "+YALO-1-8-9-10-12";
+  "+YALO-1-8-9-10-12-17";
 ]
 
 (* List of namespaces and tags to ignore in specifications *)

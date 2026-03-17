@@ -132,11 +132,9 @@ let create_installer
           (OpamFilename.Dir.to_string bundle.contents) dir_name
       in
       if OpamFilename.exists_dir src_dir then
-        begin
-          OpamConsole.msg "Creating symlink: Contents/%s -> Resources/%s\n"
-            dir_name dir_name;
-          Unix.symlink ("Resources/" ^ dir_name) link_path
-        end
+        (OpamConsole.msg "Creating symlink: Contents/%s -> Resources/%s\n"
+           dir_name dir_name;
+         Unix.symlink ("Resources/" ^ dir_name) link_path)
       else
         OpamConsole.warning
           "Directory %s not found in Resources, skipping symlink"
