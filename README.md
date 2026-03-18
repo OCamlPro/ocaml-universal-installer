@@ -46,6 +46,9 @@ To produce linux installer, the `makeself` script must be in the `PATH`.
 You can dowload the latest official release from the
 [official makeself website](https://makeself.io/).
 
+We also use `patchelf` to set the `RUNPATH` on binaries, allowing `oui`
+or users themselves to embedded shared libraries.
+
 #### Windows
 
 Windows MSI are built using the [Wix6 toolkit](https://wixtoolset.org/).
