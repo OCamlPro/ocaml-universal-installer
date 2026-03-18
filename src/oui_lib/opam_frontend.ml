@@ -37,29 +37,29 @@ let wix_version ~opam_oui_conf package =
     in
     try Wix.Version.of_string pkg_version
     with Failure _ ->
-      (OpamConsole.warning
-         "Package version %s contains characters not accepted by MSI."
-         (OpamConsole.colorise `underline pkg_version);
-       let use = "use config file to set it or option --with-version" in
-       let version =
-         let n =
-           OpamStd.String.find_from (function '0'..'9' | '.' -> false | _ -> true)
-             pkg_version 0
-         in
-         if n = 0 then
-           OpamConsole.error_and_exit `Not_found
-             "No version can be retrieved from '%s', %s."
-             pkg_version use
-         else
-           String.sub pkg_version 0 n
-       in
-       OpamConsole.msg
-         "It must be only dot separated numbers. You can %s.\n" use;
-       if
-         OpamConsole.confirm "Do you want to use simplified version %s?"
-           (OpamConsole.colorise `underline version)
-       then version
-       else OpamStd.Sys.exit_because `Aborted)
+      OpamConsole.warning
+        "Package version %s contains characters not accepted by MSI."
+        (OpamConsole.colorise `underline pkg_version);
+      let use = "use config file to set it or option --with-version" in
+      let version =
+        let n =
+          OpamStd.String.find_from (function '0'..'9' | '.' -> false | _ -> true)
+            pkg_version 0
+        in
+        if n = 0 then
+          OpamConsole.error_and_exit `Not_found
+            "No version can be retrieved from '%s', %s."
+            pkg_version use
+        else
+          String.sub pkg_version 0 n
+      in
+      OpamConsole.msg
+        "It must be only dot separated numbers. You can %s.\n" use;
+      if
+        OpamConsole.confirm "Do you want to use simplified version %s?"
+          (OpamConsole.colorise `underline version)
+      then version
+      else OpamStd.Sys.exit_because `Aborted
 
 let binaries changes =
   List.filter_map
@@ -97,8 +97,7 @@ let package_description ~opam package =
   let descr =
     match OpamFile.OPAM.descr_body opam with None -> "" | Some s -> s
   in
-  let summary = Printf.sprintf "Package %s" (OpamPackage.to_string package) in
-  synopsis ^ descr ^ summary
+  Printf.sprintf "%s%sPackage %s" synopsis descr (OpamPackage.to_string package)
 
 let package_environment ~opam_oui_conf ~embedded_dirs ~embedded_files =
   let all_paths =
@@ -136,8 +135,8 @@ let copy_embedded
     (module F : System.FILE_INTF with type t = a)
     ~env
     ~bundle_dir
-    path dst_base =
-  let src = System.resolve_path env (module F) path in
+    ~src ~dst =
+  let src = System.resolve_path env (module F) src in
   if not @@ F.exists src
   then
     OpamConsole.error_and_exit
@@ -145,14 +144,14 @@ let copy_embedded
       "Couldn't find %s %s."
       (OpamConsole.colorise `bold (F.to_string src))
       F.name;
-  let dst = F.(bundle_dir / dst_base) in
+  let dst = F.(bundle_dir / dst) in
   F.copy ~src ~dst;
   F.basename dst, dst
 
-let copy_include path src_dir dst_dir =
+let copy_include ~src_dir ~dst_dir path =
   let sep = if Sys.cygwin then '/' else '\\' in
   let dirs = OpamStd.String.split path sep in (* this is wrong, should support both / and \ *)
-  let rec aux src dst files =
+  let rec aux ~src ~dst files =
     match files with
     | [] -> ()
     | [ file ] when Sys.is_directory @@
@@ -167,9 +166,9 @@ let copy_include path src_dir dst_dir =
       let src =  OpamFilename.Op.(src/file) in
       let dst = OpamFilename.Op.(dst/file) in
       if not @@ OpamFilename.exists_dir dst then OpamFilename.mkdir dst;
-      aux src dst files
+      aux ~src ~dst files
   in
-  aux src_dir dst_dir dirs
+  aux ~src:src_dir ~dst:dst_dir dirs
 
 (* Extract and specifies extra files to embed in the install archive as
    described by the configuration file. *)
@@ -334,22 +333,27 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
       (fun (dirs, files) -> function
          | Copy_alias (dirname, alias) when Sys.is_directory dirname ->
            let dir =
-             copy_embedded (module System.DIR_IMPL) ~env ~bundle_dir dirname alias
+             copy_embedded (module System.DIR_IMPL) ~env ~bundle_dir
+               ~src:dirname ~dst:alias
            in
            (dir::dirs, files)
          | Copy_alias (filename, alias) ->
            let file =
-             copy_embedded (module System.FILE_IMPL) ~env ~bundle_dir filename alias
+             copy_embedded (module System.FILE_IMPL) ~env ~bundle_dir
+               ~src:filename ~dst:alias
            in
            (dirs, file::files)
          | Copy_opam path ->
            let prefix =
              OpamPath.Switch.root global_state.root switch_state.switch
            in
-           copy_include path prefix opam_dir;
+           copy_include ~src_dir:prefix ~dst_dir:opam_dir path;
            (dirs, files)
          | Copy_external path ->
-           copy_include path (OpamFilename.Dir.of_string ".") external_dir;
+           copy_include
+             ~src_dir:(OpamFilename.Dir.of_string ".")
+             ~dst_dir:external_dir
+             path;
            (dirs, files))
       ([],[])
       emb_modes

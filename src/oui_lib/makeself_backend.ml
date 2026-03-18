@@ -412,8 +412,8 @@ let install_script ~installer_name (ic : Installer_config.internal) =
       ] @ set_root_prefixes
     in
     set_defaults
-    @ [read_arguments] (* PREFIX can be overwritten via --prefix *)
-    @ setup_install_kind ~installer_name ~prefix:prefix_v
+    @ read_arguments (* PREFIX can be overwritten via --prefix *)
+    :: setup_install_kind ~installer_name ~prefix:prefix_v
   in
   let plugin_apps =
     List.map (fun (p : Installer_config.plugin) -> p.app_name) ic.plugins
@@ -525,9 +525,9 @@ let install_script ~installer_name (ic : Installer_config.internal) =
       Sh_script.chmod 644 [install_conf];
     ]
   in
-  setup
-  @ [install_bundle]
-  @ install_binaries
+  setup @
+  install_bundle
+  :: install_binaries
   @ install_manpages
   @ install_plugins
   @ dump_install_conf

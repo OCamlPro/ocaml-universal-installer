@@ -137,7 +137,7 @@ let call_inner : type a. a command -> a -> string * string list =
     "codesign", args @ [ path ]
   | CodesignVerify, { binary; verbose } ->
     let path = OpamFilename.to_string binary in
-    let args = [ "--verify" ] @ (if verbose then [ "--verbose" ] else []) @ [ path ] in
+    let args = "--verify" :: (if verbose then [ "--verbose" ] else []) @ [ path ] in
     "codesign", args
   | Pkgbuild, { root; identifier; version; install_location; scripts; output } ->
     let args = [

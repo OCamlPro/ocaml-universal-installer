@@ -54,9 +54,9 @@ let create_info_plist bundle ~installer_config =
 let handle_dylibs bundle ~binary_dst =
   OpamConsole.msg "Processing dylib dependencies...\n";
   let dylibs = Otool.get_dylibs binary_dst in
-  if List.length dylibs = 0 then
-    OpamConsole.msg "  No external dylibs found\n"
-  else
+  match dylibs with
+  | [] -> OpamConsole.msg "  No external dylibs found\n"
+  | _ ->
     List.iter
       (fun dylib ->
          ignore (Macos_app_bundle.copy_dylib bundle ~dylib))
@@ -66,8 +66,8 @@ let handle_dylibs bundle ~binary_dst =
 (** Generate install.conf content *)
 let generate_install_conf ~resources_path ~(installer_config : Installer_config.internal) =
   let lines =
-    [ Printf.sprintf "version=%s" installer_config.version ]
-    @ (match installer_config.plugin_dirs with
+    Printf.sprintf "version=%s" installer_config.version
+    :: (match installer_config.plugin_dirs with
         | None -> []
         | Some pd ->
           [ Printf.sprintf "plugins=%s/%s" resources_path pd.Installer_config.plugins_dir
@@ -128,7 +128,8 @@ let create_installer
   List.iter (fun dir_name ->
       let src_dir = bundle.resources / dir_name in
       let link_path =
-        OpamFilename.Dir.to_string bundle.contents ^ "/" ^ dir_name
+        Printf.sprintf "%s/%s"
+          (OpamFilename.Dir.to_string bundle.contents) dir_name
       in
       if OpamFilename.exists_dir src_dir then
         (OpamConsole.msg "Creating symlink: Contents/%s -> Resources/%s\n"

@@ -15,8 +15,8 @@ module Version = struct
     String.iter (function
         | '0'..'9' | '.' -> ()
         | c ->
-            failwith
-              (Printf.sprintf "Invalid character '%c' in WIX version '%S'" c s))
+          Printf.ksprintf failwith "Invalid character '%c' in WIX version '%S'"
+            c s)
       s;
     s
 end

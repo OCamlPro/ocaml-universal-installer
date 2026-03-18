@@ -1,0 +1,187 @@
+
+
+(*************************************)
+(*   Never edit options files while  *)
+(*       the program is running      *)
+(*************************************)
+(* SECTION : main                    *)
+(* Options for Yalo itself           *)
+(*************************************)
+
+
+
+(* List of plugins to load (in this specific order) *)
+plugins = [
+  yalo_plugin_ocaml;
+  yalo_plugin_YALO;
+]
+
+(* List of directories to search for plugin/profile files *)
+search_path = [
+]
+
+(* List of specifications to activate warnings *)
+warnings = [
+  "+YALO-1-8-9-10-12-17";
+]
+
+(* List of namespaces and tags to ignore in specifications *)
+ignore_namespaces = [
+]
+
+(* List of specifications to activate errors *)
+errors = [
+  "#danger";
+]
+
+(* The name of this project, starting from the root *)
+project = default
+
+(* The name of the project to lint by default *)
+default_target = None
+
+(* Associate attributes with files and folders *)
+fileattrs = [
+]
+
+(* List of profiles to use for this project (NAME means yalo-NAME.conf should be loaded) *)
+profiles = [
+]
+
+
+(*************************************)
+(* SECTION : profiles                *)
+(* Options with special behavior in profiles  *)
+(*************************************)
+
+
+
+(* List of specifications to activate warnings. These specifications *)
+(* are used before the ones provided by the configuration, so that   *)
+(* the project configuration has the final word.                     *)
+profile_warnings = [
+]
+
+(* List of specifications to activate errors *)
+profile_errors = [
+]
+
+
+(*************************************)
+(* SECTION : yalo_plugin_YALO        *)
+(* YALO plugin                       *)
+(*************************************)
+
+
+
+(* A list of identifiers that are authorized to be used without qualification, usually because they come from Stdlib.Pervasives *)
+allow_unqualified = [
+  exit;
+  ref;
+  not;
+  failwith;
+  raise;
+  fst;
+  snd;
+  compare;
+  int_of_string;
+  string_of_int;
+  incr;
+  decr;
+  min;
+  max;
+  stdin;
+  stdout;
+  stderr;
+  open_in;
+  open_out;
+  open_in_bin;
+  open_out_bin;
+  close_in;
+  close_out;
+  at_exit;
+  print_int;
+  print_string;
+  print_char;
+  ignore;
+  output_string;
+]
+YALO = {
+
+(* Minimal number of arguments for a function to need to discriminate between arguments of same types *)
+  min_args_to_need_labels = 3
+
+(* List of (space separated) forbidden keywords or tokens *)
+  forbidden_keywords = [
+    or;
+  ]
+
+(* List of infix operators from Stdlib allowed in this project (missing operators should be reported upstream) *)
+  allowed_stdlib_infix = [
+    "^";
+    "+";
+    "-";
+    "*";
+    "/";
+    "=";
+    "==";
+    "!=";
+    ">";
+    "<";
+    "<=";
+    ">=";
+    "<>";
+    "||";
+    "&&";
+    ":=";
+    "!";
+    "@";
+    "@@";
+    "|>";
+  ]
+
+(* List of infix operators allowed in this project (such as [ "++", "--" ]) for the forbidden_infix warning *)
+  allowed_infix = [
+  ]
+
+(* Maximal length of line before warning YALO+1 *)
+  max_line_length = 80
+}
+
+
+
+(*****************************************************************)
+(*                                                               *)
+(*                       ADVANCED OPTIONS                        *)
+(*                                                               *)
+(*        All the options after this line are for the expert     *)
+(*        user. Do not modify them if you are not   sure.        *)
+(*                                                               *)
+(*****************************************************************)
+
+
+
+
+
+(*************************************)
+(* SECTION : profiles    FOR EXPERTS *)
+(* Options with special behavior in profiles  *)
+(*************************************)
+
+
+
+(* List of plugins to load (in this specific order) for this profile *)
+profile_plugins = [
+]
+
+(* List of directories to search for plugin files for this profile *)
+profile_search_path = [
+]
+
+(* List of other profiles to use for this profile *)
+profile_profiles = [
+]
+
+(* Associate attributes with files and folders *)
+profile_fileattrs = [
+]

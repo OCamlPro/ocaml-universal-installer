@@ -141,7 +141,9 @@ let rec pp_sh_command ?(newline=true) ~indent fmtr command =
     Format.fprintf fmtr ("%s" ^^ fmt ^^ (if newline then "\n" else ""))
       (if indent then indent_str else "")
   in
-  let pp_files = Fmt.(list ~sep:(const string " ") (using (fun x -> "\""^x^"\"") string)) in
+  let pp_files =
+    Fmt.(list ~sep:(const string " ") (using (Printf.sprintf {|"%s"|}) string))
+  in
   match command with
   | Continue -> fpf "continue"
   | Return i -> fpf "return %d" i

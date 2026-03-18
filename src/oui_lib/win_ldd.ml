@@ -186,20 +186,19 @@ let is_system32 =
   fun path ->
     let prefix =
       try String.sub path 0 (String.length win_dir)
-      with _ -> ""
+      with Invalid_argument _ -> ""
     in
-    if prefix <> win_dir then false
-    else
-      let suffix =
-        try String.sub path (String.length win_dir)
-              (String.length path - String.length win_dir)
-        with _ -> ""
-      in
-      match String.split_on_char '\\' suffix with
-      | directory :: _ ->
-          String.lowercase_ascii directory = "system32"
-          || String.lowercase_ascii directory = "syswow64"
-      | _ -> false
+    String.equal prefix win_dir &&
+    let suffix =
+      try String.sub path (String.length win_dir)
+            (String.length path - String.length win_dir)
+      with Invalid_argument _ -> ""
+    in
+    match String.split_on_char '\\' suffix with
+    | directory :: _ ->
+      String.lowercase_ascii directory = "system32"
+      || String.lowercase_ascii directory = "syswow64"
+    | _ -> false
 
 (* Note: string is encoded using the current Windows ANSI encoding, not UTF-8 *)
 external resolve_dll : string -> string option = "ml_resolve_dll"

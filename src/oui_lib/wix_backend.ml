@@ -103,7 +103,7 @@ let create_installer ?(keep_wxs=false) ~tmp_dir
   let (ui_wxs_filename, ui_wxs_content) =
     match info.plugin_for with
     | None -> Data.WIX.custom_app
-    | Some (_) -> Data.WIX.custom_plugin
+    | Some _ -> Data.WIX.custom_plugin
   in
   let ui_wxs_filepath = tmp_dir // ui_wxs_filename in
   OpamFilename.write ui_wxs_filepath ui_wxs_content;
