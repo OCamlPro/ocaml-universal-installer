@@ -365,6 +365,9 @@ let read_arguments =
           shift;
           assign ~var:prefix_nv ~value:"$1";
         ]};
+      { pattern = "--prefix=*"
+      ; commands = [assign ~var:prefix_nv ~value:"${1#--prefix=}"]
+      };
       { pattern = "--help";
         commands = [
           call_fun "usage" [];
