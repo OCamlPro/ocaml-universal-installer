@@ -8,6 +8,9 @@
 
 ### Fixed
 
+- Fix a bug in makeself installation script which caused the `--prefix`
+  option not to work when using the `--prefix=dir` form. (#??, @NathanReb)
+
 ### Removed
 
 ### Security

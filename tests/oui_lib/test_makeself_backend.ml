@@ -123,6 +123,9 @@ let%expect_test "install_script: simple" =
           shift
           PREFIX="$1"
         ;;
+        --prefix=*)
+          PREFIX="${1#--prefix=}"
+        ;;
         --help)
           usage
           exit 0
@@ -259,6 +262,9 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
           fi
           shift
           PREFIX="$1"
+        ;;
+        --prefix=*)
+          PREFIX="${1#--prefix=}"
         ;;
         --help)
           usage
@@ -422,6 +428,9 @@ let%expect_test "install_script: install plugins" =
           fi
           shift
           PREFIX="$1"
+        ;;
+        --prefix=*)
+          PREFIX="${1#--prefix=}"
         ;;
         --help)
           usage
@@ -820,6 +829,9 @@ let%expect_test "install_script: binary in sub folder" =
           shift
           PREFIX="$1"
         ;;
+        --prefix=*)
+          PREFIX="${1#--prefix=}"
+        ;;
         --help)
           usage
           exit 0
@@ -1027,6 +1039,9 @@ let%expect_test "install_script: set environment for binaries" =
           fi
           shift
           PREFIX="$1"
+        ;;
+        --prefix=*)
+          PREFIX="${1#--prefix=}"
         ;;
         --help)
           usage
