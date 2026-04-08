@@ -94,7 +94,7 @@ let%expect_test "install_script: simple" =
       echo "                           Must be an absolute path."
     }
     check_available() {
-      if [ -e "$1" ]; then
+      if [ -e "$1" ] || [ -L "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
         printf '%s\n' "Use $PREFIX/aaa/uninstall.sh to uninstall it" >&2
         exit 1
@@ -243,7 +243,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo "                           Must be an absolute path."
     }
     check_available() {
-      if [ -e "$1" ]; then
+      if [ -e "$1" ] || [ -L "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
         printf '%s\n' "Use $PREFIX/t-name/uninstall.sh to uninstall it" >&2
         exit 1
@@ -388,7 +388,7 @@ let%expect_test "install_script: install plugins" =
       echo "                           Must be an absolute path."
     }
     check_available() {
-      if [ -e "$1" ]; then
+      if [ -e "$1" ] || [ -L "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
         printf '%s\n' "Use $PREFIX/t-name/uninstall.sh to uninstall it" >&2
         exit 1
@@ -827,7 +827,7 @@ let%expect_test "install_script: binary in sub folder" =
       echo "                           Must be an absolute path."
     }
     check_available() {
-      if [ -e "$1" ]; then
+      if [ -e "$1" ] || [ -L "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
         printf '%s\n' "Use $PREFIX/test-name/uninstall.sh to uninstall it" >&2
         exit 1
@@ -1047,7 +1047,7 @@ let%expect_test "install_script: set environment for binaries" =
       echo "                           Must be an absolute path."
     }
     check_available() {
-      if [ -e "$1" ]; then
+      if [ -e "$1" ] || [ -L "$1" ]; then
         printf '%s\n' "$1 already exists on the system! Aborting" >&2
         printf '%s\n' "Use $PREFIX/test-name/uninstall.sh to uninstall it" >&2
         exit 1

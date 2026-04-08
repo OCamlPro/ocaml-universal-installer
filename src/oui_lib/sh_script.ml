@@ -29,11 +29,13 @@ type condition =
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition
+  | Or of condition * condition
   | Not of condition
   | Num_op of string * numerical_op * int
   | Str_op of string_op
 
 let (&&) c1 c2 = And (c1, c2)
+let (||) c1 c2 = Or (c1, c2)
 
 type command =
   | Continue
@@ -126,6 +128,10 @@ let rec pp_sh_condition fmtr condition =
   | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
   | And (c1, c2) ->
     Format.fprintf fmtr "%a && %a"
+      pp_sh_condition c1
+      pp_sh_condition c2
+  | Or (c1, c2) ->
+    Format.fprintf fmtr "%a || %a"
       pp_sh_condition c1
       pp_sh_condition c2
   | Not (And _ as c) -> Format.fprintf fmtr "! (%a)" pp_sh_condition c

@@ -29,11 +29,13 @@ type condition =
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition
+  | Or of condition * condition
   | Not of condition
   | Num_op of string * numerical_op * int
   | Str_op of string_op
 
 val (&&) : condition -> condition -> condition
+val (||) : condition -> condition -> condition
 
 type command =
   | Continue

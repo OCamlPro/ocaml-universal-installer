@@ -302,7 +302,7 @@ let install_plugin ~install_dir (plugin : Installer_config.plugin) =
 let def_check_available prefix =
   let open Sh_script in
   def_fun check_available
-    [ if_ (Exists "$1")
+    [ if_ (Exists "$1" || Link_exists "$1")
         [
           print_errf "$1 already exists on the system! Aborting";
           print_errf "Use %s/%s to uninstall it"
