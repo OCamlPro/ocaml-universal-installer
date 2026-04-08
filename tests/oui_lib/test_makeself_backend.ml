@@ -200,6 +200,11 @@ let%expect_test "install_script: simple" =
     fi
     mkdir -p -m 755 "$PREFIX/aaa"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/aaa" \;
+    {
+      printf '%s\n' "version=x.y.z"
+      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
+    } > "$PREFIX/aaa/install.conf"
+    chmod 644 "$PREFIX/aaa/install.conf"
     if ! [ -d "$BINDIR" ]; then
       mkdir -p -m 755 "$BINDIR"
     fi
@@ -213,11 +218,6 @@ let%expect_test "install_script: simple" =
     ln -s "$PREFIX/aaa/man/man1/aaa-utility.1" "$MANDIR/man1/aaa-utility.1"
     mkdir -p -m 755 "$MANDIR/man5"
     ln -s "$PREFIX/aaa/man/man5/aaa-file.1" "$MANDIR/man5/aaa-file.1"
-    {
-      printf '%s\n' "version=x.y.z"
-      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
-    } > "$PREFIX/aaa/install.conf"
-    chmod 644 "$PREFIX/aaa/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run $PREFIX/aaa/uninstall.sh."
     |}]
@@ -535,6 +535,15 @@ let%expect_test "install_script: install plugins" =
     fi
     mkdir -p -m 755 "$PREFIX/t-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
+    {
+      printf '%s\n' "version=t.version"
+      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
+      printf '%s\n' "app_a_lib=$app_a_lib"
+      printf '%s\n' "app_a_plugins=$app_a_plugins"
+      printf '%s\n' "app_b_lib=$app_b_lib"
+      printf '%s\n' "app_b_plugins=$app_b_plugins"
+    } > "$PREFIX/t-name/install.conf"
+    chmod 644 "$PREFIX/t-name/install.conf"
     echo "Installing plugin app-a-name to app-a..."
     ln -s "$PREFIX/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
     if ! [ -L "$app_a_lib/app-a-name" ] && ! [ -d "$app_a_lib/app-a-name" ]; then
@@ -551,15 +560,6 @@ let%expect_test "install_script: install plugins" =
     if ! [ -L "$app_b_lib/dep-b" ] && ! [ -d "$app_b_lib/dep-b" ]; then
       ln -s "$PREFIX/t-name/lib/dep-b" "$app_b_lib/dep-b"
     fi
-    {
-      printf '%s\n' "version=t.version"
-      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
-      printf '%s\n' "app_a_lib=$app_a_lib"
-      printf '%s\n' "app_a_plugins=$app_a_plugins"
-      printf '%s\n' "app_b_lib=$app_b_lib"
-      printf '%s\n' "app_b_plugins=$app_b_plugins"
-    } > "$PREFIX/t-name/install.conf"
-    chmod 644 "$PREFIX/t-name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall t-name, please run $PREFIX/t-name/uninstall.sh."
     |}]
@@ -925,16 +925,16 @@ let%expect_test "install_script: binary in sub folder" =
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
-    if ! [ -d "$BINDIR" ]; then
-      mkdir -p -m 755 "$BINDIR"
-    fi
-    echo "Adding do to $BINDIR"
-    ln -s "$PREFIX/test-name/bin/do" "$BINDIR/do"
     {
       printf '%s\n' "version=test.version"
       printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
     } > "$PREFIX/test-name/install.conf"
     chmod 644 "$PREFIX/test-name/install.conf"
+    if ! [ -d "$BINDIR" ]; then
+      mkdir -p -m 755 "$BINDIR"
+    fi
+    echo "Adding do to $BINDIR"
+    ln -s "$PREFIX/test-name/bin/do" "$BINDIR/do"
     echo "Installation complete!"
     echo "If you want to safely uninstall test-name, please run $PREFIX/test-name/uninstall.sh."
     |}]
@@ -1145,6 +1145,11 @@ let%expect_test "install_script: set environment for binaries" =
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
+    {
+      printf '%s\n' "version=test.version"
+      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
+    } > "$PREFIX/test-name/install.conf"
+    chmod 644 "$PREFIX/test-name/install.conf"
     if ! [ -d "$BINDIR" ]; then
       mkdir -p -m 755 "$BINDIR"
     fi
@@ -1156,11 +1161,6 @@ let%expect_test "install_script: set environment for binaries" =
       printf '%s\n' "exec $PREFIX/test-name/bin/app \"\$@\""
     } > "$BINDIR/app"
     chmod 755 "$BINDIR/app"
-    {
-      printf '%s\n' "version=test.version"
-      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
-    } > "$PREFIX/test-name/install.conf"
-    chmod 644 "$PREFIX/test-name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall test-name, please run $PREFIX/test-name/uninstall.sh."
     |}]

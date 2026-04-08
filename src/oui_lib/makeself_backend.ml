@@ -544,10 +544,10 @@ let install_script ~installer_name (ic : Installer_config.internal) =
   in
   setup @
   install_bundle
-  :: install_binaries
+  :: dump_install_conf
+  @ install_binaries
   @ install_manpages
   @ install_plugins
-  @ dump_install_conf
   @ notify_install_complete
 
 let display_plugin (plugin : Installer_config.plugin) =
