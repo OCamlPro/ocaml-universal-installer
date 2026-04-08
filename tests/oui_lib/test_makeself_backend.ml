@@ -139,7 +139,10 @@ let%expect_test "install_script: simple" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -288,7 +291,10 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -463,7 +469,10 @@ let%expect_test "install_script: install plugins" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -872,7 +881,10 @@ let%expect_test "install_script: binary in sub folder" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -1092,7 +1104,10 @@ let%expect_test "install_script: set environment for binaries" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage

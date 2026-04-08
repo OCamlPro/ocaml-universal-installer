@@ -354,6 +354,7 @@ let prompt_for_confirmation =
 
 let read_arguments =
   let open Sh_script in
+  let prefix_no_trailing_bs = Printf.sprintf "${%s%%/}" prefix_nv in
   let check_arg =
     if_ (Num_op ("#",Lt,2)) [echof "Option $1 requires an argument"; exit 2] ()
   in
@@ -382,7 +383,10 @@ let read_arguments =
         shift;
       ]
   ; case prefix_nv
-        [ { pattern = "/*"; commands = []}
+        [ { pattern = "/"; commands = []}
+        ; { pattern = "/*"
+          ; commands = [assign ~var:prefix_nv ~value:prefix_no_trailing_bs]
+          }
         ; { pattern = "*"
           ; commands =
               [ print_errf "Invalid %s %s: should be an absolute path"
