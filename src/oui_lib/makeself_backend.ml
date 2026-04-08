@@ -56,7 +56,9 @@ let conf_version = "version"
 let conf_plugins = "plugins"
 let conf_lib = "lib"
 
-let check_available = "check_available"
+let existing_files_nv = "existing_files"
+let existing_files_v = !$ existing_files_nv
+let collect_existing = "collect_existing"
 let check_lib = "check_lib"
 
 let vars : Installer_config.vars = { install_path = install_path_v }
@@ -299,16 +301,12 @@ let install_plugin ~install_dir (plugin : Installer_config.plugin) =
        (fun dyn_dep -> add_symlink_if_missing ~install_dir dyn_dep ~in_:lib_dir)
        plugin.dyn_deps)
 
-let def_check_available prefix =
+let def_collect_existing =
   let open Sh_script in
-  def_fun check_available
+  def_fun collect_existing
     [ if_ (Exists "$1" || Link_exists "$1")
-        [
-          print_errf "$1 already exists on the system! Aborting";
-          print_errf "Use %s/%s to uninstall it"
-            prefix uninstall_script_name;
-          exit 1
-        ]
+        [ assign ~var:existing_files_nv
+            ~value:(existing_files_v ^ " $1") ]
         ()
     ]
 
@@ -323,13 +321,13 @@ let def_check_lib =
         ()
     ]
 
-let call_check_available path =
-  Sh_script.call_fun check_available [Printf.sprintf "%S" path]
+let call_collect_existing path =
+  Sh_script.call_fun collect_existing [Printf.sprintf "%S" path]
 
 let call_check_lib path =
   Sh_script.call_fun check_lib [Printf.sprintf "%S" path]
 
-let check_plugin_available (plugin : Installer_config.plugin) =
+let collect_plugin_existing (plugin : Installer_config.plugin) =
   let var_prefix = app_var_prefix plugin.app_name in
   let lib_dir = !$ (lib_var ~var_prefix) in
   let plugins_dir = !$ (plugins_var ~var_prefix) in
@@ -338,7 +336,7 @@ let check_plugin_available (plugin : Installer_config.plugin) =
     ; plugins_dir / (Filename.basename plugin.plugin_dir)
     ]
   in
-  List.map call_check_available paths
+  List.map call_collect_existing paths
   @ List.map
     (fun x -> call_check_lib (lib_dir / (Filename.basename x)))
     plugin.dyn_deps
@@ -465,9 +463,23 @@ let install_script ~installer_name (ic : Installer_config.internal) =
          plugins)
   in
   let load_plugin_app_vars = List.map find_and_load_conf plugin_apps in
-  let check_all_available =
-    List.map call_check_available all_files
-    @ List.concat_map check_plugin_available ic.plugins
+  let init_existing_files =
+    [ assign ~var:existing_files_nv ~value:"" ]
+  in
+  let collect_all_existing =
+    List.map call_collect_existing all_files
+    @ List.concat_map collect_plugin_existing ic.plugins
+  in
+  let warn_if_existing =
+    [ if_ (Str_op (Not_empty existing_files_v))
+        [ echof
+            "Warning: the following files or directories already exist and \
+             will be overwritten:"
+        ; for_ ~var:"f" ~in_:existing_files_nv
+            [ echof "  - $f" ]
+        ]
+        ()
+    ]
   in
   let create_install_dir =
     [
@@ -475,9 +487,14 @@ let install_script ~installer_name (ic : Installer_config.internal) =
       mkdir ~permissions:755 [install_dir];
     ]
   in
+  let remove_existing =
+    if_ (Str_op (Not_empty existing_files_v))
+      [for_ ~var:"f" ~in_:existing_files_nv [ rm_rf ["$f"]]]
+      ()
+  in
   let deffuns = [
     def_usage;
-    def_check_available install_dir;
+    def_collect_existing;
     def_check_lib;
   ] @
     def_load_conf
@@ -489,9 +506,12 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     @ display_install_info
     @ display_plugin_install_info
     @ load_plugin_app_vars
-    @ check_all_available
+    @ init_existing_files
+    @ collect_all_existing
+    @ warn_if_existing
     @ prompt_for_confirmation
-    @ create_install_dir
+    @ remove_existing
+    :: create_install_dir
   in
   let install_bundle =
     Sh_script.copy_all_in ~src:"." ~dst:install_dir ~except:install_script_name

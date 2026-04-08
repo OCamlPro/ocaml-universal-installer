@@ -61,6 +61,7 @@ type command =
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
   | While of {condition: condition; while_: command list}
+  | For of {var: string; in_: string; body: command list}
   | Write_file of {file: string; lines : string list; append:bool}
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
@@ -92,6 +93,7 @@ let if_ condition then_ ?(else_=[]) () = If {condition; then_; else_}
 let prompt ~question ~varname = Prompt {question; varname}
 let case varname cases = Case {varname; cases}
 let while_ condition while_ = While { condition; while_ }
+let for_ ~var ~in_ body = For {var; in_; body}
 let write_file ?(append=false) file lines = Write_file {file; lines; append}
 let def_fun name body = Def_fun {name; body}
 let call_fun name args = Call_fun {name; args}
@@ -204,6 +206,10 @@ let rec pp_sh_command ?(newline=true) ~indent fmtr command =
   | While {condition; while_} ->
     fpf {|while %a; do|} pp_sh_condition condition;
     List.iter (pp_sh_command ~indent:(indent + 2) fmtr) while_;
+    fpf "done"
+  | For {var; in_; body} ->
+    fpf "for %s in $%s; do" var in_;
+    List.iter (pp_sh_command ~indent:(indent + 2) fmtr) body;
     fpf "done"
   | Write_file {file; lines; append} ->
     fpf "{";
