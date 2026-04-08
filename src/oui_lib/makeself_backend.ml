@@ -357,29 +357,41 @@ let read_arguments =
   let check_arg =
     if_ (Num_op ("#",Lt,2)) [echof "Option $1 requires an argument"; exit 2] ()
   in
-  while_ (Num_op ("#",Gt,0)) [
-    case "1" [
-      { pattern = "--prefix";
-        commands = [
-          check_arg;
-          shift;
-          assign ~var:prefix_nv ~value:"$1";
-        ]};
-      { pattern = "--prefix=*"
-      ; commands = [assign ~var:prefix_nv ~value:"${1#--prefix=}"]
-      };
-      { pattern = "--help";
-        commands = [
-          call_fun "usage" [];
-          exit 0
-        ]};
-      { pattern = "*";
-        commands = [
-          call_fun "usage" [];
-          exit 3
-        ]};
-    ];
-    shift;
+  [ while_ (Num_op ("#",Gt,0)) [
+        case "1" [
+          { pattern = "--prefix";
+            commands = [
+              check_arg;
+              shift;
+              assign ~var:prefix_nv ~value:"$1";
+            ]};
+          { pattern = "--prefix=*"
+          ; commands = [assign ~var:prefix_nv ~value:"${1#--prefix=}"]
+          };
+          { pattern = "--help";
+            commands = [
+              call_fun "usage" [];
+              exit 0
+            ]};
+          { pattern = "*";
+            commands = [
+              call_fun "usage" [];
+              exit 3
+            ]};
+        ];
+        shift;
+      ]
+  ; case prefix_nv
+        [ { pattern = "/*"; commands = []}
+        ; { pattern = "*"
+          ; commands =
+              [ print_errf "Invalid %s %s: should be an absolute path"
+                  prefix_nv prefix_v
+              ; call_fun "usage" []
+              ; exit 3
+              ]
+          }
+        ]
   ]
 
 let install_script ~installer_name (ic : Installer_config.internal) =
@@ -399,7 +411,9 @@ let install_script ~installer_name (ic : Installer_config.internal) =
       Printf.sprintf
         "                           If PREFIX points to a user owned directory \
          symlinks and manpage will be put in %s, otherwise (root directory) \
-         in %s" User.pre Global.pre;
+         in %s." User.pre Global.pre;
+      Printf.sprintf
+        "                           Must be an absolute path."
     ]
     |> List.map (echof "%s")
     |> def_fun "usage"
@@ -416,7 +430,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     in
     set_defaults
     @ read_arguments (* PREFIX can be overwritten via --prefix *)
-    :: setup_install_kind ~installer_name ~prefix:prefix_v
+    @ setup_install_kind ~installer_name ~prefix:prefix_v
   in
   let plugin_apps =
     List.map (fun (p : Installer_config.plugin) -> p.app_name) ic.plugins
