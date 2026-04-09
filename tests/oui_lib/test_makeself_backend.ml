@@ -90,7 +90,8 @@ let%expect_test "install_script: simple" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
+      echo "                           Must be an absolute path."
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -137,6 +138,14 @@ let%expect_test "install_script: simple" =
       esac
       shift
     done
+    case "$PREFIX" in
+      /*) ;;
+      *)
+        printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
+        usage
+        exit 3
+      ;;
+    esac
     if [ -d "$PREFIX" ]; then
       dir_name="$PREFIX"
     else
@@ -230,7 +239,8 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
+      echo "                           Must be an absolute path."
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -277,6 +287,14 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       esac
       shift
     done
+    case "$PREFIX" in
+      /*) ;;
+      *)
+        printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
+        usage
+        exit 3
+      ;;
+    esac
     if [ -d "$PREFIX" ]; then
       dir_name="$PREFIX"
     else
@@ -366,7 +384,8 @@ let%expect_test "install_script: install plugins" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
+      echo "                           Must be an absolute path."
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -443,6 +462,14 @@ let%expect_test "install_script: install plugins" =
       esac
       shift
     done
+    case "$PREFIX" in
+      /*) ;;
+      *)
+        printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
+        usage
+        exit 3
+      ;;
+    esac
     if [ -d "$PREFIX" ]; then
       dir_name="$PREFIX"
     else
@@ -796,7 +823,8 @@ let%expect_test "install_script: binary in sub folder" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
+      echo "                           Must be an absolute path."
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -843,6 +871,14 @@ let%expect_test "install_script: binary in sub folder" =
       esac
       shift
     done
+    case "$PREFIX" in
+      /*) ;;
+      *)
+        printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
+        usage
+        exit 3
+      ;;
+    esac
     if [ -d "$PREFIX" ]; then
       dir_name="$PREFIX"
     else
@@ -1007,7 +1043,8 @@ let%expect_test "install_script: set environment for binaries" =
       echo ""
       echo "Options:"
       echo "    --prefix PREFIX        Install bundle in PREFIX (default is /opt)"
-      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local"
+      echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
+      echo "                           Must be an absolute path."
     }
     check_available() {
       if [ -e "$1" ]; then
@@ -1054,6 +1091,14 @@ let%expect_test "install_script: set environment for binaries" =
       esac
       shift
     done
+    case "$PREFIX" in
+      /*) ;;
+      *)
+        printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
+        usage
+        exit 3
+      ;;
+    esac
     if [ -d "$PREFIX" ]; then
       dir_name="$PREFIX"
     else

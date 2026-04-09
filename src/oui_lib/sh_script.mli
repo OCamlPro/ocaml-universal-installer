@@ -145,6 +145,7 @@ val copy_all_in : src: string -> dst: string -> except: string -> command
     [read varname]. *)
 val prompt : question: string -> varname: string -> command
 
+(** [case "VAR" cases] is ["case $VAR in ... esac"] *)
 val case : string -> case list -> command
 
 (** [while condition commands] is
