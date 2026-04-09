@@ -29,11 +29,13 @@ type condition =
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition
+  | Or of condition * condition
   | Not of condition
   | Num_op of string * numerical_op * int
   | Str_op of string_op
 
 val (&&) : condition -> condition -> condition
+val (||) : condition -> condition -> condition
 
 type command =
   | Continue
@@ -59,6 +61,7 @@ type command =
   | Prompt of {question: string; varname: string}
   | Case of {varname: string; cases: case list}
   | While of {condition: condition; while_: command list}
+  | For of {var: string; in_: string; body: command list}
   | Write_file of {file: string; lines : string list; append:bool}
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
@@ -153,6 +156,12 @@ val case : string -> case list -> command
       commands
     done"] *)
 val while_ : condition -> command list -> command
+
+(** [for_ ~var:"f" ~in_:"list" commands] is
+    ["for f in $list; do
+      commands
+    done"] *)
+val for_ : var: string -> in_: string -> command list -> command
 
 (** [write_file file lines] is
     ["{ printf \"line1\n\"; printf \"line2\n\"; ... } > file"].

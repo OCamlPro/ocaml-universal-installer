@@ -93,11 +93,9 @@ let%expect_test "install_script: simple" =
       echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
       echo "                           Must be an absolute path."
     }
-    check_available() {
-      if [ -e "$1" ]; then
-        printf '%s\n' "$1 already exists on the system! Aborting" >&2
-        printf '%s\n' "Use $PREFIX/aaa/uninstall.sh to uninstall it" >&2
-        exit 1
+    collect_existing() {
+      if [ -e "$1" ] || [ -L "$1" ]; then
+        existing_files="$existing_files $1"
       fi
     }
     check_lib() {
@@ -139,7 +137,10 @@ let%expect_test "install_script: simple" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -180,12 +181,19 @@ let%expect_test "install_script: simple" =
     echo "- $MANDIR/man1/aaa-command.1"
     echo "- $MANDIR/man1/aaa-utility.1"
     echo "- $MANDIR/man5/aaa-file.1"
-    check_available "$PREFIX/aaa"
-    check_available "$BINDIR/aaa-command"
-    check_available "$BINDIR/aaa-utility"
-    check_available "$MANDIR/man1/aaa-command.1"
-    check_available "$MANDIR/man1/aaa-utility.1"
-    check_available "$MANDIR/man5/aaa-file.1"
+    existing_files=""
+    collect_existing "$PREFIX/aaa"
+    collect_existing "$BINDIR/aaa-command"
+    collect_existing "$BINDIR/aaa-utility"
+    collect_existing "$MANDIR/man1/aaa-command.1"
+    collect_existing "$MANDIR/man1/aaa-utility.1"
+    collect_existing "$MANDIR/man5/aaa-file.1"
+    if [ -n "$existing_files" ]; then
+      echo "Warning: the following files or directories already exist and will be overwritten:"
+      for f in $existing_files; do
+        echo "  - $f"
+      done
+    fi
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -195,11 +203,21 @@ let%expect_test "install_script: simple" =
         exit 1
       ;;
     esac
+    if [ -n "$existing_files" ]; then
+      for f in $existing_files; do
+        rm -rf "$f"
+      done
+    fi
     if ! [ -d "$PREFIX" ]; then
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/aaa"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/aaa" \;
+    {
+      printf '%s\n' "version=x.y.z"
+      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
+    } > "$PREFIX/aaa/install.conf"
+    chmod 644 "$PREFIX/aaa/install.conf"
     if ! [ -d "$BINDIR" ]; then
       mkdir -p -m 755 "$BINDIR"
     fi
@@ -213,11 +231,6 @@ let%expect_test "install_script: simple" =
     ln -s "$PREFIX/aaa/man/man1/aaa-utility.1" "$MANDIR/man1/aaa-utility.1"
     mkdir -p -m 755 "$MANDIR/man5"
     ln -s "$PREFIX/aaa/man/man5/aaa-file.1" "$MANDIR/man5/aaa-file.1"
-    {
-      printf '%s\n' "version=x.y.z"
-      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
-    } > "$PREFIX/aaa/install.conf"
-    chmod 644 "$PREFIX/aaa/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run $PREFIX/aaa/uninstall.sh."
     |}]
@@ -242,11 +255,9 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
       echo "                           Must be an absolute path."
     }
-    check_available() {
-      if [ -e "$1" ]; then
-        printf '%s\n' "$1 already exists on the system! Aborting" >&2
-        printf '%s\n' "Use $PREFIX/t-name/uninstall.sh to uninstall it" >&2
-        exit 1
+    collect_existing() {
+      if [ -e "$1" ] || [ -L "$1" ]; then
+        existing_files="$existing_files $1"
       fi
     }
     check_lib() {
@@ -288,7 +299,10 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -324,7 +338,14 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     echo "Installing t-name.t.version to $PREFIX/t-name"
     echo "The following files and directories will be written to the system:"
     echo "- $PREFIX/t-name"
-    check_available "$PREFIX/t-name"
+    existing_files=""
+    collect_existing "$PREFIX/t-name"
+    if [ -n "$existing_files" ]; then
+      echo "Warning: the following files or directories already exist and will be overwritten:"
+      for f in $existing_files; do
+        echo "  - $f"
+      done
+    fi
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -334,6 +355,11 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
         exit 1
       ;;
     esac
+    if [ -n "$existing_files" ]; then
+      for f in $existing_files; do
+        rm -rf "$f"
+      done
+    fi
     if ! [ -d "$PREFIX" ]; then
       mkdir -p -m 755 "$PREFIX"
     fi
@@ -387,11 +413,9 @@ let%expect_test "install_script: install plugins" =
       echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
       echo "                           Must be an absolute path."
     }
-    check_available() {
-      if [ -e "$1" ]; then
-        printf '%s\n' "$1 already exists on the system! Aborting" >&2
-        printf '%s\n' "Use $PREFIX/t-name/uninstall.sh to uninstall it" >&2
-        exit 1
+    collect_existing() {
+      if [ -e "$1" ] || [ -L "$1" ]; then
+        existing_files="$existing_files $1"
       fi
     }
     check_lib() {
@@ -463,7 +487,10 @@ let%expect_test "install_script: install plugins" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -514,13 +541,20 @@ let%expect_test "install_script: install plugins" =
       printf '%s\n' "Could not locate app-b install path" >&2
       exit 1
     fi
-    check_available "$PREFIX/t-name"
-    check_available "$app_a_lib/app-a-name"
-    check_available "$app_a_plugins/name"
-    check_available "$app_b_lib/app-b-name"
-    check_available "$app_b_plugins/name"
+    existing_files=""
+    collect_existing "$PREFIX/t-name"
+    collect_existing "$app_a_lib/app-a-name"
+    collect_existing "$app_a_plugins/name"
+    collect_existing "$app_b_lib/app-b-name"
+    collect_existing "$app_b_plugins/name"
     check_lib "$app_b_lib/dep-a"
     check_lib "$app_b_lib/dep-b"
+    if [ -n "$existing_files" ]; then
+      echo "Warning: the following files or directories already exist and will be overwritten:"
+      for f in $existing_files; do
+        echo "  - $f"
+      done
+    fi
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -530,11 +564,25 @@ let%expect_test "install_script: install plugins" =
         exit 1
       ;;
     esac
+    if [ -n "$existing_files" ]; then
+      for f in $existing_files; do
+        rm -rf "$f"
+      done
+    fi
     if ! [ -d "$PREFIX" ]; then
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/t-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/t-name" \;
+    {
+      printf '%s\n' "version=t.version"
+      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
+      printf '%s\n' "app_a_lib=$app_a_lib"
+      printf '%s\n' "app_a_plugins=$app_a_plugins"
+      printf '%s\n' "app_b_lib=$app_b_lib"
+      printf '%s\n' "app_b_plugins=$app_b_plugins"
+    } > "$PREFIX/t-name/install.conf"
+    chmod 644 "$PREFIX/t-name/install.conf"
     echo "Installing plugin app-a-name to app-a..."
     ln -s "$PREFIX/t-name/lib/app-a/plugins/name" "$app_a_plugins/name"
     if ! [ -L "$app_a_lib/app-a-name" ] && ! [ -d "$app_a_lib/app-a-name" ]; then
@@ -551,15 +599,6 @@ let%expect_test "install_script: install plugins" =
     if ! [ -L "$app_b_lib/dep-b" ] && ! [ -d "$app_b_lib/dep-b" ]; then
       ln -s "$PREFIX/t-name/lib/dep-b" "$app_b_lib/dep-b"
     fi
-    {
-      printf '%s\n' "version=t.version"
-      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
-      printf '%s\n' "app_a_lib=$app_a_lib"
-      printf '%s\n' "app_a_plugins=$app_a_plugins"
-      printf '%s\n' "app_b_lib=$app_b_lib"
-      printf '%s\n' "app_b_plugins=$app_b_plugins"
-    } > "$PREFIX/t-name/install.conf"
-    chmod 644 "$PREFIX/t-name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall t-name, please run $PREFIX/t-name/uninstall.sh."
     |}]
@@ -826,11 +865,9 @@ let%expect_test "install_script: binary in sub folder" =
       echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
       echo "                           Must be an absolute path."
     }
-    check_available() {
-      if [ -e "$1" ]; then
-        printf '%s\n' "$1 already exists on the system! Aborting" >&2
-        printf '%s\n' "Use $PREFIX/test-name/uninstall.sh to uninstall it" >&2
-        exit 1
+    collect_existing() {
+      if [ -e "$1" ] || [ -L "$1" ]; then
+        existing_files="$existing_files $1"
       fi
     }
     check_lib() {
@@ -872,7 +909,10 @@ let%expect_test "install_script: binary in sub folder" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -909,8 +949,15 @@ let%expect_test "install_script: binary in sub folder" =
     echo "The following files and directories will be written to the system:"
     echo "- $PREFIX/test-name"
     echo "- $BINDIR/do"
-    check_available "$PREFIX/test-name"
-    check_available "$BINDIR/do"
+    existing_files=""
+    collect_existing "$PREFIX/test-name"
+    collect_existing "$BINDIR/do"
+    if [ -n "$existing_files" ]; then
+      echo "Warning: the following files or directories already exist and will be overwritten:"
+      for f in $existing_files; do
+        echo "  - $f"
+      done
+    fi
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -920,21 +967,26 @@ let%expect_test "install_script: binary in sub folder" =
         exit 1
       ;;
     esac
+    if [ -n "$existing_files" ]; then
+      for f in $existing_files; do
+        rm -rf "$f"
+      done
+    fi
     if ! [ -d "$PREFIX" ]; then
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
-    if ! [ -d "$BINDIR" ]; then
-      mkdir -p -m 755 "$BINDIR"
-    fi
-    echo "Adding do to $BINDIR"
-    ln -s "$PREFIX/test-name/bin/do" "$BINDIR/do"
     {
       printf '%s\n' "version=test.version"
       printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
     } > "$PREFIX/test-name/install.conf"
     chmod 644 "$PREFIX/test-name/install.conf"
+    if ! [ -d "$BINDIR" ]; then
+      mkdir -p -m 755 "$BINDIR"
+    fi
+    echo "Adding do to $BINDIR"
+    ln -s "$PREFIX/test-name/bin/do" "$BINDIR/do"
     echo "Installation complete!"
     echo "If you want to safely uninstall test-name, please run $PREFIX/test-name/uninstall.sh."
     |}]
@@ -1046,11 +1098,9 @@ let%expect_test "install_script: set environment for binaries" =
       echo "                           If PREFIX points to a user owned directory symlinks and manpage will be put in $HOME/.local, otherwise (root directory) in /usr/local."
       echo "                           Must be an absolute path."
     }
-    check_available() {
-      if [ -e "$1" ]; then
-        printf '%s\n' "$1 already exists on the system! Aborting" >&2
-        printf '%s\n' "Use $PREFIX/test-name/uninstall.sh to uninstall it" >&2
-        exit 1
+    collect_existing() {
+      if [ -e "$1" ] || [ -L "$1" ]; then
+        existing_files="$existing_files $1"
       fi
     }
     check_lib() {
@@ -1092,7 +1142,10 @@ let%expect_test "install_script: set environment for binaries" =
       shift
     done
     case "$PREFIX" in
-      /*) ;;
+      /) ;;
+      /*)
+        PREFIX="${PREFIX%/}"
+      ;;
       *)
         printf '%s\n' "Invalid PREFIX $PREFIX: should be an absolute path" >&2
         usage
@@ -1129,8 +1182,15 @@ let%expect_test "install_script: set environment for binaries" =
     echo "The following files and directories will be written to the system:"
     echo "- $PREFIX/test-name"
     echo "- $BINDIR/app"
-    check_available "$PREFIX/test-name"
-    check_available "$BINDIR/app"
+    existing_files=""
+    collect_existing "$PREFIX/test-name"
+    collect_existing "$BINDIR/app"
+    if [ -n "$existing_files" ]; then
+      echo "Warning: the following files or directories already exist and will be overwritten:"
+      for f in $existing_files; do
+        echo "  - $f"
+      done
+    fi
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -1140,11 +1200,21 @@ let%expect_test "install_script: set environment for binaries" =
         exit 1
       ;;
     esac
+    if [ -n "$existing_files" ]; then
+      for f in $existing_files; do
+        rm -rf "$f"
+      done
+    fi
     if ! [ -d "$PREFIX" ]; then
       mkdir -p -m 755 "$PREFIX"
     fi
     mkdir -p -m 755 "$PREFIX/test-name"
     find . -mindepth 1 -maxdepth 1 ! -name 'install.sh' -exec cp -rp {} "$PREFIX/test-name" \;
+    {
+      printf '%s\n' "version=test.version"
+      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
+    } > "$PREFIX/test-name/install.conf"
+    chmod 644 "$PREFIX/test-name/install.conf"
     if ! [ -d "$BINDIR" ]; then
       mkdir -p -m 755 "$BINDIR"
     fi
@@ -1156,11 +1226,6 @@ let%expect_test "install_script: set environment for binaries" =
       printf '%s\n' "exec $PREFIX/test-name/bin/app \"\$@\""
     } > "$BINDIR/app"
     chmod 755 "$BINDIR/app"
-    {
-      printf '%s\n' "version=test.version"
-      printf '%s\n' "IS_USER_INSTALL=$IS_USER_INSTALL"
-    } > "$PREFIX/test-name/install.conf"
-    chmod 644 "$PREFIX/test-name/install.conf"
     echo "Installation complete!"
     echo "If you want to safely uninstall test-name, please run $PREFIX/test-name/uninstall.sh."
     |}]
