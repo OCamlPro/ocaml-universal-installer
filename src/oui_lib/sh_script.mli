@@ -66,6 +66,7 @@ type command =
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
+  | Sed of {file: string; pattern: string; value: string}
 and case =
   { pattern : string
   ; commands : command list

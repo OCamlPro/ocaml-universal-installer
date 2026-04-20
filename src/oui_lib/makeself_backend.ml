@@ -34,6 +34,8 @@ let mandir_nv = "MANDIR"
 let mandir_v = !$ mandir_nv
 let bindir_nv = "BINDIR"
 let bindir_v = !$ bindir_nv
+let appdir_nv = "APPDIR"
+let appdir_v = !$ appdir_nv
 
 let opt = "/opt"
 
@@ -41,6 +43,8 @@ module Global = struct
   let pre = "/usr/local"
   let bin = pre / "bin"
   let shareman = pre / "share/man"
+  let shareapplications = pre / "share/applications"
+  let localshareapplications = pre / "local/share/applications"
   let man = pre / "man"
 end
 
@@ -48,6 +52,7 @@ module User = struct
   let pre = "$HOME/.local"
   let bin = pre / "bin"
   let man = pre / "man"
+  let applications = pre / "share/applications"
 end
 
 let install_conf = "install.conf"
@@ -133,6 +138,10 @@ let list_all_files ~install_dir ~bindir ~mandir
     (fun (x : Installer_config.exec_file) ->
        bindir / (Filename.basename x.path))
     ic.exec_files
+  @ List.filter_map
+    (fun (x : Installer_config.exec_file) ->
+       Option.map (fun x -> appdir_v / (Filename.basename x)) x.desktop_tpl)
+    ic.exec_files
   @ List.concat_map
     (fun (section, files) ->
        let dir = mandir / section in
@@ -151,6 +160,7 @@ let set_user_prefixes =
   let open Sh_script in
   [ assign ~var:bindir_nv ~value:User.bin
   ; assign ~var:mandir_nv ~value:User.man
+  ; assign ~var:appdir_nv ~value:User.applications
   ]
 
 (* checks whether this is a user or global install based on the
@@ -202,9 +212,19 @@ let set_default_mandir =
       ()
   ]
 
+let set_default_appdir =
+  let open Sh_script in
+  [ if_ (Dir_exists Global.shareapplications)
+      [assign ~var:appdir_nv ~value:Global.shareapplications]
+      ~else_:[assign ~var:appdir_nv ~value:Global.localshareapplications]
+      ()
+  ]
+
 let set_root_prefixes =
   let open Sh_script in
-  assign ~var:bindir_nv ~value:Global.bin :: set_default_mandir
+  assign ~var:bindir_nv ~value:Global.bin
+  :: set_default_mandir
+  @ set_default_appdir
 
 let add_symlink ~install_dir ~in_ bundle_path =
   let open Sh_script in
@@ -511,7 +531,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     @ warn_if_existing
     @ prompt_for_confirmation
     @ remove_existing
-    :: create_install_dir
+      :: create_install_dir
   in
   let install_bundle =
     Sh_script.copy_all_in ~src:"." ~dst:install_dir ~except:install_script_name
@@ -533,6 +553,44 @@ let install_script ~installer_name (ic : Installer_config.internal) =
         "If you want to safely uninstall %s, please run %s/%s."
         package install_dir uninstall_script_name
     ]
+  in
+  let make_desktop_files =
+    let create_applications_dir =
+      [
+        create_if_not_found appdir_v;
+        mkdir ~permissions:755 [appdir_v];
+      ]
+    in
+    let create_desktop_file file =
+      let base_desktop_file = Filename.basename file in
+      let install_pattern = "%{install_path}" in
+      let installed = appdir_v / base_desktop_file in
+      Sh_script.[
+        Cp { src = file ; dst = installed } ;
+        Chmod { permissions = 644 ; files = [ installed ] } ;
+        Sed {
+          file = installed ;
+          pattern = install_pattern ; value = install_path_v
+        } ;
+        if_ Is_not_root [
+          write_file ~append:true installed
+          [ "NoDisplay=true" ]
+        ] () ;
+        echof "Adding %s to %s" base_desktop_file appdir_v
+      ]
+    in
+    let files =
+      List.fold_left
+        begin fun acc exec_file ->
+          match exec_file.Installer_config.desktop_tpl with
+          | None -> acc
+          | Some file -> (create_desktop_file file) @ acc
+        end
+        [] ic.exec_files
+    in
+    match files with
+    | [] -> []
+    | files -> create_applications_dir @ files
   in
   let install_plugins = List.concat_map (install_plugin ~install_dir) ic.plugins in
   let dump_install_conf =
@@ -572,6 +630,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
   @ install_binaries
   @ install_manpages
   @ install_plugins
+  @ make_desktop_files
   @ notify_install_complete
 
 let display_plugin (plugin : Installer_config.plugin) =
@@ -616,6 +675,16 @@ let uninstall_script (ic : Installer_config.internal) =
       )
       binaries
   in
+  let display_desktop_files =
+    let out_file file =
+      Sh_script.echof "- %s" (appdir_v / Filename.basename file)
+    in
+    List.filter_map
+      begin fun Installer_config.{ desktop_tpl  ; _} ->
+        Option.map out_file desktop_tpl
+      end
+      ic.exec_files
+  in
   let manpages = Option.value ic.manpages ~default:[] in
   let display_manpages =
     List.concat_map
@@ -651,6 +720,7 @@ let uninstall_script (ic : Installer_config.internal) =
     @ display_symlinks
     @ display_manpages
     @ display_plugins
+    @ display_desktop_files
   in
   let check_permissions =
     [ if_ Is_not_root
@@ -688,6 +758,19 @@ let uninstall_script (ic : Installer_config.internal) =
            pages)
       manpages
   in
+  let remove_desktop_files =
+    let out_file file = appdir_v / Filename.basename file in
+    let files =
+      List.filter_map
+        begin fun Installer_config.{ desktop_tpl  ; _} ->
+          Option.map out_file desktop_tpl
+        end
+        ic.exec_files
+    in
+    match files with
+    | [] -> []
+    | files -> [Sh_script.Rm { files ; rec_ = false}]
+  in
   let remove_plugins = List.concat_map uninstall_plugin ic.plugins in
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
   setup
@@ -697,6 +780,7 @@ let uninstall_script (ic : Installer_config.internal) =
   @ remove_symlinks
   @ remove_manpages
   @ remove_plugins
+  @ remove_desktop_files
   @ notify_uninstall_complete
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =

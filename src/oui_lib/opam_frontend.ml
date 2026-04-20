@@ -363,7 +363,11 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
   let name = OpamPackage.Name.to_string (OpamPackage.name package) in
   let exec_files =
     List.map (fun x ->
-        { path = OpamFilename.Base.to_string x; symlink = true; deps = true }
+        { path = OpamFilename.Base.to_string x;
+          symlink = true;
+          deps = true;
+          desktop_tpl = None;
+        }
       ) exe_bases
   in
   let wix_manufacturer = String.concat ", " (OpamFile.OPAM.maintainer opam) in
