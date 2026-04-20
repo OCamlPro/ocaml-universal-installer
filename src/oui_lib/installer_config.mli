@@ -12,6 +12,7 @@ type exec_file = {
     path : string;
     symlink : bool; [@default true]
     deps : bool; [@default true]
+    desktop_tpl: string option; [@default None]
   }
 
 type man_section =
@@ -113,4 +114,3 @@ val manpages_of_expanded : expanded_manpages -> manpages
 
 val load : OpamFilename.t -> (user, [> `Invalid_config of string]) result
 val save : user -> OpamFilename.t -> unit
-

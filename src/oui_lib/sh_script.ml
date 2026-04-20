@@ -18,8 +18,8 @@ type numerical_op =
   | Eq
 
 type string_op =
- | Not_empty of string
- | Equal of string * string
+  | Not_empty of string
+  | Equal of string * string
 
 type condition =
   | Exists of string
@@ -66,6 +66,7 @@ type command =
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
+  | Sed of {file: string; pattern: string; value: string}
 and case =
   { pattern : string
   ; commands : command list
@@ -228,6 +229,8 @@ let rec pp_sh_command ?(newline=true) ~indent fmtr command =
     fpf "%s" name
   | Call_fun {name; args} ->
     fpf "%s %s" name (String.concat " " args)
+  | Sed {file; pattern; value} ->
+    fpf "sed -i 's,%s,'\"%s\"',' %s" pattern value file
 
 and pp_sh_case ~indent fmtr {pattern; commands} =
   let indent_str = String.make indent ' ' in
