@@ -352,7 +352,8 @@ Here is the `oui.json` file we'd use to generate `alt-ergo`'s installer:
 {
   "name": "alt-ergo",
   "fullname": "alt-ergo.dev",
-  "version": "dev",
+  "version": "1.0.0",
+  "unique_id": "com.ocamlpro.alt_ergo",
   "wix_description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
   "wix_manufacturer": "alt-ergo@ocamlpro.com",
   "exec_files": ["bin/alt-ergo"],
