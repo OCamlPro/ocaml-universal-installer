@@ -352,7 +352,8 @@ Here is the `oui.json` file we'd use to generate `alt-ergo`'s installer:
 {
   "name": "alt-ergo",
   "fullname": "alt-ergo.dev",
-  "version": "dev",
+  "version": "1.0.0",
+  "unique_id": "com.ocamlpro.alt_ergo",
   "wix_description": "Alt-Ergo is an automatic theorem prover of mathematical formulas. It was developed at LRI, and is now maintained at OCamlPro.",
   "wix_manufacturer": "alt-ergo@ocamlpro.com",
   "exec_files": ["bin/alt-ergo"],
@@ -428,7 +429,7 @@ main platform it supports.
 ### Linux
 
 Executing a `.run` produced by oui will install the application in
-`/opt/<appname>`. The installation folder structure will be the same
+`/opt/<appname>` by default. The installation folder structure will be the same
 as the install bundle you fed to `oui`.
 
 The installer will add a symlink to all your application binaries
@@ -439,6 +440,17 @@ install them in the relevant section of the following folders, by order
 of priority:
 1. `/usr/local/share/man`
 2. `/usr/local/man` if **1.** does not exist
+
+The end user can choose a custom installation folder using the install script's
+`--prefix` option, e.g.:
+```
+./alt-ergo-1.0.0.run -- --prefix /home/me/apps
+```
+
+If the chosen folder requires root access, binaries and manpages will be
+installed as described above. If it does not, the installer will switch to a
+"user" install and instead install binaires in `$HOME/.local/bin` and manpages in
+`$HOME/.local/man`.
 
 If plugins need to be installed, the installer will locate the plugin's main
 application and add symlinks to the plugins directory in the app's install path,
