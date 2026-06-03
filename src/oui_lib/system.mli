@@ -101,6 +101,7 @@ type _ command =
   | Productbuild : productbuild_args command (** {b productbuild} command to create macOS installer packages *)
   | Patchelf : patchelf_args command
   | Touch : touch_args command (** {b touch} command to change files timestamps *)
+  | File : string command (* {b file} command to check if the binay is dynamically linked *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)

@@ -36,9 +36,16 @@ let is_elf file =
   close_in ic;
   is_elf
 
+let is_dynamic path =
+  match System.call File path with
+  | line :: _ ->
+    let r = Re.Str.regexp {|.*dynamically linked.*|} in
+    Re.Str.string_match r line 0
+  | _ -> false
+
 let get_sos binary =
   let path = OpamFilename.to_string binary in
-  if is_elf path then
+  if is_elf path && is_dynamic path then
     let output = System.call Ldd path in
     let shared_libs = List.filter_map parse_true_so_line output in
     let to_embed = List.filter should_embed shared_libs in
