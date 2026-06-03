@@ -26,6 +26,7 @@ type condition =
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
+  | Command_exists of string
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition

@@ -367,6 +367,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
           symlink = true;
           deps = true;
           desktop_tpl = None;
+          apparmor_profile = None;
         }
       ) exe_bases
   in

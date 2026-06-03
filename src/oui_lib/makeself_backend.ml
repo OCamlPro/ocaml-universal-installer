@@ -37,6 +37,8 @@ let bindir_v = !$ bindir_nv
 let appdir_nv = "APPDIR"
 let appdir_v = !$ appdir_nv
 
+let apparmor_path = "/etc/apparmor.d"
+
 let opt = "/opt"
 
 module Global = struct
@@ -466,11 +468,34 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     | [] -> []
     | _ -> [def_load_conf]
   in
+  let profiles =
+    List.filter_map
+      begin fun (exec_file: Installer_config.exec_file) ->
+        match exec_file.apparmor_profile with
+        | None -> None
+        | Some _ -> Some (apparmor_path / Filename.basename exec_file.path)
+      end
+      ic.exec_files
+  in
+  let display_profiles =
+    if not @@ List.is_empty profiles
+    then
+      Sh_script.[
+        if_ (Dir_exists apparmor_path) [
+          if_ Is_not_root
+            [ Echo "AppArmor profiles won't be installed: non-root install." ]
+            ~else_:(List.map (echof "- %s") profiles)
+            ()
+        ] ()
+      ]
+    else []
+  in
   let display_install_info =
     [ echof "Installing %s.%s to %s" package version install_dir
     ; echof "The following files and directories will be written to the system:"
     ]
     @ (List.map (echof "- %s") all_files)
+    @ display_profiles
   in
   let display_plugin_install_info =
     match (ic.plugins : Installer_config.plugin list) with
@@ -592,6 +617,41 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     | [] -> []
     | files -> create_applications_dir @ files
   in
+  let make_apparmor_profiles =
+    let create_apparmor_file (file, executable) =
+      let filename = Filename.basename executable in
+      let dst = apparmor_path / filename in
+      Sh_script.[
+        echof "Adding %s to %s" filename apparmor_path ;
+        Cp { src = file ; dst } ;
+        Sed {
+          file = dst ;
+          pattern = "%{install_path}" ; value = install_path_v
+        } ;
+        if_ (Command_exists "apparmor_parser") [
+          echof "Enabling profile" ;
+          Eval (Printf.sprintf "apparmor_parser -r %s" dst)
+        ] ()
+      ]
+    in
+    let profiles =
+      List.filter_map
+        begin fun (exec_file: Installer_config.exec_file) ->
+          match exec_file.apparmor_profile with
+          | None -> None
+          | Some file -> Some (file, exec_file.path)
+        end
+        ic.exec_files
+    in
+    if not @@ List.is_empty profiles
+    then
+      Sh_script.[
+        if_ (Dir_exists  apparmor_path && (Not Is_not_root))
+          (List.concat_map create_apparmor_file profiles)
+          ()
+      ]
+    else []
+  in
   let install_plugins = List.concat_map (install_plugin ~install_dir) ic.plugins in
   let dump_install_conf =
     let lines =
@@ -631,6 +691,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
   @ install_manpages
   @ install_plugins
   @ make_desktop_files
+  @ make_apparmor_profiles
   @ notify_install_complete
 
 let display_plugin (plugin : Installer_config.plugin) =
@@ -685,6 +746,22 @@ let uninstall_script (ic : Installer_config.internal) =
       end
       ic.exec_files
   in
+  let display_apparmor_profile =
+    let out_file file =
+      Sh_script.echof "- %s" (apparmor_path / Filename.basename file)
+    in
+    let files = List.filter_map
+        begin fun Installer_config.{ apparmor_profile ; path ; _  } ->
+          match apparmor_profile with
+          | None -> None
+          | Some _ -> Some (out_file path)
+        end
+        ic.exec_files
+    in
+    if not @@ List.is_empty files then
+      Sh_script.[if_ (Dir_exists  apparmor_path && (Not Is_not_root)) files ()]
+    else []
+  in
   let manpages = Option.value ic.manpages ~default:[] in
   let display_manpages =
     List.concat_map
@@ -721,6 +798,7 @@ let uninstall_script (ic : Installer_config.internal) =
     @ display_manpages
     @ display_plugins
     @ display_desktop_files
+    @ display_apparmor_profile
   in
   let check_permissions =
     [ if_ Is_not_root
@@ -771,6 +849,33 @@ let uninstall_script (ic : Installer_config.internal) =
     | [] -> []
     | files -> [Sh_script.Rm { files ; rec_ = false}]
   in
+  let remove_apparmor_profiles =
+    let apparmor_path = "/etc/apparmor.d" in
+    let out_file file = apparmor_path / Filename.basename file in
+    let profiles =
+      List.filter_map
+        begin fun Installer_config.{ apparmor_profile ; path; _} ->
+          match apparmor_profile with
+          | None -> None
+          | Some _ -> Some (out_file path)
+        end
+        ic.exec_files
+    in
+    let disable_profile p =
+      Sh_script.Eval (Printf.sprintf "apparmor_parser -R %s" p) in
+    if not @@ List.is_empty profiles
+    then
+      Sh_script.[
+        if_ (Dir_exists apparmor_path && (Not Is_not_root)) [
+          if_ (Command_exists "apparmor_parser") (
+              echof "Disabling apparmor profiles" ::
+              (List.map disable_profile profiles)
+          ) () ;
+          Rm { files = profiles ; rec_ = false}
+         ] ()
+      ]
+    else []
+  in
   let remove_plugins = List.concat_map uninstall_plugin ic.plugins in
   let notify_uninstall_complete = [echof "Uninstallation complete!"] in
   setup
@@ -781,6 +886,7 @@ let uninstall_script (ic : Installer_config.internal) =
   @ remove_manpages
   @ remove_plugins
   @ remove_desktop_files
+  @ remove_apparmor_profiles
   @ notify_uninstall_complete
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =

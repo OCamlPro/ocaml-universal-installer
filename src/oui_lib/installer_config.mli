@@ -13,6 +13,7 @@ type exec_file = {
     symlink : bool; [@default true]
     deps : bool; [@default true]
     desktop_tpl: string option; [@default None]
+    apparmor_profile: string option; [@default None]
   }
 
 type man_section =

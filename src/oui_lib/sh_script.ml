@@ -26,6 +26,7 @@ type condition =
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
+  | Command_exists of string
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition
@@ -127,6 +128,7 @@ let rec pp_sh_condition fmtr condition =
   | Dir_exists s -> Format.fprintf fmtr "[ -d %S ]" s
   | Link_exists s -> Format.fprintf fmtr "[ -L %S ]" s
   | File_exists s -> Format.fprintf fmtr "[ -f %S ]" s
+  | Command_exists s -> Format.fprintf fmtr "command -v %s > /dev/null 2>&1" s
   | Writable_as_user s -> Format.fprintf fmtr "[ -w %S ]" s
   | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
   | And (c1, c2) ->

@@ -78,8 +78,14 @@ let%expect_test "install_script: simple" =
         ; symlink = true
         ; deps = true
         ; desktop_tpl = Some "file.desktop"
+        ; apparmor_profile = Some "apparmor.profile"
         };
-        { path = "aaa-utility"; symlink = true; deps = true ; desktop_tpl = None }
+        { path = "aaa-utility"
+        ; symlink = true
+        ; deps = true
+        ; desktop_tpl = None
+        ; apparmor_profile = None
+        }
       ]
       ~manpages
       ()
@@ -194,6 +200,13 @@ let%expect_test "install_script: simple" =
     echo "- $MANDIR/man1/aaa-command.1"
     echo "- $MANDIR/man1/aaa-utility.1"
     echo "- $MANDIR/man5/aaa-file.1"
+    if [ -d "/etc/apparmor.d" ]; then
+      if [ "$(id -u)" -ne 0 ]; then
+        echo "AppArmor profiles won't be installed: non-root install."
+      else
+        echo "- /etc/apparmor.d/aaa-command"
+      fi
+    fi
     existing_files=""
     collect_existing "$PREFIX/aaa"
     collect_existing "$BINDIR/aaa-command"
@@ -258,6 +271,15 @@ let%expect_test "install_script: simple" =
       } >> "$APPDIR/file.desktop"
     fi
     echo "Adding file.desktop to $APPDIR"
+    if [ -d "/etc/apparmor.d" ] && ! [ "$(id -u)" -ne 0 ]; then
+      echo "Adding aaa-command to /etc/apparmor.d"
+      cp apparmor.profile /etc/apparmor.d/aaa-command
+      sed -i 's,%{install_path},'"$INSTALL_PATH"',' /etc/apparmor.d/aaa-command
+      if command -v apparmor_parser > /dev/null 2>&1; then
+        echo "Enabling profile"
+        eval "apparmor_parser -r /etc/apparmor.d/aaa-command"
+      fi
+    fi
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run $PREFIX/aaa/uninstall.sh."
     |}]
@@ -786,8 +808,18 @@ let%expect_test "uninstall_script: simple" =
   let config =
     make_config ~name:"aaa"
       ~exec_files:[
-        { path = "aaa-command"; symlink = true; deps = true ; desktop_tpl = None };
-        { path = "aaa-utility"; symlink = true; deps = true ; desktop_tpl = None }
+        { path = "aaa-command"
+        ; symlink = true
+        ; deps = true
+        ; desktop_tpl = None
+        ; apparmor_profile = None
+        };
+        { path = "aaa-utility"
+        ; symlink = true
+        ; deps = true
+        ; desktop_tpl = None
+        ; apparmor_profile = None
+        }
       ]
       ~manpages
       ()
@@ -904,7 +936,12 @@ let%expect_test "uninstall_script: simple" =
 let%expect_test "install_script: binary in sub folder" =
   let config = make_config
       ~exec_files:[
-        { path = "bin/do"; symlink = true; deps = true; desktop_tpl = None }
+        { path = "bin/do"
+        ; symlink = true
+        ; deps = true
+        ; desktop_tpl = None
+        ; apparmor_profile = None
+        }
       ] ()
   in
   let installer_name = "installer.run" in
@@ -1058,7 +1095,12 @@ let%expect_test "install_script: binary in sub folder" =
    root, the symlinks are correctly removed by the uninstall script. *)
 let%expect_test "uninstall_script: binary in sub folder" =
   let config = make_config ~exec_files:[
-      { path = "bin/do"; symlink = true; deps = true ; desktop_tpl = None }
+      { path = "bin/do"
+      ; symlink = true
+      ; deps = true
+      ; desktop_tpl = None
+      ; apparmor_profile = None
+      }
     ] ()
   in
   let uninstall_script = Makeself_backend.uninstall_script config in
@@ -1152,7 +1194,12 @@ let%expect_test "install_script: set environment for binaries" =
   let config =
     make_config
       ~exec_files:[
-        { path = "bin/app"; symlink = true; deps = true; desktop_tpl = None }
+        { path = "bin/app"
+        ; symlink = true
+        ; deps = true
+        ; desktop_tpl = None
+        ; apparmor_profile = None
+        }
       ]
       ~environment:[("VAR1", "value1"); ("VAR2", "$INSTALL_PATH/lib")]
       ()
