@@ -118,10 +118,10 @@ let%expect_test "install_script: simple" =
     else
       MANDIR="/usr/local/man"
     fi
-    if [ -d "/usr/local/share/applications" ]; then
-      APPDIR="/usr/local/share/applications"
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
     else
-      APPDIR="/usr/local/local/share/applications"
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -301,10 +301,10 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
     else
       MANDIR="/usr/local/man"
     fi
-    if [ -d "/usr/local/share/applications" ]; then
-      APPDIR="/usr/local/share/applications"
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
     else
-      APPDIR="/usr/local/local/share/applications"
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -495,10 +495,10 @@ let%expect_test "install_script: install plugins" =
     else
       MANDIR="/usr/local/man"
     fi
-    if [ -d "/usr/local/share/applications" ]; then
-      APPDIR="/usr/local/share/applications"
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
     else
-      APPDIR="/usr/local/local/share/applications"
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -714,10 +714,10 @@ let%expect_test "uninstall_script: uninstall plugins" =
       else
         MANDIR="/usr/local/man"
       fi
-      if [ -d "/usr/local/share/applications" ]; then
-        APPDIR="/usr/local/share/applications"
+      if [ -d "/usr/share/applications" ]; then
+        APPDIR="/usr/share/applications"
       else
-        APPDIR="/usr/local/local/share/applications"
+        APPDIR="/usr/local/share/applications"
       fi
     fi
     echo "About to uninstall t-name."
@@ -842,10 +842,10 @@ let%expect_test "uninstall_script: simple" =
       else
         MANDIR="/usr/local/man"
       fi
-      if [ -d "/usr/local/share/applications" ]; then
-        APPDIR="/usr/local/share/applications"
+      if [ -d "/usr/share/applications" ]; then
+        APPDIR="/usr/share/applications"
       else
-        APPDIR="/usr/local/local/share/applications"
+        APPDIR="/usr/local/share/applications"
       fi
     fi
     echo "About to uninstall aaa."
@@ -941,10 +941,10 @@ let%expect_test "install_script: binary in sub folder" =
     else
       MANDIR="/usr/local/man"
     fi
-    if [ -d "/usr/local/share/applications" ]; then
-      APPDIR="/usr/local/share/applications"
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
     else
-      APPDIR="/usr/local/local/share/applications"
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -1111,10 +1111,10 @@ let%expect_test "uninstall_script: binary in sub folder" =
       else
         MANDIR="/usr/local/man"
       fi
-      if [ -d "/usr/local/share/applications" ]; then
-        APPDIR="/usr/local/share/applications"
+      if [ -d "/usr/share/applications" ]; then
+        APPDIR="/usr/share/applications"
       else
-        APPDIR="/usr/local/local/share/applications"
+        APPDIR="/usr/local/share/applications"
       fi
     fi
     echo "About to uninstall test-name."
@@ -1191,10 +1191,10 @@ let%expect_test "install_script: set environment for binaries" =
     else
       MANDIR="/usr/local/man"
     fi
-    if [ -d "/usr/local/share/applications" ]; then
-      APPDIR="/usr/local/share/applications"
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
     else
-      APPDIR="/usr/local/local/share/applications"
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
