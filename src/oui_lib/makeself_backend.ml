@@ -43,8 +43,8 @@ module Global = struct
   let pre = "/usr/local"
   let bin = pre / "bin"
   let shareman = pre / "share/man"
-  let shareapplications = pre / "share/applications"
-  let localshareapplications = pre / "local/share/applications"
+  let shareapplications = "/usr/share/applications"
+  let localshareapplications = pre / "share/applications"
   let man = pre / "man"
 end
 
