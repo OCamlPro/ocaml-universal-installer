@@ -392,6 +392,15 @@ You will note that we currently support the plugin layout required by
 `dune-sites` plugins. If this does not fit the way your application handles
 plugins, please reach out!
 
+**Important note**: If you want to install an app and some of its dune-sites
+plugins alongside it, all packaged together in a single installer, you don't
+need to declare the plugins in the `oui.json` config file. Plugins that are
+correctly bundled (i.e. if you use the `dune install --prefix` command described
+above) will be picked up by the app and don't need any special treatment from
+`oui`. Plugins need to be declared in the configuration only if they are plugins
+for an "external" app, i.e. if they are packaged in a separate installer from
+the app itself.
+
 `dune-sites` plugins are installed by adding a "main" directory in the `lib/`
 folder that contain the actual plugin binaries and a "redirect" directory within
 the app's `lib/` directory where it looks up all of its plugins. This "redirect"
@@ -417,6 +426,94 @@ loading time.
 Note that you need to be careful with how you build the plugin binaries (`.cmxs`
 files) as if they haven't been compiled in the same environment as the main
 application binary they likey won't be compatible.
+
+### Generating a separate plugin installer
+
+We'll describe how to simply generate a separate installer for a `dune-site`
+based plugin here.
+
+In this example our main app's called `foo` and our plugin `bar`, known as
+`foo-bar` on opam.
+
+#### Generating the bundle
+
+There's no specifics here and you can simply use the same commands as in the 
+[Generating the installation bundle](#generating-the-installation-bundle)
+section above.
+
+Note that if you develop a plugin in the same repo as the main application but
+want them packaged separately, you add `-p <package-name>` to the `dune build`
+and `dune install` commands to create a bundle for that package only.
+
+After running our clean up script we'd get a bundle that looks like this:
+```
+foo-bar.bundle/
+├── lib
+│   ├── foo
+│   │   └── plugins
+│   │       └── bar
+│   │           └── META
+│   └── foo-bar
+│       ├── META
+│       └── bar.cmxs
+└── man
+    └── man1
+        └── foo-bar.1
+```
+
+Now say `foo-bar` depends on `yojson` while `foo` does not. To properly load
+`foo-bar`, dune will need to load `yojson` first. This means we need to embed
+`yojson` as well. At the moment, there's no support in `oui` to automatically
+embed it. Though that's something we plan on adding shortly, you can do it
+manually by copying the right subset of `yojson`'s lib directory, either from
+your opam switch used to build `foo` and `foo-bar` or from the `_build`
+directory if you build everything from a monorepo. Either way you'll need to add
+`yojson`'s `META` and `yojson.cmxs` to `lib/yojson/`:
+
+```
+foo-bar.bundle/
+├── lib
+│   ├── foo
+│   │   └── plugins
+│   │       └── bar
+│   │           └── META
+│   ├── foo-bar
+│   │   ├── META
+│   │   └── bar.cmxs
+│   └── yojson 
+│       ├── META
+│       └── yojson.cmxs
+└── man
+    └── man1
+        └── foo-bar.1
+```
+
+#### Writing the config file
+
+From the bundle above, you'll need the following config:
+```json
+{
+  "name": "foo-bar",
+  "fullname": "foo-bar",
+  "version": "1.0.0",
+  "unique_id": "com.foo.foo_bar",
+  "plugins":
+    [
+      {
+        "name": "foo-bar",
+        "app_name": "foo",
+        "plugin_dir": "lib/foo/plugins/bar",
+        "lib_dir": "lib/foo-bar",
+        "dyn_deps": "lib/yojson"
+      }
+    ],
+  "wix_manufacturer": "Foo Inc."
+}
+```
+
+With this, `oui` generated installer will install `foo-bar`'s bundle on the
+target system, locate where `foo` is installed and add the proper symlinks in
+`foo`'s install so it can locate the plugins adequatly.
 
 ## Installation layout
 
