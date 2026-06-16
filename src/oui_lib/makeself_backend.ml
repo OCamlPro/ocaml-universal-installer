@@ -478,7 +478,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
       ic.exec_files
   in
   let display_profiles =
-    if not @@ List.is_empty profiles
+    if profiles <> []
     then
       Sh_script.[
         if_ (Dir_exists apparmor_path) [
@@ -643,7 +643,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
         end
         ic.exec_files
     in
-    if not @@ List.is_empty profiles
+    if profiles <> []
     then
       Sh_script.[
         if_ (Dir_exists  apparmor_path && (Not Is_not_root))
@@ -758,7 +758,7 @@ let uninstall_script (ic : Installer_config.internal) =
         end
         ic.exec_files
     in
-    if not @@ List.is_empty files then
+    if files <> [] then
       Sh_script.[if_ (Dir_exists  apparmor_path && (Not Is_not_root)) files ()]
     else []
   in
@@ -863,7 +863,7 @@ let uninstall_script (ic : Installer_config.internal) =
     in
     let disable_profile p =
       Sh_script.Eval (Printf.sprintf "apparmor_parser -R %s" p) in
-    if not @@ List.is_empty profiles
+    if profiles <> []
     then
       Sh_script.[
         if_ (Dir_exists apparmor_path && (Not Is_not_root)) [
