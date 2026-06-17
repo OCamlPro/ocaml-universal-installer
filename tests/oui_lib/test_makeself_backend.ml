@@ -200,7 +200,7 @@ let%expect_test "install_script: simple" =
     echo "- $MANDIR/man1/aaa-command.1"
     echo "- $MANDIR/man1/aaa-utility.1"
     echo "- $MANDIR/man5/aaa-file.1"
-    if [ -d "/etc/apparmor.d" ]; then
+    if [ -d "/etc/apparmor.d" ] && [ -f "/etc/apparmor.d/abi/4.0" ]; then
       if [ "$(id -u)" -ne 0 ]; then
         echo "AppArmor profiles won't be installed: non-root install."
       else
@@ -271,7 +271,7 @@ let%expect_test "install_script: simple" =
       } >> "$APPDIR/file.desktop"
     fi
     echo "Adding file.desktop to $APPDIR"
-    if [ -d "/etc/apparmor.d" ] && ! [ "$(id -u)" -ne 0 ]; then
+    if [ -d "/etc/apparmor.d" ] && [ -f "/etc/apparmor.d/abi/4.0" ] && ! [ "$(id -u)" -ne 0 ]; then
       echo "Adding aaa-command to /etc/apparmor.d"
       cp apparmor.profile /etc/apparmor.d/aaa-command
       sed -i 's,%{install_path},'"$INSTALL_PATH"',' /etc/apparmor.d/aaa-command

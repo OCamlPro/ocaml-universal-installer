@@ -38,6 +38,7 @@ let appdir_nv = "APPDIR"
 let appdir_v = !$ appdir_nv
 
 let apparmor_path = "/etc/apparmor.d"
+let apparmor_abi_40 = "/etc/apparmor.d/abi/4.0"
 
 let opt = "/opt"
 
@@ -481,7 +482,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     if profiles <> []
     then
       Sh_script.[
-        if_ (Dir_exists apparmor_path) [
+        if_ (Dir_exists apparmor_path && File_exists apparmor_abi_40) [
           if_ Is_not_root
             [ Echo "AppArmor profiles won't be installed: non-root install." ]
             ~else_:(List.map (echof "- %s") profiles)
@@ -646,7 +647,9 @@ let install_script ~installer_name (ic : Installer_config.internal) =
     if profiles <> []
     then
       Sh_script.[
-        if_ (Dir_exists  apparmor_path && (Not Is_not_root))
+        if_ (Dir_exists apparmor_path
+             && File_exists apparmor_abi_40
+             && (Not Is_not_root))
           (List.concat_map create_apparmor_file profiles)
           ()
       ]
@@ -759,7 +762,10 @@ let uninstall_script (ic : Installer_config.internal) =
         ic.exec_files
     in
     if files <> [] then
-      Sh_script.[if_ (Dir_exists  apparmor_path && (Not Is_not_root)) files ()]
+      Sh_script.[
+        if_ (Dir_exists apparmor_path
+             && File_exists apparmor_abi_40
+             && (Not Is_not_root)) files ()]
     else []
   in
   let manpages = Option.value ic.manpages ~default:[] in
@@ -866,13 +872,15 @@ let uninstall_script (ic : Installer_config.internal) =
     if profiles <> []
     then
       Sh_script.[
-        if_ (Dir_exists apparmor_path && (Not Is_not_root)) [
+        if_ (Dir_exists apparmor_path
+             && File_exists apparmor_abi_40
+             && (Not Is_not_root)) [
           if_ (Command_exists "apparmor_parser") (
-              echof "Disabling apparmor profiles" ::
-              (List.map disable_profile profiles)
+            echof "Disabling apparmor profiles" ::
+            (List.map disable_profile profiles)
           ) () ;
           Rm { files = profiles ; rec_ = false}
-         ] ()
+        ] ()
       ]
     else []
   in
