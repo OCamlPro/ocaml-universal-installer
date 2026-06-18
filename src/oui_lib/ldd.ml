@@ -19,7 +19,9 @@ let should_embed (name, _) =
      configurable by the user. *)
   match String.split_on_char '.' name with
   | "libc"::_
-  | "libm"::_ -> false
+  | "libm"::_
+  | "libpthread"::_
+  | "libdl"::_ -> false
   | _ -> true
 
 let elf_magic_number = "\x7FELF"

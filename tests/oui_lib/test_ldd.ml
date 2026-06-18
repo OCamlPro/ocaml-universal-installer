@@ -38,26 +38,27 @@ let%expect_test "parse_true_so_line: regular .so" =
 
 (* [should_embed] *)
 
-let%expect_test "should_embed: libc" =
-  let lib =
-    ("libc.so.6", OpamFilename.of_string "/lib/x86_64-linux-gnu/libc.so.6")
-  in
+let test_should_embed lib file =
+  let lib = (lib, OpamFilename.of_string file) in
   let result = Ldd.should_embed lib in
-  Format.printf "%b" result;
+  Format.printf "%b" result
+
+let%expect_test "should_embed: libc" =
+  test_should_embed "libc.so.6" "/lib/x86_64-linux-gnu/libc.so.6";
   [%expect {| false |}]
 
 let%expect_test "should_embed: libm" =
-  let lib =
-    ("libm.so.6", OpamFilename.of_string "/lib/x86_64-linux-gnu/libm.so.6")
-  in
-  let result = Ldd.should_embed lib in
-  Format.printf "%b" result;
+  test_should_embed "libm.so.6" "/lib/x86_64-linux-gnu/libm.so.6";
+  [%expect {| false |}]
+
+let%expect_test "should_embed: libdl" =
+  test_should_embed "libdl.so.2" "/lib/x86_64-linux-gnu/libdl.so.2";
+  [%expect {| false |}]
+
+let%expect_test "should_embed: libpthread" =
+  test_should_embed "libpthread.so.0" "/lib/x86_64-linux-gnu/libpthread.so.0";
   [%expect {| false |}]
 
 let%expect_test "should_embed: somelib" =
-  let lib =
-    ("somelib.so.1", OpamFilename.of_string "/lib/x86_64-linux-gnu/somelib.so.1")
-  in
-  let result = Ldd.should_embed lib in
-  Format.printf "%b" result;
+  test_should_embed "somelib.so.1" "/lib/x86_64-linux-gnu/somelib.so.1";
   [%expect {| true |}]
