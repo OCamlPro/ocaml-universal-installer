@@ -16,10 +16,25 @@ let parse_true_so_line l =
 
 let should_embed (name, _) =
   (* Those are hardcoded for now but we should ultimately make this
-     configurable by the user. *)
+     configurable by the user.
+     We exclude the dynamic linker (all ld* names) and the glibc along
+     with libs that are co-developed with it and rely on GLIBC_PRIVATE symbols.
+  *)
   match String.split_on_char '.' name with
+  | "ld-linux"::_
+  | "ld-linux-x86-64"::_
+  | "ld-linux-aarch64"::_
+  | "ld-linux-armhf"::_
+  | "ld-linux-arm"::_
+  | "ld64"::_
+  | "ld-linux-riscv64-lp64d"::_
+  | "ld-musl-x86_64"::_
+  | "ld-musl-aarch64"::_
   | "libc"::_
   | "libm"::_
+  | "librt"::_
+  | "libresolv"::_
+  | "libutil"::_
   | "libpthread"::_
   | "libdl"::_ -> false
   | _ -> true

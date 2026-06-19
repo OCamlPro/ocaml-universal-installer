@@ -59,6 +59,23 @@ let%expect_test "should_embed: libpthread" =
   test_should_embed "libpthread.so.0" "/lib/x86_64-linux-gnu/libpthread.so.0";
   [%expect {| false |}]
 
+let%expect_test "should_embed: dynamic linker" =
+  test_should_embed "ld-linux-x86-64.so.2"
+    "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2";
+  [%expect {| false |}]
+
+let%expect_test "should_embed: librt" =
+  test_should_embed "librt.so.1" "/lib/x86_64-linux-gnu/librt.so.1";
+  [%expect {| false |}]
+
+let%expect_test "should_embed: libresolv" =
+  test_should_embed "libresolv.so.2" "/lib/x86_64-linux-gnu/libresolv.so.2";
+  [%expect {| false |}]
+
+let%expect_test "should_embed: libutil" =
+  test_should_embed "libutil.so.1" "/lib/x86_64-linux-gnu/libutil.so.1";
+  [%expect {| false |}]
+
 let%expect_test "should_embed: somelib" =
   test_should_embed "somelib.so.1" "/lib/x86_64-linux-gnu/somelib.so.1";
   [%expect {| true |}]
