@@ -22,7 +22,7 @@
 - Fix a bug where passing a directory with a trailing `/` would cause the
   install to fail. (#128, @NathanReb)
 - Fix a bug where `oui` would embed unwanted shared libraries on Linux.
-  (#138, @AllanBlanchard)
+  (#138 #144, @AllanBlanchard @NathanReb)
 
 ### Removed
 
