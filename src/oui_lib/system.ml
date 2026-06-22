@@ -80,6 +80,7 @@ type _ command =
   | Productbuild : productbuild_args command
   | Patchelf : patchelf_args command
   | Touch : touch_args command
+  | File : string command
 
 exception System_error of string
 
@@ -160,6 +161,8 @@ let call_inner : type a. a command -> a -> string * string list =
     "patchelf", ["--set-rpath"; rpath; OpamFilename.to_string binary]
   | Touch, { mtime; file } ->
     "touch", [ "-t"; mtime; file ]
+  | File, path ->
+    "file", [ path ]
 
 let gen_command_tmp_dir cmd =
   Printf.sprintf "%s-%06x" (Filename.basename cmd) (Random.int 0xFFFFFF)
