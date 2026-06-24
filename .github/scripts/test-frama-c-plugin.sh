@@ -2,6 +2,9 @@
 # test-frama-c-plugin.sh - integration test for macOS plugin support
 set -euo pipefail
 
+FRAMA_C_UID="com.cea.frama_c"
+METACSL_UID="com.cea.frama_c_metacsl"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$(pwd)/frama-c-test"
 mkdir -p "$WORK_DIR"
@@ -47,12 +50,12 @@ for dep in unionFind yojson ppx_deriving ppx_deriving_yojson why3; do
   [[ -d "$OPAM_LIB/$dep" ]] && cp -R "$OPAM_LIB/$dep" "$FRAMA_C_BUNDLE/lib/"
 done
 
-cat > "$FRAMA_C_BUNDLE/oui.json" << 'EOF'
+cat > "$FRAMA_C_BUNDLE/oui.json" << EOF
 {
   "name": "frama-c",
   "fullname": "Frama-C",
   "version": "32.0",
-  "unique_id": "com.cea.frama_c",
+  "unique_id": "$FRAMA_C_UID",
   "exec_files": ["bin/frama-c", "bin/frama-c-config", "bin/frama-c-script"],
   "wix_manufacturer": "CEA LIST",
   "plugin_dirs": { "plugins_dir": "lib/frama-c/plugins", "lib_dir": "lib" },
@@ -61,12 +64,12 @@ cat > "$FRAMA_C_BUNDLE/oui.json" << 'EOF'
 }
 EOF
 
-cat > "$METACSL_BUNDLE/oui.json" << 'EOF'
+cat > "$METACSL_BUNDLE/oui.json" << EOF
 {
   "name": "metacsl",
   "fullname": "MetAcsl",
   "version": "0.10",
-  "unique_id": "com.cea.frama_c_metacsl",
+  "unique_id": "$METACSL_UID",
   "exec_files": [],
   "wix_manufacturer": "CEA LIST",
   "plugins": [{
@@ -111,11 +114,17 @@ echo "$EVA_OUTPUT" | tail -20
 echo "$EVA_OUTPUT" | grep -q "ANALYSIS SUMMARY" || error "eva analysis failed"
 log "eva ok"
 
+check_forgotten() {
+  pkgutil --pkg-info "$1" && error "$1 receipt still present" && exit 1 || exit 0
+}
+
 log "testing uninstall..."
 sudo /Applications/Metacsl.app/Contents/Resources/uninstall.sh
 sudo /Applications/Frama-c.app/Contents/Resources/uninstall.sh
 [[ ! -d /Applications/Frama-c.app ]] || error "Frama-c.app not removed"
 [[ ! -d /Applications/Metacsl.app ]] || error "Metacsl.app not removed"
 [[ ! -f /usr/local/bin/frama-c ]] || error "frama-c symlink not removed"
+check_forgotten $FRAMA_C_UID
+check_forgotten $METACSL_UID
 
 log "all tests passed"
