@@ -31,12 +31,14 @@ val generate_postinstall_script :
     - Removes manpage symlinks
     - For plugin packages: removes symlinks from target app's bundle
     - Removes the .app bundle
+    - Remove the package recipt with pkgutil --forget
 *)
 val generate_uninstall_script :
   app_name:string ->
   binary_name:string ->
   has_binary:bool ->
   plugins:Installer_config.plugin list ->
+  app_uid:string ->
   string
 
 (** Save postinstall script to the scripts directory with executable permissions. *)
