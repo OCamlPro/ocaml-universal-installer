@@ -167,8 +167,8 @@ exit 0|}
     plugin_install_section
     manpages_section
 
-
-let generate_uninstall_script ~app_name ~binary_name ~has_binary ~plugins =
+let generate_uninstall_script ~app_name ~binary_name ~has_binary ~plugins
+  ~app_uid =
   let app_path = Printf.sprintf "/Applications/%s.app" app_name in
   let resources = Printf.sprintf "%s/Contents/Resources" app_path in
 
@@ -241,6 +241,9 @@ if [ -d "%s" ]; then
   rm -rf "%s"
 fi
 
+# Remove MacOs package receipt
+pkgutil --forget "%s"
+
 echo "Uninstallation complete!"
 |}
     app_name
@@ -248,6 +251,7 @@ echo "Uninstallation complete!"
     wrapper_removal
     resources
     app_path app_path app_path
+    app_uid
 
 
 let save_postinstall_script ~content ~scripts_dir =

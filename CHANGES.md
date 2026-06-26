@@ -13,6 +13,8 @@
 
 ### Fixed
 
+- Fix a bug in MacOS uninstall script which left orphans package receipts
+  (#145, @NathanReb)
 - Fix a bug in makeself installation script which caused the `--prefix`
   option not to work when using the `--prefix=dir` form. (#126, @NathanReb)
 - Fix a bug where makeself install script would ungracely fail if
