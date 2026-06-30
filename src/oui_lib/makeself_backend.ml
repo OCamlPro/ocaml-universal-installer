@@ -416,6 +416,50 @@ let read_arguments =
         ]
   ]
 
+let install_desktop_files ic =
+  let open Sh_script in
+  let create_applications_dir =
+    [
+      create_if_not_found appdir_v;
+      mkdir ~permissions:755 [appdir_v];
+    ]
+  in
+  let sed_script_nv = "tmpsedscript" in
+  let sed_script_v = !$ sed_script_nv in
+  let create_sed_script =
+    [ assign_eval sed_script_nv (mktemp ())
+    ; write_file sed_script_v
+        [ Printf.sprintf "s/%%{install_path}/%s/g" install_path_v
+        ]
+    ]
+  in
+  let rm_sed_script = [rm [sed_script_v]] in
+  let create_desktop_file template =
+    let base_desktop_file = Filename.basename template in
+    let installed = appdir_v / base_desktop_file in
+    [
+      echof "Adding %s to %s" base_desktop_file appdir_v;
+      sed ~script:sed_script_v ~in_:template ~out:installed;
+      chmod 644 [ installed ];
+      if_ Is_not_root
+        [ write_file ~append:true installed [ "NoDisplay=true" ]] ();
+    ]
+  in
+  let install_desktop_files =
+    List.filter_map
+      (fun exec_file ->
+         Option.map
+           create_desktop_file
+           exec_file.Installer_config.desktop_tpl)
+      ic.Installer_config.exec_files
+  in
+  match install_desktop_files with
+  | [] -> []
+  | files ->
+    List.concat
+      (create_applications_dir::create_sed_script::files)
+    @ rm_sed_script
+
 let install_script ~installer_name (ic : Installer_config.internal) =
   let open Sh_script in
   let package = ic.name in
@@ -554,44 +598,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
         package install_dir uninstall_script_name
     ]
   in
-  let make_desktop_files =
-    let create_applications_dir =
-      [
-        create_if_not_found appdir_v;
-        mkdir ~permissions:755 [appdir_v];
-      ]
-    in
-    let create_desktop_file file =
-      let base_desktop_file = Filename.basename file in
-      let install_pattern = "%{install_path}" in
-      let installed = appdir_v / base_desktop_file in
-      Sh_script.[
-        Cp { src = file ; dst = installed } ;
-        Chmod { permissions = 644 ; files = [ installed ] } ;
-        Sed {
-          file = installed ;
-          pattern = install_pattern ; value = install_path_v
-        } ;
-        if_ Is_not_root [
-          write_file ~append:true installed
-          [ "NoDisplay=true" ]
-        ] () ;
-        echof "Adding %s to %s" base_desktop_file appdir_v
-      ]
-    in
-    let files =
-      List.fold_left
-        begin fun acc exec_file ->
-          match exec_file.Installer_config.desktop_tpl with
-          | None -> acc
-          | Some file -> (create_desktop_file file) @ acc
-        end
-        [] ic.exec_files
-    in
-    match files with
-    | [] -> []
-    | files -> create_applications_dir @ files
-  in
+  let install_desktop_files = install_desktop_files ic in
   let install_plugins = List.concat_map (install_plugin ~install_dir) ic.plugins in
   let dump_install_conf =
     let lines =
@@ -630,7 +637,7 @@ let install_script ~installer_name (ic : Installer_config.internal) =
   @ install_binaries
   @ install_manpages
   @ install_plugins
-  @ make_desktop_files
+  @ install_desktop_files
   @ notify_install_complete
 
 let display_plugin (plugin : Installer_config.plugin) =

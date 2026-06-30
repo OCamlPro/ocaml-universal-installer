@@ -249,15 +249,19 @@ let%expect_test "install_script: simple" =
       mkdir -p -m 755 "$APPDIR"
     fi
     mkdir -p -m 755 "$APPDIR"
-    cp file.desktop $APPDIR/file.desktop
+    tmpsedscript="$(mktemp)"
+    {
+      printf '%s\n' "s/%{install_path}/$INSTALL_PATH/g"
+    } > "$tmpsedscript"
+    echo "Adding file.desktop to $APPDIR"
+    sed -f "$tmpsedscript" "file.desktop" > "$APPDIR/file.desktop"
     chmod 644 "$APPDIR/file.desktop"
-    sed -i 's,%{install_path},'"$INSTALL_PATH"',' $APPDIR/file.desktop
     if [ "$(id -u)" -ne 0 ]; then
       {
         printf '%s\n' "NoDisplay=true"
       } >> "$APPDIR/file.desktop"
     fi
-    echo "Adding file.desktop to $APPDIR"
+    rm -f "$tmpsedscript"
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run $PREFIX/aaa/uninstall.sh."
     |}]

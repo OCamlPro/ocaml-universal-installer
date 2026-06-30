@@ -66,7 +66,8 @@ type command =
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
-  | Sed of {file: string; pattern: string; value: string}
+  | Sed of {script: string; in_: string; out: string}
+  | Mktemp
 and case =
   { pattern : string
   ; commands : command list
@@ -106,6 +107,10 @@ let set_permissions_in ~on ~permissions starting_point =
   Set_permissions_in {on; permissions; starting_point}
 
 let copy_all_in ~src ~dst ~except = Copy_all_in {src; dst; except}
+
+let sed ~script ~in_ ~out = Sed {script; in_; out}
+
+let mktemp () = Mktemp
 
 let pp_sh_find_type fmtr ft =
   match ft with
@@ -229,8 +234,10 @@ let rec pp_sh_command ?(newline=true) ~indent fmtr command =
     fpf "%s" name
   | Call_fun {name; args} ->
     fpf "%s %s" name (String.concat " " args)
-  | Sed {file; pattern; value} ->
-    fpf "sed -i 's,%s,'\"%s\"',' %s" pattern value file
+  | Sed {script; in_; out} ->
+    fpf "sed -f \"%s\" \"%s\" > \"%s\"" script in_ out
+  | Mktemp ->
+    fpf "mktemp"
 
 and pp_sh_case ~indent fmtr {pattern; commands} =
   let indent_str = String.make indent ' ' in
