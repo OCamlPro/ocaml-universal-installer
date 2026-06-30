@@ -26,6 +26,7 @@ type condition =
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
+  | Command_exists of string
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition
@@ -66,6 +67,7 @@ type command =
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
+  | Sed of {file: string; pattern: string; value: string}
 and case =
   { pattern : string
   ; commands : command list
