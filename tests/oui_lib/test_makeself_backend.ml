@@ -34,6 +34,7 @@ let make_expanded_manpages
   |> List.filter_map (function _, [] -> None | x -> Some x)
 
 let make_config
+    ?(unique_id="com.test")
     ?(name="test-name")
     ?(version="test.version")
     ?(exec_files=[])
@@ -49,7 +50,7 @@ let make_config
   ; fullname = ""
   ; manpages
   ; environment
-  ; unique_id = ""
+  ; unique_id
   ; plugins
   ; plugin_dirs
   ; wix_manufacturer = ""
@@ -72,7 +73,7 @@ let%expect_test "install_script: simple" =
       ()
   in
   let config =
-    make_config ~name:"aaa" ~version:"x.y.z"
+    make_config ~unique_id:"com.a" ~name:"aaa" ~version:"x.y.z"
       ~exec_files:[
         { path = "aaa-command"
         ; symlink = true
@@ -253,13 +254,13 @@ let%expect_test "install_script: simple" =
     {
       printf '%s\n' "s/%{install_path}/$INSTALL_PATH/g"
     } > "$tmpsedscript"
-    echo "Adding file.desktop to $APPDIR"
-    sed -f "$tmpsedscript" "file.desktop" > "$APPDIR/file.desktop"
-    chmod 644 "$APPDIR/file.desktop"
+    echo "Adding com.a.aaa-command.desktop to $APPDIR"
+    sed -f "$tmpsedscript" "file.desktop" > "$APPDIR/com.a.aaa-command.desktop"
+    chmod 644 "$APPDIR/com.a.aaa-command.desktop"
     if [ "$(id -u)" -ne 0 ]; then
       {
         printf '%s\n' "NoDisplay=true"
-      } >> "$APPDIR/file.desktop"
+      } >> "$APPDIR/com.a.aaa-command.desktop"
     fi
     rm -f "$tmpsedscript"
     echo "Installation complete!"
@@ -788,9 +789,10 @@ let%expect_test "uninstall_script: simple" =
       ()
   in
   let config =
-    make_config ~name:"aaa"
+    make_config ~unique_id:"com.a" ~name:"aaa"
       ~exec_files:[
-        { path = "aaa-command"; symlink = true; deps = true ; desktop_tpl = None };
+        { path = "aaa-command"; symlink = true; deps = true
+        ; desktop_tpl = Some "file.desktop" };
         { path = "aaa-utility"; symlink = true; deps = true ; desktop_tpl = None }
       ]
       ~manpages
@@ -860,6 +862,7 @@ let%expect_test "uninstall_script: simple" =
     echo "- $MANDIR/man1/aaa-command.1"
     echo "- $MANDIR/man1/aaa-utility.1"
     echo "- $MANDIR/man5/aaa-file.1"
+    echo "- $APPDIR/com.a.aaa-command.desktop"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -900,6 +903,7 @@ let%expect_test "uninstall_script: simple" =
       echo "Removing manpage $MANDIR/man5/aaa-file.1..."
       rm -f "$MANDIR/man5/aaa-file.1"
     fi
+    rm -f "$APPDIR/com.a.aaa-command.desktop"
     echo "Uninstallation complete!"
     |}]
 

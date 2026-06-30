@@ -416,6 +416,11 @@ let read_arguments =
         ]
   ]
 
+let desktop_file_basename ic exec =
+  Printf.sprintf "%s.%s.desktop"
+    ic.Installer_config.unique_id
+    (Filename.basename (Filename.remove_extension exec.Installer_config.path))
+
 let install_desktop_files ic =
   let open Sh_script in
   let create_applications_dir =
@@ -434,8 +439,8 @@ let install_desktop_files ic =
     ]
   in
   let rm_sed_script = [rm [sed_script_v]] in
-  let create_desktop_file template =
-    let base_desktop_file = Filename.basename template in
+  let create_desktop_file ~template exec =
+    let base_desktop_file = desktop_file_basename ic exec in
     let installed = appdir_v / base_desktop_file in
     [
       echof "Adding %s to %s" base_desktop_file appdir_v;
@@ -451,7 +456,7 @@ let install_desktop_files ic =
     List.filter_map
       (fun exec_file ->
          Option.map
-           create_desktop_file
+           (fun template -> create_desktop_file ~template exec_file)
            exec_file.Installer_config.desktop_tpl)
       ic.Installer_config.exec_files
   in
@@ -685,14 +690,14 @@ let uninstall_script (ic : Installer_config.internal) =
       binaries
   in
   let display_desktop_files =
-    let out_file file =
-      Sh_script.echof "- %s" (appdir_v / Filename.basename file)
+    let out_file exec =
+      match exec.Installer_config.desktop_tpl with
+      | None -> None
+      | Some _ ->
+        Some
+          (Sh_script.echof "- %s" (appdir_v / (desktop_file_basename ic exec)))
     in
-    List.filter_map
-      begin fun Installer_config.{ desktop_tpl  ; _} ->
-        Option.map out_file desktop_tpl
-      end
-      ic.exec_files
+    List.filter_map out_file ic.exec_files
   in
   let manpages = Option.value ic.manpages ~default:[] in
   let display_manpages =
@@ -768,14 +773,12 @@ let uninstall_script (ic : Installer_config.internal) =
       manpages
   in
   let remove_desktop_files =
-    let out_file file = appdir_v / Filename.basename file in
-    let files =
-      List.filter_map
-        begin fun Installer_config.{ desktop_tpl  ; _} ->
-          Option.map out_file desktop_tpl
-        end
-        ic.exec_files
+    let out_file exec =
+      Option.map
+        (fun _ -> appdir_v / (desktop_file_basename ic exec))
+        exec.desktop_tpl
     in
+    let files = List.filter_map out_file ic.exec_files in
     match files with
     | [] -> []
     | files -> [Sh_script.Rm { files ; rec_ = false}]
