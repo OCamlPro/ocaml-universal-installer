@@ -34,6 +34,7 @@ let make_expanded_manpages
   |> List.filter_map (function _, [] -> None | x -> Some x)
 
 let make_config
+    ?(unique_id="com.test")
     ?(name="test-name")
     ?(version="test.version")
     ?(exec_files=[])
@@ -49,7 +50,7 @@ let make_config
   ; fullname = ""
   ; manpages
   ; environment
-  ; unique_id = ""
+  ; unique_id
   ; plugins
   ; plugin_dirs
   ; wix_manufacturer = ""
@@ -72,9 +73,15 @@ let%expect_test "install_script: simple" =
       ()
   in
   let config =
-    make_config ~name:"aaa" ~version:"x.y.z"
-      ~exec_files:[{ path = "aaa-command"; symlink = true; deps = true };
-                   { path = "aaa-utility"; symlink = true; deps = true } ]
+    make_config ~unique_id:"com.a" ~name:"aaa" ~version:"x.y.z"
+      ~exec_files:[
+        { path = "aaa-command"
+        ; symlink = true
+        ; deps = true
+        ; desktop_tpl = Some "file.desktop"
+        };
+        { path = "aaa-utility"; symlink = true; deps = true ; desktop_tpl = None }
+      ]
       ~manpages
       ()
   in
@@ -111,6 +118,11 @@ let%expect_test "install_script: simple" =
       MANDIR="/usr/local/share/man"
     else
       MANDIR="/usr/local/man"
+    fi
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
+    else
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -158,6 +170,7 @@ let%expect_test "install_script: simple" =
           IS_USER_INSTALL="true"
           BINDIR="$HOME/.local/bin"
           MANDIR="$HOME/.local/man"
+          APPDIR="$HOME/.local/share/applications"
         else
           echo "Not running as root. Aborting."
           echo "Need root permission for $dir_name"
@@ -178,6 +191,7 @@ let%expect_test "install_script: simple" =
     echo "- $PREFIX/aaa"
     echo "- $BINDIR/aaa-command"
     echo "- $BINDIR/aaa-utility"
+    echo "- $APPDIR/file.desktop"
     echo "- $MANDIR/man1/aaa-command.1"
     echo "- $MANDIR/man1/aaa-utility.1"
     echo "- $MANDIR/man5/aaa-file.1"
@@ -185,6 +199,7 @@ let%expect_test "install_script: simple" =
     collect_existing "$PREFIX/aaa"
     collect_existing "$BINDIR/aaa-command"
     collect_existing "$BINDIR/aaa-utility"
+    collect_existing "$APPDIR/file.desktop"
     collect_existing "$MANDIR/man1/aaa-command.1"
     collect_existing "$MANDIR/man1/aaa-utility.1"
     collect_existing "$MANDIR/man5/aaa-file.1"
@@ -231,6 +246,23 @@ let%expect_test "install_script: simple" =
     ln -s "$PREFIX/aaa/man/man1/aaa-utility.1" "$MANDIR/man1/aaa-utility.1"
     mkdir -p -m 755 "$MANDIR/man5"
     ln -s "$PREFIX/aaa/man/man5/aaa-file.1" "$MANDIR/man5/aaa-file.1"
+    if ! [ -d "$APPDIR" ]; then
+      mkdir -p -m 755 "$APPDIR"
+    fi
+    mkdir -p -m 755 "$APPDIR"
+    tmpsedscript="$(mktemp)"
+    {
+      printf '%s\n' "s/%{install_path}/$INSTALL_PATH/g"
+    } > "$tmpsedscript"
+    echo "Adding com.a.aaa-command.desktop to $APPDIR"
+    sed -f "$tmpsedscript" "file.desktop" > "$APPDIR/com.a.aaa-command.desktop"
+    chmod 644 "$APPDIR/com.a.aaa-command.desktop"
+    if [ "$(id -u)" -ne 0 ]; then
+      {
+        printf '%s\n' "NoDisplay=true"
+      } >> "$APPDIR/com.a.aaa-command.desktop"
+    fi
+    rm -f "$tmpsedscript"
     echo "Installation complete!"
     echo "If you want to safely uninstall aaa, please run $PREFIX/aaa/uninstall.sh."
     |}]
@@ -273,6 +305,11 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
       MANDIR="/usr/local/share/man"
     else
       MANDIR="/usr/local/man"
+    fi
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
+    else
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -320,6 +357,7 @@ let%expect_test "install_script: plugin_dirs dumped in install.conf" =
           IS_USER_INSTALL="true"
           BINDIR="$HOME/.local/bin"
           MANDIR="$HOME/.local/man"
+          APPDIR="$HOME/.local/share/applications"
         else
           echo "Not running as root. Aborting."
           echo "Need root permission for $dir_name"
@@ -462,6 +500,11 @@ let%expect_test "install_script: install plugins" =
     else
       MANDIR="/usr/local/man"
     fi
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
+    else
+      APPDIR="/usr/local/share/applications"
+    fi
     while [ $# -gt 0 ]; do
       case "$1" in
         --prefix)
@@ -508,6 +551,7 @@ let%expect_test "install_script: install plugins" =
           IS_USER_INSTALL="true"
           BINDIR="$HOME/.local/bin"
           MANDIR="$HOME/.local/man"
+          APPDIR="$HOME/.local/share/applications"
         else
           echo "Not running as root. Aborting."
           echo "Need root permission for $dir_name"
@@ -667,12 +711,18 @@ let%expect_test "uninstall_script: uninstall plugins" =
     if [ "$IS_USER_INSTALL" = "true" ]; then
       BINDIR="$HOME/.local/bin"
       MANDIR="$HOME/.local/man"
+      APPDIR="$HOME/.local/share/applications"
     else
       BINDIR="/usr/local/bin"
       if [ -d "/usr/local/share/man" ]; then
         MANDIR="/usr/local/share/man"
       else
         MANDIR="/usr/local/man"
+      fi
+      if [ -d "/usr/share/applications" ]; then
+        APPDIR="/usr/share/applications"
+      else
+        APPDIR="/usr/local/share/applications"
       fi
     fi
     echo "About to uninstall t-name."
@@ -739,9 +789,12 @@ let%expect_test "uninstall_script: simple" =
       ()
   in
   let config =
-    make_config ~name:"aaa"
-      ~exec_files:[{ path = "aaa-command"; symlink = true; deps = true };
-                   { path = "aaa-utility"; symlink = true; deps = true } ]
+    make_config ~unique_id:"com.a" ~name:"aaa"
+      ~exec_files:[
+        { path = "aaa-command"; symlink = true; deps = true
+        ; desktop_tpl = Some "file.desktop" };
+        { path = "aaa-utility"; symlink = true; deps = true ; desktop_tpl = None }
+      ]
       ~manpages
       ()
   in
@@ -787,12 +840,18 @@ let%expect_test "uninstall_script: simple" =
     if [ "$IS_USER_INSTALL" = "true" ]; then
       BINDIR="$HOME/.local/bin"
       MANDIR="$HOME/.local/man"
+      APPDIR="$HOME/.local/share/applications"
     else
       BINDIR="/usr/local/bin"
       if [ -d "/usr/local/share/man" ]; then
         MANDIR="/usr/local/share/man"
       else
         MANDIR="/usr/local/man"
+      fi
+      if [ -d "/usr/share/applications" ]; then
+        APPDIR="/usr/share/applications"
+      else
+        APPDIR="/usr/local/share/applications"
       fi
     fi
     echo "About to uninstall aaa."
@@ -803,6 +862,7 @@ let%expect_test "uninstall_script: simple" =
     echo "- $MANDIR/man1/aaa-command.1"
     echo "- $MANDIR/man1/aaa-utility.1"
     echo "- $MANDIR/man5/aaa-file.1"
+    echo "- $APPDIR/com.a.aaa-command.desktop"
     printf "Proceed? [y/N] "
     read ans
     case "$ans" in
@@ -843,13 +903,18 @@ let%expect_test "uninstall_script: simple" =
       echo "Removing manpage $MANDIR/man5/aaa-file.1..."
       rm -f "$MANDIR/man5/aaa-file.1"
     fi
+    rm -f "$APPDIR/com.a.aaa-command.desktop"
     echo "Uninstallation complete!"
     |}]
 
 (* Regression test that ensures that if the binaries are not at the bundle's
    root, the symlink are still installed correctly. *)
 let%expect_test "install_script: binary in sub folder" =
-  let config = make_config ~exec_files:[{ path = "bin/do"; symlink = true; deps = true }] () in
+  let config = make_config
+      ~exec_files:[
+        { path = "bin/do"; symlink = true; deps = true; desktop_tpl = None }
+      ] ()
+  in
   let installer_name = "installer.run" in
   let install_script = Makeself_backend.install_script ~installer_name config in
   Format.printf "%a" pp_sh install_script;
@@ -883,6 +948,11 @@ let%expect_test "install_script: binary in sub folder" =
       MANDIR="/usr/local/share/man"
     else
       MANDIR="/usr/local/man"
+    fi
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
+    else
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -930,6 +1000,7 @@ let%expect_test "install_script: binary in sub folder" =
           IS_USER_INSTALL="true"
           BINDIR="$HOME/.local/bin"
           MANDIR="$HOME/.local/man"
+          APPDIR="$HOME/.local/share/applications"
         else
           echo "Not running as root. Aborting."
           echo "Need root permission for $dir_name"
@@ -994,7 +1065,10 @@ let%expect_test "install_script: binary in sub folder" =
 (* Regression test that ensures that if the binaries are not at the bundle's
    root, the symlinks are correctly removed by the uninstall script. *)
 let%expect_test "uninstall_script: binary in sub folder" =
-  let config = make_config ~exec_files:[{ path = "bin/do"; symlink = true; deps = true }] () in
+  let config = make_config ~exec_files:[
+      { path = "bin/do"; symlink = true; deps = true ; desktop_tpl = None }
+    ] ()
+  in
   let uninstall_script = Makeself_backend.uninstall_script config in
   Format.printf "%a" pp_sh uninstall_script;
   [%expect {|
@@ -1037,12 +1111,18 @@ let%expect_test "uninstall_script: binary in sub folder" =
     if [ "$IS_USER_INSTALL" = "true" ]; then
       BINDIR="$HOME/.local/bin"
       MANDIR="$HOME/.local/man"
+      APPDIR="$HOME/.local/share/applications"
     else
       BINDIR="/usr/local/bin"
       if [ -d "/usr/local/share/man" ]; then
         MANDIR="/usr/local/share/man"
       else
         MANDIR="/usr/local/man"
+      fi
+      if [ -d "/usr/share/applications" ]; then
+        APPDIR="/usr/share/applications"
+      else
+        APPDIR="/usr/local/share/applications"
       fi
     fi
     echo "About to uninstall test-name."
@@ -1079,7 +1159,9 @@ let%expect_test "uninstall_script: binary in sub folder" =
 let%expect_test "install_script: set environment for binaries" =
   let config =
     make_config
-      ~exec_files:[{ path = "bin/app"; symlink = true; deps = true }]
+      ~exec_files:[
+        { path = "bin/app"; symlink = true; deps = true; desktop_tpl = None }
+      ]
       ~environment:[("VAR1", "value1"); ("VAR2", "$INSTALL_PATH/lib")]
       ()
   in
@@ -1116,6 +1198,11 @@ let%expect_test "install_script: set environment for binaries" =
       MANDIR="/usr/local/share/man"
     else
       MANDIR="/usr/local/man"
+    fi
+    if [ -d "/usr/share/applications" ]; then
+      APPDIR="/usr/share/applications"
+    else
+      APPDIR="/usr/local/share/applications"
     fi
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -1163,6 +1250,7 @@ let%expect_test "install_script: set environment for binaries" =
           IS_USER_INSTALL="true"
           BINDIR="$HOME/.local/bin"
           MANDIR="$HOME/.local/man"
+          APPDIR="$HOME/.local/share/applications"
         else
           echo "Not running as root. Aborting."
           echo "Need root permission for $dir_name"

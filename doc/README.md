@@ -99,6 +99,9 @@ It contains the following fields:
   executable in `/usr/local/bin`. True by default.
 - `deps`, **boolean**, **optional**: Whether to resolve shared library
   dependencies on the executable. True by default.
+- `desktop_tpl`, **string**, **optional**: Path to a desktop file template to
+  be installed on linux. None by default. If missing, no desktop file is
+  installed. See the [Desktop files](#desktop-files) section for details.
 
 *Example:*
 ```json
@@ -437,7 +440,7 @@ In this example our main app's called `foo` and our plugin `bar`, known as
 
 #### Generating the bundle
 
-There's no specifics here and you can simply use the same commands as in the 
+There's no specifics here and you can simply use the same commands as in the
 [Generating the installation bundle](#generating-the-installation-bundle)
 section above.
 
@@ -480,7 +483,7 @@ foo-bar.bundle/
 │   ├── foo-bar
 │   │   ├── META
 │   │   └── bar.cmxs
-│   └── yojson 
+│   └── yojson
 │       ├── META
 │       └── yojson.cmxs
 └── man
@@ -556,6 +559,22 @@ as described by the plugin and the app respective `oui.json` configuration.
 An `uninstall.sh` script is also installed alongside the application
 that can be run to cleanly remove it from the system. It will remove
 the installation folder and all symlinks created during the installation.
+
+#### Desktop files
+
+By default `oui` will not install desktop files for your applications. If you'd
+like to install desktop files you can provide a template in the bundle and list
+it in the [exec_file object](#exec_files-object) of the app in your JSON config.
+
+At install time, the template will be used to generate a desktop file and
+install it in `/usr/share/applications` or `/usr/local/share/applications` for
+global installs or in `$HOME/.local/share/applications` for user installs.
+The desktop file itself will be named `<unique_id>.<exec-basename-no-extension>.desktop`.
+
+The template can use the following variables that will be substituted at install
+time:
+- `%{install_path}`: will be replace by the absolute path to the install folder
+  e.g. `/opt/alt-ergo` or `$HOME/.local/frama-c`
 
 ### Windows / WiX
 

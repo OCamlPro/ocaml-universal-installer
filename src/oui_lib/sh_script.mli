@@ -66,6 +66,8 @@ type command =
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
+  | Sed of {script: string; in_: string; out: string}
+  | Mktemp
 and case =
   { pattern : string
   ; commands : command list
@@ -181,5 +183,10 @@ val def_fun : string -> command list -> command
 
 (** [call_fun name [arg1; arg2] is ["name arg1 arg2"] *)
 val call_fun : string -> string list -> command
+
+(** [sed ~script ~in_ ~out] is ["sed -f script in_ > out"] *)
+val sed : script: string -> in_: string -> out: string -> command
+
+val mktemp : unit -> command
 
 val save : t -> OpamFilename.t -> unit

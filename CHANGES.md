@@ -2,6 +2,9 @@
 
 ### Added
 
+- Add support for desktop files installation on Linux (#146, @AllanBlanchard
+  @NathanReb)
+
 ### Changed
 
 - On linux, write `install.conf` earlier during install to allow recovering
