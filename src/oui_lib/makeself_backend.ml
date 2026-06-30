@@ -441,6 +441,8 @@ let install_desktop_files ic =
       echof "Adding %s to %s" base_desktop_file appdir_v;
       sed ~script:sed_script_v ~in_:template ~out:installed;
       chmod 644 [ installed ];
+      (* This next command is a temporary fix for frama-c, to remove once
+         post-install scripts are permitted. *)
       if_ Is_not_root
         [ write_file ~append:true installed [ "NoDisplay=true" ]] ();
     ]
