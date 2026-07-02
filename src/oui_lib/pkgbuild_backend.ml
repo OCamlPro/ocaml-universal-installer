@@ -114,9 +114,12 @@ let create_installer
         Macos_app_bundle.install_binary bundle ~binary_path:binary_src
       in
       handle_dylibs bundle ~binary_dst;
-      (* Sign the binary with ad-hoc signature *)
+      (* Sign the binary*)
       OpamConsole.msg "Signing binary...\n";
-      Codesign.sign_binary_adhoc binary_dst;
+      (match installer_config.macos_application_signing_id with
+       | None -> Codesign.sign_binary_adhoc binary_dst
+       | Some cert_name ->
+         Codesign.sign_binary_with_dev_id ~cert_name binary_dst);
       Some bundle.binary_name
   in
 

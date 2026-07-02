@@ -11,6 +11,14 @@
 open OpamCmdliner
 open Oui
 
+let arg_from_abstract : type a. a Oui_cli.Args.abstract -> a Arg.t =
+  fun {names; docv; doc; kind} ->
+  let open Arg in
+  let info = info ~doc ~docv names in
+  match kind with
+  | Flag -> flag info
+  | String_opt default -> opt (some string) default info
+
 let package =
   let open Arg in
   required
@@ -18,20 +26,17 @@ let package =
   & info [] ~docv:"PACKAGE" ~docs:Oui_cli.Man.Section.package_arg
       ~doc:"The package to create an installer for"
 
+let macos_application_signing_id =
+  let open Arg in
+  value & arg_from_abstract Oui_cli.Args.macos_application_signing_id_abstract
+
 let opam_filename =
   let conv, pp = OpamArg.filename in
   ((fun filename_arg -> System.normalize_path filename_arg |> conv), pp)
 
 let output =
   let open Arg in
-  let doc =
-    "$(docv) installer or bundle name. Defaults to \
-     $(b,package-name.version.ext), in the current directory, where $(b,ext) \
-     is $(b,.msi) for Windows installers and $(b,.run) for Linux installers."
-  in
-  value
-  & opt (some string) None
-  & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]
+  value & arg_from_abstract Oui_cli.Args.output_abstract
 
 let opam_conf_file =
   let open Arg in
@@ -44,7 +49,7 @@ let opam_conf_file =
 
 let wix_keep_wxs =
   let open Arg in
-  value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
+  value & arg_from_abstract Oui_cli.Args.wix_keep_wxs_abstract
 
 let no_backend =
   let open Arg in
@@ -60,10 +65,17 @@ let save_bundle_and_conf ~(installer_config : Installer_config.user) ~bundle_dir
 
 let create_bundle cli =
   let doc = "Extract package installer bundle" in
-  let create_bundle global_options conf_file keep_wxs no_backend output
-      package () =
+  let create_bundle global_options conf_file
+      (`App_signing_id macos_application_signing_id)
+      (`Keep_wxs keep_wxs) (`No_backend no_backend) (`Output output) package ()
+    =
     Opam_frontend.with_install_bundle ?conf_file cli global_options package
       (fun installer_config ~bundle_dir ~tmp_dir ->
+         let installer_config =
+           Oui_cli.Args.override_config
+             ~macos_application_signing_id
+             installer_config
+         in
          let backend =
            if no_backend then
              None
@@ -105,9 +117,10 @@ let create_bundle cli =
     Term.(const create_bundle
           $ OpamArg.global_options cli
           $ opam_conf_file
-          $ wix_keep_wxs
-          $ no_backend
-          $ output
+          $ map (fun x -> `App_signing_id x) macos_application_signing_id
+          $ map (fun x -> `Keep_wxs x) wix_keep_wxs
+          $ map (fun x -> `No_backend x) no_backend
+          $ map (fun x -> `Output x) output
           $ package)
 
 let () =
