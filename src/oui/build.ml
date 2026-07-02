@@ -10,8 +10,10 @@
 
 open Oui
 
-let run keep_wxs backend mtime tar_extra installer_config bundle_dir output
-  verbose_level debug_level =
+let run (`Keep_wxs keep_wxs) (`Backend backend) (`Mtime mtime)
+    (`Tar_extra tar_extra) (`App_signing_id macos_application_signing_id)
+    (`Installer_config installer_config) (`Bundle_dir bundle_dir)
+    (`Output output) (`Verbose verbose_level) (`Debug debug_level) =
   OpamCoreConfig.init ~verbose_level ~debug_level ();
   let res =
     let open Letop.Result in
@@ -22,6 +24,11 @@ let run keep_wxs backend mtime tar_extra installer_config bundle_dir output
     in
     Oui_cli.Warnings.handle warnings;
     let+ installer_config = res in
+    let installer_config =
+      Oui_cli.Args.override_config
+        ~macos_application_signing_id
+        installer_config
+    in
     let output =
       Oui_cli.Args.output_name ~output ~backend:(Some backend) installer_config
     in
@@ -46,15 +53,16 @@ let run keep_wxs backend mtime tar_extra installer_config bundle_dir output
 let term =
   let open Cmdliner.Term in
   const run
-  $ Oui_cli.Args.wix_keep_wxs
-  $ Oui_cli.Args.backend
-  $ Oui_cli.Args.mtime
-  $ Oui_cli.Args.tar_extra
-  $ Oui_cli.Args.installer_config
-  $ Oui_cli.Args.bundle_dir
-  $ Oui_cli.Args.output
-  $ Oui_cli.Args.verbose
-  $ Oui_cli.Args.debug
+  $ map (fun x -> `Keep_wxs x) Oui_cli.Args.wix_keep_wxs
+  $ map (fun x -> `Backend x) Oui_cli.Args.backend
+  $ map (fun x -> `Mtime x) Oui_cli.Args.mtime
+  $ map (fun x -> `Tar_extra x) Oui_cli.Args.tar_extra
+  $ map (fun x -> `App_signing_id x) Oui_cli.Args.macos_application_signing_id
+  $ map (fun x -> `Installer_config x) Oui_cli.Args.installer_config
+  $ map (fun x -> `Bundle_dir x) Oui_cli.Args.bundle_dir
+  $ map (fun x -> `Output x) Oui_cli.Args.output
+  $ map (fun x -> `Verbose x) Oui_cli.Args.verbose
+  $ map (fun x -> `Debug x) Oui_cli.Args.debug
 
 let cmd =
   let info =

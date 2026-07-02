@@ -386,6 +386,7 @@ let create_bundle ~global_state ~switch_state ~env ~tmp_dir opam_oui_conf
      wix_banner_bmp_file = opam_oui_conf.c_images.ban;
      wix_license_file = None; (* TODO *)
      macos_symlink_dirs = []; (* TODO *)
+     macos_application_signing_id = None;
    })
 
 let with_opam_and_conf ~conf_file cli global_options f =

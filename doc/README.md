@@ -86,6 +86,10 @@ are:
   in `Contents/`. Used by macOS backend only. See
   [macOS / Application Bundle section](#macos--application-bundle) for details.
   *Example:* `["lib", "share"]`.
+- `macos_application_signing_id`: **string**, **optional**: Developer ID
+  Application or Common Name of certificate used to sign MacOS binaries
+  with `codesign`. If missing, binaries are signed with `codesign -s -`.
+  *Example:* `"Developer ID Application: John Smith (ABC123DEF)"`
 
 ### exec_files object
 

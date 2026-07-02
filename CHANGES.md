@@ -2,6 +2,9 @@
 
 ### Added
 
+- Allow properly signing MacOS binaries with Developer ID certificate
+  (#147, @NathanReb)
+
 ### Changed
 
 - On linux, write `install.conf` earlier during install to allow recovering

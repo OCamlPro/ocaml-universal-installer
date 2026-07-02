@@ -12,6 +12,27 @@ open Cmdliner
 open Cmdliner.Arg
 open Oui
 
+type 'a arg_kind =
+  | Flag : bool arg_kind
+  | String_opt : string option -> string option arg_kind
+
+type 'a abstract =
+  { names : string list
+  ; docv : string
+  ; doc : string
+  ; kind : 'a arg_kind
+  }
+(** Type describing individual elements of a CLI argument. Used to share
+    args between the main binary and the opam plugin which uses OpamCmdliner
+    and not Cmdliner itself. *)
+
+let arg_from_abstract : type a. a abstract -> a Cmdliner.Arg.t =
+  fun {names; docv; doc; kind} ->
+  let info = info ~doc ~docv names in
+  match kind with
+  | Flag -> flag info
+  | String_opt default -> opt (some string) default info
+
 let opam_filename =
   let conv, pp = OpamArg.filename in
   let parse filename_arg =
@@ -30,7 +51,14 @@ let opam_dirname =
   in
   Arg.conv' (parse, pp)
 
-let wix_keep_wxs = value & flag & info [ "keep-wxs" ] ~doc:"Keep Wix source files."
+let wix_keep_wxs_abstract =
+  { kind = Flag
+  ; docv = ""
+  ; doc = "Keep Wix source files."
+  ; names = [ "keep-wxs" ]
+  }
+
+let wix_keep_wxs = value & arg_from_abstract wix_keep_wxs_abstract
 
 type backend = Wix | Makeself | Pkgbuild
 
@@ -134,16 +162,19 @@ let backend_opt =
   in
   Cmdliner.Term.(const choose $ value arg)
 
+let output_abstract =
+  { kind = String_opt None
+  ; docv = "OUTPUT"
+  ; doc =
+      "$(docv) installer or bundle name. Defaults to \
+       $(b,package-name.version.ext), in the current directory, where $(b,ext) \
+       is $(b,.msi) for Windows installers and $(b,.run) for Linux installers."
+  ; names = [ "o"; "output" ]
+  }
+
 let output =
   let open Arg in
-  let doc =
-    "$(docv) installer or bundle name. Defaults to \
-     $(b,package-name.version.ext), in the current directory, where $(b,ext) \
-     is $(b,.msi) for Windows installers and $(b,.run) for Linux installers."
-  in
-  value
-  & opt (some string) None
-  & info ~docv:"OUTPUT" ~doc [ "o"; "output" ]
+  value & arg_from_abstract output_abstract
 
 let output_name ~output ~backend (ic : _ Installer_config.t) =
   match output with
@@ -158,6 +189,18 @@ let output_name ~output ~backend (ic : _ Installer_config.t) =
       | Some Pkgbuild -> ".pkg"
     in
     base ^ ext
+
+let override_config
+    ~macos_application_signing_id
+    (ic : Installer_config.internal) =
+  let override ~default cli_opt =
+    match cli_opt with None -> default | Some _ -> cli_opt
+  in
+  let macos_application_signing_id =
+    override ~default:ic.macos_application_signing_id
+      macos_application_signing_id
+  in
+  {ic with macos_application_signing_id}
 
 let installer_config =
   let open Cmdliner.Arg in
@@ -198,3 +241,16 @@ let tar_extra =
      creating makeself installer."
   in
   value & opt (some ~none (list string)) None & info ["tar-extra"] ~doc
+
+let macos_application_signing_id_abstract =
+  { kind = String_opt None
+  ; docv = "DEVELOPER_ID_APPLICATION"
+  ; doc =
+      "Developer ID application certificate name to use with codesign. \
+       This option has higher priority than the \
+       $(b,macos_application_signing_id) JSON config field."
+  ; names = ["macos-binary-signing-id"]
+  }
+
+let macos_application_signing_id =
+  value & arg_from_abstract macos_application_signing_id_abstract
