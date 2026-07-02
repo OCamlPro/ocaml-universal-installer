@@ -8,11 +8,28 @@
 (*                                                                        *)
 (**************************************************************************)
 
+
+type 'a arg_kind =
+  | Flag : bool arg_kind
+  | String_opt : string option -> string option arg_kind
+
+type 'a abstract =
+  { names : string list
+  ; docv : string
+  ; doc : string
+  ; kind : 'a arg_kind
+  }
+(** Type describing individual elements of a CLI argument. Used to share
+    args between the main binary and the opam plugin which uses OpamCmdliner
+    and not Cmdliner itself. *)
+
 val opam_filename : OpamFilename.t Cmdliner.Arg.conv
 val opam_dirname : OpamFilename.Dir.t Cmdliner.Arg.conv
 
 val wix_keep_wxs : bool Cmdliner.Term.t
 (** --keep-wxs flag to disable WiX files clean up. *)
+
+val wix_keep_wxs_abstract : bool abstract
 
 type backend = Wix | Makeself | Pkgbuild
 
@@ -35,6 +52,8 @@ val backend_opt : backend option Cmdliner.Term.t
 val output : string option Cmdliner.Term.t
 (** -o/--output option to overwrite the default output file/dir. *)
 
+val output_abstract : string option abstract
+
 val output_name :
   output: string option ->
   backend: backend option ->
@@ -42,6 +61,12 @@ val output_name :
   string
 (** Returns the approriate output name based on the value of the
     -o and --backend options. *)
+
+(** Overrides some config fields with higher priority CLI options *)
+val override_config :
+  macos_application_signing_id: string option ->
+  Oui.Installer_config.internal -> 
+  Oui.Installer_config.internal
 
 (** JSON oui config file positional argument, sits as first positional arg. *)
 val installer_config : OpamFilename.t Cmdliner.Term.t
@@ -60,3 +85,10 @@ val mtime : string option Cmdliner.Term.t
 
 (** Extra tar option for makeself archives *)
 val tar_extra : string list option Cmdliner.Term.t
+
+(** --macos-application-signing-id option to pass Developer ID Application
+    certificate name to codesign for binary signature. Overrides the JSON
+    config field. *)
+val macos_application_signing_id : string option Cmdliner.Term.t
+
+val macos_application_signing_id_abstract : string option abstract

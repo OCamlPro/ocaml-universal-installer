@@ -87,6 +87,9 @@ type ('manpages, 'string_with_vars) t = {
     macos_symlink_dirs : string list;
     (** Directories to symlink from Contents/ to Resources/ for dune-site relocatable support.
         Example: ["lib"; "share"] creates Contents/lib -> Resources/lib and Contents/share -> Resources/share *)
+    macos_application_signing_id: string option; [@default None]
+    (** Developer ID Application certificate, passed to codesign to sign
+        binaries *)
   }
 
 type user = (manpages, String_with_vars.t) t
