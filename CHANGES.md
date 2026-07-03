@@ -4,6 +4,8 @@
 
 - Allow properly signing MacOS binaries with Developer ID certificate
   (#147, @NathanReb)
+- Allow signing MacOS .pkg installers with Developer ID certificate
+  (#148, @NathanReb)
 
 ### Changed
 

@@ -52,9 +52,15 @@ type pkgbuild_args = {
   output : OpamFilename.t;
 }
 
+type productbuild_sign_args = {
+  identity : string;
+  timestamp : bool;
+}
+
 type productbuild_args = {
   package : OpamFilename.t;
   output : OpamFilename.t;
+  sign : productbuild_sign_args option;
 }
 
 type touch_args = {
@@ -151,8 +157,17 @@ let call_inner : type a. a command -> a -> string * string list =
       | None -> args
     in
     "pkgbuild", args @ [ OpamFilename.to_string output ]
-  | Productbuild, { package; output } ->
-    "productbuild", [
+  | Productbuild, { package; output; sign } ->
+    let sign_args =
+      match sign with
+      | None -> []
+      | Some {identity; timestamp} ->
+        let sign = ["--sign"; identity] in
+        if timestamp then "--timestamp"::sign else sign
+    in
+    "productbuild",
+    sign_args @
+    [
       "--package"; OpamFilename.to_string package;
       OpamFilename.to_string output
     ]

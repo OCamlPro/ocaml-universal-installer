@@ -202,9 +202,15 @@ let create_installer
   System.call_unit System.Pkgbuild pkgbuild_args;
 
   OpamConsole.msg "Creating final installer package...\n";
+  let sign =
+    Option.map
+      (fun x -> {System.identity = x; timestamp = true})
+      installer_config.macos_installer_signing_id
+  in
   let productbuild_args : System.productbuild_args = {
     package = component_pkg_path;
     output = installer;
+    sign;
   } in
   System.call_unit System.Productbuild productbuild_args;
 

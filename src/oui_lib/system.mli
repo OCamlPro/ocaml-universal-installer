@@ -69,10 +69,16 @@ type pkgbuild_args = {
   output : OpamFilename.t; (** Output .pkg file *)
 }
 
+type productbuild_sign_args = {
+  identity : string;
+  timestamp : bool;
+}
+
 (** Arguments for productbuild command *)
 type productbuild_args = {
   package : OpamFilename.t; (** Component package to wrap *)
   output : OpamFilename.t; (** Output .pkg file *)
+  sign: productbuild_sign_args option; (** Whether to sign the .pkg and how *)
 }
 
 (** Arguments for patchelf command *)

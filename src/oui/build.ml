@@ -12,6 +12,7 @@ open Oui
 
 let run (`Keep_wxs keep_wxs) (`Backend backend) (`Mtime mtime)
     (`Tar_extra tar_extra) (`App_signing_id macos_application_signing_id)
+    (`Installer_signing_id macos_installer_signing_id)
     (`Installer_config installer_config) (`Bundle_dir bundle_dir)
     (`Output output) (`Verbose verbose_level) (`Debug debug_level) =
   OpamCoreConfig.init ~verbose_level ~debug_level ();
@@ -27,6 +28,7 @@ let run (`Keep_wxs keep_wxs) (`Backend backend) (`Mtime mtime)
     let installer_config =
       Oui_cli.Args.override_config
         ~macos_application_signing_id
+        ~macos_installer_signing_id
         installer_config
     in
     let output =
@@ -58,6 +60,7 @@ let term =
   $ map (fun x -> `Mtime x) Oui_cli.Args.mtime
   $ map (fun x -> `Tar_extra x) Oui_cli.Args.tar_extra
   $ map (fun x -> `App_signing_id x) Oui_cli.Args.macos_application_signing_id
+  $ map (fun x -> `Installer_signing_id x) Oui_cli.Args.macos_installer_signing_id
   $ map (fun x -> `Installer_config x) Oui_cli.Args.installer_config
   $ map (fun x -> `Bundle_dir x) Oui_cli.Args.bundle_dir
   $ map (fun x -> `Output x) Oui_cli.Args.output

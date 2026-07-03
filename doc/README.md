@@ -90,6 +90,10 @@ are:
   Application or Common Name of certificate used to sign MacOS binaries
   with `codesign`. If missing, binaries are signed with `codesign -s -`.
   *Example:* `"Developer ID Application: John Smith (ABC123DEF)"`
+- `macos_installer_signing_id`: **string**, **optional**: Developer ID
+  Installer or Common Name of certificate used to sign MacOS .pkg installers
+  with `productbuild`. If missing, .pkg are left unsigned.
+  *Example:* `"Developer ID Installer: John Smith (ABC123DEF)"`
 
 ### exec_files object
 

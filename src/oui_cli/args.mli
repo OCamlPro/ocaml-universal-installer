@@ -65,7 +65,8 @@ val output_name :
 (** Overrides some config fields with higher priority CLI options *)
 val override_config :
   macos_application_signing_id: string option ->
-  Oui.Installer_config.internal -> 
+  macos_installer_signing_id: string option ->
+  Oui.Installer_config.internal ->
   Oui.Installer_config.internal
 
 (** JSON oui config file positional argument, sits as first positional arg. *)
@@ -92,3 +93,10 @@ val tar_extra : string list option Cmdliner.Term.t
 val macos_application_signing_id : string option Cmdliner.Term.t
 
 val macos_application_signing_id_abstract : string option abstract
+
+(** --macos-installer-signing-id option to pass Developer ID Installer
+    certificate name to productbuild for .pkg signature. Overrides the JSON
+    config field. *)
+val macos_installer_signing_id : string option Cmdliner.Term.t
+
+val macos_installer_signing_id_abstract : string option abstract
