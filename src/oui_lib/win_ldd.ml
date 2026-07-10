@@ -201,7 +201,7 @@ let is_system32 =
     | _ -> false
 
 (* Note: string is encoded using the current Windows ANSI encoding, not UTF-8 *)
-external resolve_dll : string -> string option = "ml_resolve_dll"
+external resolve_dll : string -> (string, string) result = "ml_resolve_dll"
 
 let get_dlls binary =
   let rec aux dlls binary =
@@ -209,8 +209,10 @@ let get_dlls binary =
     let new_dlls =
       List.filter_map (fun dll ->
           match resolve_dll dll with
-          | None -> None (* Maybe should warn ? *)
-          | Some (dll) ->
+          | Error e ->
+              OpamConsole.warning "%s" e;
+              None
+          | Ok dll ->
               if is_system32 dll then None
               else if StrSet.mem dll dlls then None
               else Some (dll)
