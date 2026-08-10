@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <wchar.h>
 
 #include <caml/mlvalues.h>
@@ -43,19 +44,70 @@ WCHAR * ml_value_to_wchar(value mlString, UINT codepage)
   CAMLreturnT(WCHAR *, result);
 }
 
+static value caml_alloc_ok(value mlPayload) {
+  CAMLparam1(mlPayload);
+  CAMLlocal1(mlResult);
+  mlResult = caml_alloc(1, 0);
+  Field(mlResult, 0) = mlPayload;
+  CAMLreturn(mlResult);
+}
+
+static value caml_alloc_error(value mlPayload) {
+  CAMLparam1(mlPayload);
+  CAMLlocal1(mlResult);
+  mlResult = caml_alloc(1, 1);
+  Field(mlResult, 0) = mlPayload;
+  CAMLreturn(mlResult);
+}
+
+#define BUF_SIZE 4096
+
+static value alloc_error(const char *restrict fmt, ...) {
+  CAMLparam0();
+  va_list ap;
+  va_start(ap, fmt);
+  const char buf[BUF_SIZE] = {0};
+  vsnprintf(buf, BUF_SIZE, fmt, ap);
+  va_end(ap);
+  CAMLreturn(caml_alloc_error(caml_copy_string(buf)));
+}
+
 CAMLprim value ml_resolve_dll(value mlDllName)
 {
   CAMLparam1(mlDllName);
   CAMLlocal2(mlResult, mlTmp);
   WCHAR *dllname = ml_value_to_wchar(mlDllName, CP_ACP);
   WCHAR filename[MAX_PATH];
-  DWORD len = SearchPathW(NULL, dllname, NULL, MAX_PATH, filename, NULL);
-  if (len > 0 && len < MAX_PATH) {
-    mlTmp = ml_wchar_to_value(filename, CP_UTF8);
-    mlResult = caml_alloc_some(mlTmp);
-  } else {
-    mlResult = Val_none;
+
+  // The only reliable way to retrieve the full path of a DLL is to load it.
+  //
+  // The flag `DONT_RESOLVE_DLL_REFERENCES` prevents `LoadLibraryExW` from
+  // loading extra modules or running initialization code of the library.
+  //
+  // In particular, this function cannot discover the DLL paths of transitive
+  // dependencies that are not direct dependencies.
+  //
+  // Although this flag is deprecated, the new flag
+  // `LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE` or `LOAD_LIBRARY_AS_IMAGE_RESOURCE`
+  // don't allow requesting the full path of the DLL with `GetModuleFileNameW`.
+  HMODULE hm = LoadLibraryExW(dllname, NULL, DONT_RESOLVE_DLL_REFERENCES);
+  if (hm == NULL) {
+    mlResult = alloc_error("cannot load the library with error code %ld", GetLastError());
+    goto exit;
   }
+
+  DWORD len = GetModuleFileNameW(hm, filename, MAX_PATH);
+  if (len <= 0 || len >= MAX_PATH) {
+    mlResult = alloc_error("cannot retrieve the path of the DLL %ls with error code %ld",
+        filename, GetLastError());
+    goto exit;
+  }
+
+  mlTmp = ml_wchar_to_value(filename, CP_UTF8);
+  mlResult = caml_alloc_ok(mlTmp);
+
+exit:
+  FreeLibrary(hm);
   free(dllname);
   CAMLreturn(mlResult);
 }
