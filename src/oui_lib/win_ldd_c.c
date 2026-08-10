@@ -79,6 +79,17 @@ CAMLprim value ml_resolve_dll(value mlDllName)
   WCHAR *dllname = ml_value_to_wchar(mlDllName, CP_ACP);
   WCHAR filename[MAX_PATH];
 
+  // The only reliable way to retrieve the full path of a DLL is to load it.
+  //
+  // The flag `DONT_RESOLVE_DLL_REFERENCES` prevents `LoadLibraryExW` from
+  // loading extra modules or running initialization code of the library.
+  //
+  // In particular, this function cannot discover the DLL paths of transitive
+  // dependencies that are not direct dependencies.
+  //
+  // Although this flag is deprecated, the new flag
+  // `LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE` or `LOAD_LIBRARY_AS_IMAGE_RESOURCE`
+  // don't allow requesting the full path of the DLL with `GetModuleFileNameW`.
   HMODULE hm = LoadLibraryExW(dllname, NULL, DONT_RESOLVE_DLL_REFERENCES);
   if (hm == NULL) {
     mlResult = alloc_error("cannot load the library with error code %ld", GetLastError());
