@@ -211,7 +211,7 @@ let get_dlls binary =
           match resolve_dll dll with
           | Error e ->
               OpamConsole.warning
-                "Error while listing %s dll dependencies: %s" binary e;
+                "Error while listing %s DLL dependencies: %s" binary e;
               None
           | Ok dll ->
               if is_system32 dll then None

@@ -98,7 +98,7 @@ CAMLprim value ml_resolve_dll(value mlDllName)
 
   DWORD len = GetModuleFileNameW(hm, filename, MAX_PATH);
   if (len <= 0 || len >= MAX_PATH) {
-    mlResult = alloc_error("cannot retrieve the path of the dll %ls with error code %ld",
+    mlResult = alloc_error("cannot retrieve the path of the DLL %ls with error code %ld",
         filename, GetLastError());
     goto exit;
   }
