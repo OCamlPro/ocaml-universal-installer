@@ -210,7 +210,8 @@ let get_dlls binary =
       List.filter_map (fun dll ->
           match resolve_dll dll with
           | Error e ->
-              OpamConsole.warning "%s" e;
+              OpamConsole.warning
+                "Error while listing %s dll dependencies: %s" binary e;
               None
           | Ok dll ->
               if is_system32 dll then None

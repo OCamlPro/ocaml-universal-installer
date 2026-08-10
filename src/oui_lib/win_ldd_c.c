@@ -93,7 +93,7 @@ CAMLprim value ml_resolve_dll(value mlDllName)
   }
 
   mlTmp = ml_wchar_to_value(filename, CP_UTF8);
-  mlResult = caml_alloc_some(mlTmp);
+  mlResult = caml_alloc_ok(mlTmp);
 
 exit:
   FreeLibrary(hm);
