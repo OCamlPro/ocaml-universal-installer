@@ -105,6 +105,7 @@ type ('manpages, 'env_val) t = {
     wix_license_file : string option; [@default None]
     macos_symlink_dirs : string list; [@default []]
     macos_application_signing_id: string option; [@default None]
+    macos_installer_signing_id: string option; [@default None]
   }
 [@@deriving yojson {meta = true}]
 

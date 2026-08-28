@@ -192,6 +192,7 @@ let output_name ~output ~backend (ic : _ Installer_config.t) =
 
 let override_config
     ~macos_application_signing_id
+    ~macos_installer_signing_id
     (ic : Installer_config.internal) =
   let override ~default cli_opt =
     match cli_opt with None -> default | Some _ -> cli_opt
@@ -200,7 +201,11 @@ let override_config
     override ~default:ic.macos_application_signing_id
       macos_application_signing_id
   in
-  {ic with macos_application_signing_id}
+  let macos_installer_signing_id =
+    override ~default:ic.macos_installer_signing_id
+      macos_installer_signing_id
+  in
+  {ic with macos_application_signing_id; macos_installer_signing_id}
 
 let installer_config =
   let open Cmdliner.Arg in
@@ -254,3 +259,16 @@ let macos_application_signing_id_abstract =
 
 let macos_application_signing_id =
   value & arg_from_abstract macos_application_signing_id_abstract
+
+let macos_installer_signing_id_abstract =
+  { kind = String_opt None
+  ; docv = "DEVELOPER_ID_INSTALLER"
+  ; doc =
+      "Developer ID installer certificate name to use with productbuild. \
+       This option has higher priority than the \
+       $(b,macos_installer_signing_id) JSON config field."
+  ; names = ["macos-installer-signing-id"]
+  }
+
+let macos_installer_signing_id =
+  value & arg_from_abstract macos_installer_signing_id_abstract

@@ -90,6 +90,9 @@ type ('manpages, 'string_with_vars) t = {
     macos_application_signing_id: string option;
     (** Developer ID Application certificate, passed to codesign to sign
         binaries *)
+    macos_installer_signing_id: string option;
+    (** Developer ID Installer certificate, passed to productbuild to sign
+        .pkg *)
   }
 
 type user = (manpages, String_with_vars.t) t

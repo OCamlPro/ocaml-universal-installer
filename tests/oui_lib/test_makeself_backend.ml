@@ -61,6 +61,7 @@ let make_config
   ; wix_license_file = None
   ; macos_symlink_dirs = []
   ; macos_application_signing_id = None
+  ; macos_installer_signing_id = None
   }
 
 let pp_sh = Sh_script.pp_sh ~version:false
