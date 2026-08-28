@@ -56,7 +56,7 @@ cat > "$FRAMA_C_BUNDLE/oui.json" << EOF
   "fullname": "Frama-C",
   "version": "32.0",
   "unique_id": "$FRAMA_C_UID",
-  "exec_files": ["bin/frama-c", "bin/frama-c-config", "bin/frama-c-script"],
+  "exec_files": ["bin/frama-c"],
   "wix_manufacturer": "CEA LIST",
   "plugin_dirs": { "plugins_dir": "lib/frama-c/plugins", "lib_dir": "lib" },
   "macos_symlink_dirs": ["lib", "share"],
