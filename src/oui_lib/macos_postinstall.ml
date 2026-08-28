@@ -31,35 +31,37 @@ load_conf() {
 }
 |}
 
-let generate_wrapper_section ~app_path ~binary_name ~has_binary ~env =
-  if not has_binary then
-    "# Plugin-only package - no wrapper script"
-  else
-    let wrapper_content =
-      let env_lines =
-        List.map
-          (fun (var, value) ->
-             (* VAR="VALUE" \ *)
-             Printf.sprintf "%s=\"%s\" \\\\" var value)
-          env
-      in
-      String.concat "\n"
-        ( "#!/bin/bash"
-          :: env_lines
-          @ [ Printf.sprintf {|exec "%s/Contents/MacOS/%s" "$@"|}
-                app_path binary_name ] )
+let binary_name binary = Filename.basename binary.Installer_config.path
+let pp_newline ppf () = Format.fprintf ppf "\n"
+let pp_string ppf = Format.fprintf ppf "%s"
+
+let generate_wrapper_section ~app_path ~binary ~env =
+  let binary_name = binary_name binary in
+  let wrapper_content =
+    let env_lines =
+      List.map
+        (fun (var, value) ->
+           (* VAR="VALUE" \ *)
+           Printf.sprintf "%s=\"%s\" \\\\" var value)
+        env
     in
-    let wrapper_creation =
-      Printf.sprintf {|cat > "/usr/local/bin/%s" << 'WRAPPER_EOF'
+    String.concat "\n"
+      ( "#!/bin/bash"
+        :: env_lines
+        @ [ Printf.sprintf {|exec "%s/Contents/Resources/%s" "$@"|}
+              app_path binary.path ] )
+  in
+  let wrapper_creation =
+    Printf.sprintf {|cat > "/usr/local/bin/%s" << 'WRAPPER_EOF'
 %s
 WRAPPER_EOF|}
-        binary_name wrapper_content
-    in
-    let wrapper_chmod =
-      Printf.sprintf "chmod +x \"/usr/local/bin/%s\"" binary_name
-    in
-    Printf.sprintf "mkdir -p /usr/local/bin\n\n%s\n%s"
-      wrapper_creation wrapper_chmod
+      binary_name wrapper_content
+  in
+  let wrapper_chmod =
+    Printf.sprintf "chmod +x \"/usr/local/bin/%s\"" binary_name
+  in
+  Printf.sprintf "mkdir -p /usr/local/bin\n\n%s\n%s"
+    wrapper_creation wrapper_chmod
 
 let generate_load_app_conf ~target_app =
   let capitalized = String.capitalize_ascii target_app in
@@ -137,37 +139,40 @@ fi|}
 let generate_postinstall_script
     ~env
     ~app_name
-    ~binary_name
-    ~has_binary
+    ~binaries
     ?(plugins : Installer_config.plugin list = [])
     () =
   let app_path = Printf.sprintf "/Applications/%s.app" app_name in
   let resources = Printf.sprintf "%s/Contents/Resources" app_path in
 
   let def_install_path = Printf.sprintf "INSTALL_PATH=%s" resources in
-  let wrapper_section =
-    generate_wrapper_section ~app_path ~binary_name ~has_binary ~env
+  let wrapper_sections =
+    List.filter_map (fun binary ->
+      if binary.Installer_config.symlink then
+        Some (generate_wrapper_section ~app_path ~binary ~env)
+      else
+        None) binaries
   in
   let plugin_install_section =
     generate_plugin_install_section ~resources ~plugins
   in
   let manpages_section = generate_manpages_section ~resources in
 
-  Printf.sprintf {|#!/bin/bash
+  Format.asprintf {|#!/bin/bash
 set -e
 
 %s
-%s
+%a
 
 %s
 %s
 exit 0|}
     def_install_path
-    wrapper_section
+    (Format.pp_print_list ~pp_sep:pp_newline pp_string) wrapper_sections
     plugin_install_section
     manpages_section
 
-let generate_uninstall_script ~app_name ~binary_name ~has_binary ~plugins
+let generate_uninstall_script ~app_name ~binaries ~plugins
   ~app_uid =
   let app_path = Printf.sprintf "/Applications/%s.app" app_name in
   let resources = Printf.sprintf "%s/Contents/Resources" app_path in
@@ -213,24 +218,29 @@ rm -f "${%slib}/%s" 2>/dev/null || true
       load_and_remove ^ remove_symlinks
   in
 
-  let wrapper_removal =
-    if has_binary then
-      Printf.sprintf {|# Remove wrapper from /usr/local/bin
+  let wrapper_removals =
+    List.filter_map (fun binary ->
+      if binary.Installer_config.symlink then
+      let binary_name = binary_name binary in
+      let s =
+        Format.asprintf {|# Remove wrapper from /usr/local/bin
 if [ -L "/usr/local/bin/%s" ] || [ -f "/usr/local/bin/%s" ]; then
   echo "Removing /usr/local/bin/%s"
   rm -f "/usr/local/bin/%s"
 fi|}
-        binary_name binary_name binary_name binary_name
+          binary_name binary_name binary_name binary_name
+      in
+      Some s
     else
-      "# Plugin-only package - no wrapper to remove"
+      None) binaries
   in
 
-  Printf.sprintf {|#!/bin/bash
+  Format.asprintf {|#!/bin/bash
 set -e
 
 echo "Uninstalling %s..."
 %s
-%s
+%a
 
 # Remove manpage symlinks
 find /usr/local/share/man -type l -lname "%s/*" -delete 2>/dev/null || true
@@ -248,7 +258,7 @@ echo "Uninstallation complete!"
 |}
     app_name
     plugin_removal
-    wrapper_removal
+    (Format.pp_print_list ~pp_sep:pp_newline pp_string) wrapper_removals
     resources
     app_path app_path app_path
     app_uid

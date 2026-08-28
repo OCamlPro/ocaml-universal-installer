@@ -18,8 +18,7 @@
 val generate_postinstall_script :
   env:(string * string) list ->
   app_name:string ->
-  binary_name:string ->
-  has_binary:bool ->
+  binaries:Installer_config.exec_file list ->
   ?plugins:Installer_config.plugin list ->
   unit ->
   string
@@ -35,8 +34,7 @@ val generate_postinstall_script :
 *)
 val generate_uninstall_script :
   app_name:string ->
-  binary_name:string ->
-  has_binary:bool ->
+  binaries:Installer_config.exec_file list ->
   plugins:Installer_config.plugin list ->
   app_uid:string ->
   string

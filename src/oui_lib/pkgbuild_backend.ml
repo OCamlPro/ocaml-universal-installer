@@ -103,11 +103,10 @@ let create_installer
   Macos_app_bundle.copy_bundle_contents bundle ~bundle_dir;
 
   (* Install main binary to MacOS directory (if exec_files provided) *)
-  let binary_name = match installer_config.exec_files with
+  let () = match installer_config.exec_files with
     | [] ->
       (* Plugin-only bundle - no main binary *)
-      OpamConsole.msg "No exec_files specified, creating plugin-only package\n";
-      None
+      OpamConsole.msg "No exec_files specified, creating plugin-only package\n"
     | binary :: _ ->
       let binary_src = bundle_dir // binary.path in
       let binary_dst =
@@ -122,8 +121,7 @@ let create_installer
       (match installer_config.macos_application_signing_id with
        | None -> Codesign.sign_binary_adhoc binary_dst
        | Some cert_name ->
-         Codesign.sign_binary_with_dev_id ~cert_name binary_dst);
-      Some bundle.binary_name
+         Codesign.sign_binary_with_dev_id ~cert_name binary_dst)
   in
 
   create_info_plist bundle ~installer_config;
@@ -152,16 +150,10 @@ let create_installer
 
   (* Create postinstall script *)
   let scripts_dir = work_dir / "scripts" in
-  let has_binary = Option.is_some binary_name in
-  let binary_name_for_scripts = match binary_name with
-    | Some n -> n
-    | None -> installer_config.name
-  in
   let postinstall_content = Macos_postinstall.generate_postinstall_script
       ~env:installer_config.environment
       ~app_name:bundle.app_name
-      ~binary_name:binary_name_for_scripts
-      ~has_binary
+      ~binaries:installer_config.exec_files
       ~plugins:installer_config.plugins
       ()
   in
@@ -173,8 +165,7 @@ let create_installer
   (* Create uninstall script in bundle *)
   let uninstall_content = Macos_postinstall.generate_uninstall_script
       ~app_name:bundle.app_name
-      ~binary_name:binary_name_for_scripts
-      ~has_binary
+      ~binaries:installer_config.exec_files
       ~plugins:installer_config.plugins
       ~app_uid:bundle.bundle_id
   in
