@@ -29,6 +29,7 @@ depends: [
 depexts: [
   ["makeself"] {os = "linux"}
   ["patchelf"] {os = "linux"}
+  ["binutils"] {os = "linux"}
 ]
 build: [
     "dune"

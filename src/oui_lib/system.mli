@@ -91,6 +91,11 @@ type touch_args = {
   file  : string;
 }
 
+(** Arguments for readelf command *)
+type readelf_args = {
+  binary : OpamFilename.t;
+}
+
 (** External commands that could be called and handled by {b oui}. *)
 type _ command =
   | Which : string command  (** {b which} command, to check programs availability *)
@@ -107,6 +112,7 @@ type _ command =
   | Productbuild : productbuild_args command (** {b productbuild} command to create macOS installer packages *)
   | Patchelf : patchelf_args command
   | Touch : touch_args command (** {b touch} command to change files timestamps *)
+  | Readelf : readelf_args command (** {b readelf} command to read program headers *)
 
 (** Calls given command with its arguments and parses output, line by line. Raises [System_error]
     with command's output when command exits with non-zero exit status. *)

@@ -19,7 +19,7 @@
 (library
  (name linux_tests)
  (inline_tests)
- (modules test_ldd test_makeself_backend)
+ (modules test_ldd test_readelf test_makeself_backend)
  (enabled_if
   (= %{system} "linux"))
  (preprocess
