@@ -38,4 +38,6 @@ jobs:
         run: bash .github/scripts/test-alt-ergo.sh macos
 
       - name: Test frama-c and plugin support
+        # Latest frama-c does not build with 4.14
+        if: ${{ matrix.ocaml-compiler == 5.2.x}}
         run: bash .github/scripts/test-frama-c-plugin.sh
