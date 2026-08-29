@@ -701,13 +701,18 @@ let uninstall_script (ic : Installer_config.internal) =
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
   let binary = OpamFilename.Op.(bundle_dir // binary.path) in
-  let sos = Ldd.get_sos binary in
-  match sos with
-  | [] -> ()
-  | _ ->
-    let dst_dir = OpamFilename.dirname binary in
-    List.iter (fun so -> OpamFilename.copy_in so dst_dir) sos;
-    System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
+  let program_headers = Readelf.program_headers binary in
+  if Readelf.is_static program_headers then
+    (* this avoids calling ldd on static binaries. *)
+    ()
+  else
+    let sos = Ldd.get_sos binary in
+    match sos with
+    | [] -> ()
+    | _ ->
+      let dst_dir = OpamFilename.dirname binary in
+      List.iter (fun so -> OpamFilename.copy_in so dst_dir) sos;
+      System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
   if binary.deps then

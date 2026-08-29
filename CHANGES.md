@@ -30,6 +30,8 @@
   install to fail. (#128, @NathanReb)
 - Fix a bug where `oui` would embed unwanted shared libraries on Linux.
   (#138 #144, @AllanBlanchard @NathanReb)
+- Fix a bug where `oui` would crash on linux when inspecting static binaries
+  while trying to embed dyn deps in the bundle. (#151, @NathanReb)
 
 ### Removed
 
