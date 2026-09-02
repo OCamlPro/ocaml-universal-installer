@@ -14,6 +14,10 @@ type exec_file = {
     path : string;
     symlink : bool; [@default true]
     deps : bool; [@default true]
+    desktop_tpl: string option; [@default None]
+
+    (* definitly not what we want, but let's have something working *)
+    apparmor_profile: string option; [@default None]
   }
 [@@deriving yojson {meta = true}]
 
@@ -25,7 +29,13 @@ let exec_file_to_yojson exec_file =
 
 let exec_file_of_yojson : Yojson.Safe.t -> (exec_file, string) result =
   function
-  | `String path -> Ok ({ path; symlink = true; deps = true})
+  | `String path ->
+    Ok { path
+       ; symlink = true
+       ; deps = true
+       ; desktop_tpl = None
+       ; apparmor_profile = None
+       }
   | `Assoc _ as json ->
     let open Letop.Result in
     let* exec_file = [%of_yojson: exec_file] json in

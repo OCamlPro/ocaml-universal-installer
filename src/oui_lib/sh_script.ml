@@ -18,14 +18,15 @@ type numerical_op =
   | Eq
 
 type string_op =
- | Not_empty of string
- | Equal of string * string
+  | Not_empty of string
+  | Equal of string * string
 
 type condition =
   | Exists of string
   | Dir_exists of string
   | Link_exists of string
   | File_exists of string
+  | Command_exists of string
   | Is_not_root
   | Writable_as_user of string
   | And of condition * condition
@@ -66,6 +67,7 @@ type command =
   | Read_file of {file: string; line_var: string; process_line: command list}
   | Def_fun of {name: string; body : command list}
   | Call_fun of {name: string; args: string list}
+  | Sed of {file: string; pattern: string; value: string}
 and case =
   { pattern : string
   ; commands : command list
@@ -126,6 +128,7 @@ let rec pp_sh_condition fmtr condition =
   | Dir_exists s -> Format.fprintf fmtr "[ -d %S ]" s
   | Link_exists s -> Format.fprintf fmtr "[ -L %S ]" s
   | File_exists s -> Format.fprintf fmtr "[ -f %S ]" s
+  | Command_exists s -> Format.fprintf fmtr "command -v %s > /dev/null 2>&1" s
   | Writable_as_user s -> Format.fprintf fmtr "[ -w %S ]" s
   | Is_not_root -> Format.fprintf fmtr {|[ "$(id -u)" -ne 0 ]|}
   | And (c1, c2) ->
@@ -228,6 +231,8 @@ let rec pp_sh_command ?(newline=true) ~indent fmtr command =
     fpf "%s" name
   | Call_fun {name; args} ->
     fpf "%s %s" name (String.concat " " args)
+  | Sed {file; pattern; value} ->
+    fpf "sed -i 's,%s,'\"%s\"',' %s" pattern value file
 
 and pp_sh_case ~indent fmtr {pattern; commands} =
   let indent_str = String.make indent ' ' in
