@@ -88,8 +88,12 @@ let create_bundle cli =
            else
              Some (Oui_cli.Args.autodetect_backend ())
          in
+         let output_path =
+           Result.get_ok @@ Oui_cli.Args.output_path ?backend ?output ()
+         in
          let output =
-           Oui_cli.Args.output_name ~output ~backend installer_config
+           output_path ~name:installer_config.name
+             ~version:installer_config.version
          in
          match backend with
          | None ->

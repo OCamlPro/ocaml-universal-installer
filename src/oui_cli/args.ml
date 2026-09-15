@@ -176,19 +176,56 @@ let output =
   let open Arg in
   value & arg_from_abstract output_abstract
 
-let output_name ~output ~backend (ic : _ Installer_config.t) =
-  match output with
-  | Some o -> o
-  | None ->
-    let base = Printf.sprintf "%s-%s" ic.name ic.version in
-    let ext =
-      match backend with
-      | None -> ""
-      | Some Wix -> ".msi"
-      | Some Makeself -> ".run"
-      | Some Pkgbuild -> ".pkg"
+let installer_name_abstract =
+  { kind = String_opt None
+  ; docv = "NAME"
+  ; doc = "$(docv) installer without extension. Defaults to \
+           $(b,package-name.version)."
+  ; names = [ "installer-name" ]
+  }
+
+let installer_name =
+  let open Arg in
+  value & arg_from_abstract installer_name_abstract
+
+type output_path = name:string -> version:string -> string
+
+let is_simple_path f = Filename.basename f = f
+
+let output_path ?backend ?output ?installer_name () =
+  let ext =
+    match backend with
+    | None -> ""
+    | Some Wix -> ".msi"
+    | Some Makeself -> ".run"
+    | Some Pkgbuild -> ".pkg"
+  in
+  match output, installer_name with
+  | None, None ->
+    let k ~name ~version =
+      let base = Printf.sprintf "%s-%s" name version in
+      base ^ ext
     in
-    base ^ ext
+    Ok k
+  | Some o, None ->
+    let k ~name:_ ~version:_ = o in
+    Ok k
+  | None, Some base ->
+    if is_simple_path base then
+      let k ~name:_ ~version:_ = base ^ ext in
+      Ok k
+    else
+      Error "--installer-name expects a name, not a path"
+  | Some _, Some _ ->
+    Error "cannot use both `--output` and `--installer-name`"
+
+let output_path_t =
+  let open Term.Syntax in
+  Term.ret @@
+  let+ output and+ installer_name and+ backend in
+  match output_path ~backend ?output ?installer_name () with
+  | Ok r -> `Ok r
+  | Error e -> `Error (false, e)
 
 let override_config
     ~macos_application_signing_id

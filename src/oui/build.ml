@@ -14,7 +14,8 @@ let run (`Keep_wxs keep_wxs) (`Backend backend) (`Mtime mtime)
     (`Tar_extra tar_extra) (`App_signing_id macos_application_signing_id)
     (`Installer_signing_id macos_installer_signing_id)
     (`Installer_config installer_config) (`Bundle_dir bundle_dir)
-    (`Output output) (`Verbose verbose_level) (`Debug debug_level) =
+    (`Output_path output_path) (`Verbose verbose_level)
+    (`Debug debug_level) =
   OpamCoreConfig.init ~verbose_level ~debug_level ();
   let res =
     let open Letop.Result in
@@ -32,7 +33,7 @@ let run (`Keep_wxs keep_wxs) (`Backend backend) (`Mtime mtime)
         installer_config
     in
     let output =
-      Oui_cli.Args.output_name ~output ~backend:(Some backend) installer_config
+      output_path ~name:installer_config.name ~version:installer_config.version
     in
     let dst = OpamFilename.of_string output in
     OpamFilename.with_tmp_dir
@@ -63,7 +64,7 @@ let term =
   $ map (fun x -> `Installer_signing_id x) Oui_cli.Args.macos_installer_signing_id
   $ map (fun x -> `Installer_config x) Oui_cli.Args.installer_config
   $ map (fun x -> `Bundle_dir x) Oui_cli.Args.bundle_dir
-  $ map (fun x -> `Output x) Oui_cli.Args.output
+  $ map (fun x -> `Output_path x) Oui_cli.Args.output_path_t
   $ map (fun x -> `Verbose x) Oui_cli.Args.verbose
   $ map (fun x -> `Debug x) Oui_cli.Args.debug
 
