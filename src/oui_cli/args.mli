@@ -54,13 +54,21 @@ val output : string option Cmdliner.Term.t
 
 val output_abstract : string option abstract
 
-val output_name :
-  output: string option ->
-  backend: backend option ->
-  _ Oui.Installer_config.t ->
-  string
-(** Returns the approriate output name based on the value of the
-    -o and --backend options. *)
+val installer_name : string option Cmdliner.Term.t
+(** --installer_name option to overwrite the default installer name. *)
+
+val installer_name_abstract : string option abstract
+
+type output_path = name:string -> version:string -> string
+(** Type of output path pattern. *)
+
+val output_path :
+  ?backend:backend -> ?output:string -> ?installer_name:string -> unit
+  -> (output_path, string) result
+
+val output_path_t : output_path Cmdliner.Term.t
+(** Returns the approriate output path based on the value of the
+    -o, --installer-name and --backend options. *)
 
 (** Overrides some config fields with higher priority CLI options *)
 val override_config :
