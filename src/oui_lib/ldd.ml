@@ -42,6 +42,7 @@ let should_embed (name, _) =
 let elf_magic_number = "\x7FELF"
 
 let is_elf file =
+  let file = OpamFilename.to_string file in
   let ic = open_in_bin file in
   let is_elf =
     try
@@ -54,8 +55,8 @@ let is_elf file =
   is_elf
 
 let get_sos binary =
-  let path = OpamFilename.to_string binary in
-  if is_elf path then
+  if is_elf binary then
+    let path = OpamFilename.to_string binary in
     let output = System.call Ldd path in
     let shared_libs = List.filter_map parse_true_so_line output in
     let to_embed = List.filter should_embed shared_libs in
