@@ -701,8 +701,10 @@ let uninstall_script (ic : Installer_config.internal) =
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
   let binary = OpamFilename.Op.(bundle_dir // binary.path) in
-  let program_headers = Readelf.program_headers binary in
-  if Readelf.is_static program_headers then
+  if not @@ Ldd.is_elf binary then
+    (* do not read ELF informations on non ELF files *)
+    ()
+  else if Readelf.is_static @@ Readelf.program_headers binary then
     (* this avoids calling ldd on static binaries. *)
     ()
   else
