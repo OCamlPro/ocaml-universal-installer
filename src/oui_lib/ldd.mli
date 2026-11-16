@@ -14,6 +14,9 @@
     base system libraries libc and libm. *)
 val get_sos : OpamFilename.t -> OpamFilename.t list
 
+(** [is_elf exec] returns true iff exec is an elf file *)
+val is_elf : OpamFilename.t -> bool
+
 (**/**)
 (* Undocumented Section. Exposed for test purposes only *)
 

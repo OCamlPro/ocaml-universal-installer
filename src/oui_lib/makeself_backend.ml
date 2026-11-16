@@ -701,8 +701,10 @@ let uninstall_script (ic : Installer_config.internal) =
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
   let binary = OpamFilename.Op.(bundle_dir // binary.path) in
-  let program_headers = Readelf.program_headers binary in
-  if Readelf.is_static program_headers then
+  if not @@ Ldd.is_elf binary then
+    (* do not read ELF informations on non ELF files *)
+    ()
+  else if Readelf.is_static @@ Readelf.program_headers binary then
     (* this avoids calling ldd on static binaries. *)
     ()
   else
@@ -711,8 +713,23 @@ let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
     | [] -> ()
     | _ ->
       let dst_dir = OpamFilename.dirname binary in
-      List.iter (fun so -> OpamFilename.copy_in so dst_dir) sos;
-      System.call_unit Patchelf (Set_rpath {rpath = "$ORIGIN"; binary})
+      let dst_sos =
+        List.fold_left
+          (fun acc so ->
+             (* Copy so file into binary directory *)
+             OpamFilename.copy_in so dst_dir;
+             (* Gather path to copied so files *)
+             let basename = OpamFilename.basename so in
+             let dst_so = OpamFilename.create dst_dir basename in
+             dst_so :: acc)
+          []
+          sos
+      in
+      List.iter
+        (fun bin_or_lib ->
+           System.call_unit Patchelf
+             (Set_rpath {rpath = "$ORIGIN"; binary = bin_or_lib}))
+        (binary :: dst_sos)
 
 let add_sos_to_bundle ~bundle_dir (binary : Installer_config.exec_file) =
   if binary.deps then
