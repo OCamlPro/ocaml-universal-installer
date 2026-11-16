@@ -32,6 +32,10 @@
   (#138 #144, @AllanBlanchard @NathanReb)
 - Fix a bug where `oui` would crash on linux when inspecting static binaries
   while trying to embed dyn deps in the bundle. (#151, @NathanReb)
+- Fix a bug causing `oui` to call `readelf` on non ELF files in Makeself
+  backend. (#154, @AllanBlanchard)
+- Fix a bug causing embedded shared libraries not to be properly loaded by
+  setting RPATH on .so files in Makeself backend. (#154, @AllanBlanchard)
 
 ### Removed
 
